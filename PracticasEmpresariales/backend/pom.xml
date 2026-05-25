@@ -7,7 +7,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <!-- ================================================================
-         PARENT — Spring Boot gestiona todas las versiones automáticamente
+         PARENT — Spring Boot BOM (Bill of Materials)
+         Gestiona versiones de todas las dependencias de Spring automáticamente.
          ================================================================ -->
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -17,76 +18,87 @@
     </parent>
 
     <!-- ================================================================
-         IDENTIDAD
+         IDENTIDAD DEL PROYECTO
          ================================================================ -->
     <groupId>co.edu.cue</groupId>
     <artifactId>practicas-empresariales</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
     <name>Practicas Empresariales CUE</name>
-    <description>Sistema de Gestion de Practicas Empresariales - Universidad Alexander Von Humboldt</description>
+    <description>Sistema de Gestión de Prácticas Empresariales — Universidad Alexander Von Humboldt</description>
 
     <!-- ================================================================
-         PROPIEDADES
+         PROPIEDADES GLOBALES
          ================================================================ -->
     <properties>
         <java.version>21</java.version>
+        <!-- jjwt: librería para generación y validación de tokens JWT -->
         <jjwt.version>0.12.3</jjwt.version>
     </properties>
 
     <!-- ================================================================
-         DEPENDENCIAS
+         DEPENDENCIAS PRINCIPALES
          ================================================================ -->
     <dependencies>
 
         <!-- ── WEB ─────────────────────────────────────────────────── -->
+        <!-- Levanta el servidor Tomcat embebido y habilita @RestController -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
         <!-- ── SEGURIDAD ────────────────────────────────────────────── -->
+        <!-- Spring Security: filtros, autenticación, autorización -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-security</artifactId>
         </dependency>
 
-        <!-- ── JPA / HIBERNATE ─────────────────────────────────────── -->
+        <!-- ── PERSISTENCIA / BASE DE DATOS ────────────────────────── -->
+        <!-- JPA + Hibernate: mapeo objeto-relacional, agnóstico de BD -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-data-jpa</artifactId>
         </dependency>
 
         <!-- ── VALIDACIÓN ───────────────────────────────────────────── -->
+        <!-- @NotNull, @Email, @Size, @Valid en DTOs y controladores -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
         </dependency>
 
-        <!-- ── CORREO (Gmail SMTP) ──────────────────────────────────── -->
+        <!-- ── CORREO ELECTRÓNICO (Gmail SMTP) ─────────────────────── -->
+        <!-- JavaMailSender para envío de contraseñas temporales -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
-        <!-- ── AOP — Patrón Proxy ───────────────────────────────────── -->
+        <!-- ── AOP — PATRON PROXY ───────────────────────────────────── -->
+        <!-- Habilita @Aspect para ScopeValidationAspect            -->
+        <!-- Intercepta métodos de servicio y valida rol/scope       -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-aop</artifactId>
         </dependency>
 
-        <!-- ── JWT ─────────────────────────────────────────────────── -->
+        <!-- ── JWT (JSON Web Tokens) ────────────────────────────────── -->
+        <!-- jjwt-api: interfaces públicas (sí necesita compile scope) -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-api</artifactId>
             <version>${jjwt.version}</version>
         </dependency>
+        <!-- jjwt-impl: implementación interna, solo necesaria en runtime -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-impl</artifactId>
             <version>${jjwt.version}</version>
             <scope>runtime</scope>
         </dependency>
+        <!-- jjwt-jackson: serialización JSON de claims, solo runtime -->
         <dependency>
             <groupId>io.jsonwebtoken</groupId>
             <artifactId>jjwt-jackson</artifactId>
@@ -95,20 +107,28 @@
         </dependency>
 
         <!-- ── LOMBOK ───────────────────────────────────────────────── -->
+        <!-- Genera getters, setters, constructores, @Builder, @Slf4j   -->
+        <!-- optional=true: no se incluye en el JAR final               -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
         </dependency>
 
-        <!-- ── H2 (BD embebida — perfil de desarrollo por defecto) ─── -->
+        <!-- ── DRIVER H2 (base de datos embebida para desarrollo) ───── -->
+        <!--
+             H2 se activa por defecto (spring.profiles.active=h2).
+             No requiere instalación externa. Los datos se pierden al reiniciar.
+             Para cambiar de motor: ver los perfiles Maven al final del archivo.
+        -->
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- ── DEVTOOLS (reinicio automático al cambiar código) ─────── -->
+        <!-- ── HERRAMIENTAS DE DESARROLLO ──────────────────────────── -->
+        <!-- DevTools: reinicio automático cuando cambias código fuente  -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-devtools</artifactId>
@@ -131,19 +151,31 @@
     </dependencies>
 
     <!-- ================================================================
-         PERFILES MAVEN — DRIVER DE BASE DE DATOS
+         PERFILES MAVEN — SELECCIÓN DE BASE DE DATOS
          ================================================================
-         HOW TO USE (dos pasos siempre):
-           1. Cambia spring.profiles.active en application.properties
-           2. Activa el perfil Maven en IntelliJ (panel Maven → Profiles)
-              O en terminal: mvn spring-boot:run -P postgres
+         USO:
+           H2 (por defecto, sin instalación):
+             mvn spring-boot:run
+             — O en IntelliJ: no activar ningún perfil
 
-         H2  → perfil por defecto, no requiere activar nada extra
-         PostgreSQL → activa perfil "postgres"
-         MySQL/XAMPP → activa perfil "mysql"
+           PostgreSQL:
+             mvn spring-boot:run -P postgres
+             — También cambia spring.profiles.active=postgres en application.properties
+             — O en IntelliJ: activa el perfil "postgres" en el panel Maven
+
+           MySQL / XAMPP:
+             mvn spring-boot:run -P mysql
+             — También cambia spring.profiles.active=mysql en application.properties
+             — O en IntelliJ: activa el perfil "mysql" en el panel Maven
+
+         RAZÓN de usar perfiles Maven para los drivers:
+           Tener los tres drivers en el mismo classpath puede hacer que
+           Spring Boot intente auto-configurar múltiples DataSources.
+           Con perfiles, solo el driver activo está en el classpath.
          ================================================================ -->
     <profiles>
 
+        <!-- PERFIL: PostgreSQL -->
         <profile>
             <id>postgres</id>
             <dependencies>
@@ -155,6 +187,7 @@
             </dependencies>
         </profile>
 
+        <!-- PERFIL: MySQL / XAMPP / MariaDB -->
         <profile>
             <id>mysql</id>
             <dependencies>
@@ -172,38 +205,13 @@
          BUILD
          ================================================================ -->
     <build>
-        <!--
-            El código fuente está en la carpeta del backend.
-            Apuntamos Maven al directorio correcto para que
-            IntelliJ resuelva todas las clases sin errores.
-        -->
-        <sourceDirectory>
-            ${project.basedir}/PracticasEmpresariales/backend/src/main/java
-        </sourceDirectory>
-        <testSourceDirectory>
-            ${project.basedir}/PracticasEmpresariales/backend/src/test/java
-        </testSourceDirectory>
-        <resources>
-            <resource>
-                <directory>
-                    ${project.basedir}/PracticasEmpresariales/backend/src/main/resources
-                </directory>
-            </resource>
-        </resources>
-        <testResources>
-            <testResource>
-                <directory>
-                    ${project.basedir}/PracticasEmpresariales/backend/src/test/resources
-                </directory>
-            </testResource>
-        </testResources>
-
         <plugins>
-            <!-- Empaqueta el JAR ejecutable de Spring Boot -->
+            <!-- Plugin de Spring Boot: empaqueta el JAR ejecutable -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
+                    <!-- Excluye Lombok del JAR final (solo se usa en compilación) -->
                     <excludes>
                         <exclude>
                             <groupId>org.projectlombok</groupId>
@@ -213,7 +221,7 @@
                 </configuration>
             </plugin>
 
-            <!-- Compilador Java 21 con soporte completo de Lombok -->
+            <!-- Compilador Java 21 con preview features disponibles -->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -221,6 +229,7 @@
                     <source>21</source>
                     <target>21</target>
                     <annotationProcessorPaths>
+                        <!-- Lombok debe estar aquí para que funcione en Java 21 -->
                         <path>
                             <groupId>org.projectlombok</groupId>
                             <artifactId>lombok</artifactId>
