@@ -1,0 +1,114 @@
+# ==================== BACKEND (Java / Spring Boot) ====================
+
+# Build output
+backend/target/
+backend/build/
+backend/*.jar
+backend/*.war
+backend/*.ear
+
+# Maven wrapper cache
+backend/.mvn/wrapper/maven-wrapper.jar
+backend/.mvn/repository/
+
+# Gradle
+backend/.gradle/
+backend/gradle/wrapper/gradle-wrapper.jar
+
+# Spring Boot devtools restart trigger
+backend/.spring-boot-devtools.properties
+
+# Application secrets — use application-local.properties or env vars instead
+backend/src/main/resources/application-prod.properties
+backend/src/main/resources/application-prod.yml
+backend/src/main/resources/application-local.properties
+backend/src/main/resources/application-local.yml
+backend/src/main/resources/application-secret*.properties
+backend/src/main/resources/application-secret*.yml
+
+# Log files
+*.log
+logs/
+
+# ==================== FRONTEND (Node / React / Vite) ====================
+
+# Dependencies
+frontend/node_modules/
+
+# Build output
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/out/
+
+# Vite cache
+frontend/.vite/
+
+# Environment variables — never commit secrets
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# TypeScript build info
+frontend/tsconfig.tsbuildinfo
+frontend/**/*.tsbuildinfo
+
+# ==================== IDEs ====================
+
+# IntelliJ IDEA / JetBrains
+.idea/
+*.iml
+*.iws
+*.ipr
+out/
+
+# VS Code
+.vscode/
+!.vscode/extensions.json
+
+# Eclipse
+.classpath
+.project
+.settings/
+.factorypath
+
+# NetBeans
+nbproject/
+nb-configuration.xml
+
+# ==================== OS ====================
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+Thumbs.db:encryptable
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Linux
+*~
+
+# ==================== MISC ====================
+
+# Flyway / Liquibase sensitive config (if separate)
+*.sql.bak
+
+# Docker local overrides
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Coverage / test reports
+backend/target/site/
+frontend/coverage/
+
+# Compiled class files
+*.class
+
+# Package files
+*.zip
+*.tar.gz
