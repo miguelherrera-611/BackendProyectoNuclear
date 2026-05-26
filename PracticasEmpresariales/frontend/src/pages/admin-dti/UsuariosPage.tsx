@@ -1,7 +1,9 @@
 import { useState, useEffect } from 'react'
-import { UsuarioResponse, Rol, EtiquetaCargo } from '../../types'
+import { UsuarioResponse, Rol, EtiquetaCargo, FacultadResponse, ProgramaResponse } from '../../types'
 import { usuarioService } from '../../services/usuarioService'
 import { ROL_LABELS } from '../../constants/roles'
+import api from '../../services/api'
+import { ApiResponse, Pageable } from '../../types'
 
 const ROL_OPTIONS: Rol[] = [
   'ADMIN_DTI', 'COORDINACION_ACADEMICA', 'COORDINADOR_PRACTICAS',
@@ -15,6 +17,8 @@ const ESTADO_BADGE = (activo: boolean) =>
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<UsuarioResponse[]>([])
+  const [facultades, setFacultades] = useState<FacultadResponse[]>([])
+  const [programas, setProgramas] = useState<ProgramaResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [modalAbierto, setModalAbierto] = useState(false)
   const [form, setForm] = useState({
@@ -30,7 +34,23 @@ export default function UsuariosPage() {
     usuarioService.listar().then(p => setUsuarios(p.content)).finally(() => setLoading(false))
   }
 
-  useEffect(() => { cargar() }, [])
+  // Carga facultades y programas para los selectores del formulario
+  const cargarOpciones = () => {
+    api.get<ApiResponse<Pageable<FacultadResponse>>>('/facultades?size=100')
+      .then(r => setFacultades(r.data.datos?.content ?? []))
+    api.get<ApiResponse<Pageable<ProgramaResponse>>>('/programas?size=100')
+      .then(r => setProgramas(r.data.datos?.content ?? []))
+  }
+
+  useEffect(() => {
+    cargar()
+    cargarOpciones()
+  }, [])
+
+  // Cuando cambia el rol, limpiamos facultad y programa para evitar enviar IDs inconsistentes
+  const handleRolChange = (rol: Rol) => {
+    setForm({ ...form, rol, etiquetaCargo: '', facultadId: '', programaId: '' })
+  }
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -146,11 +166,13 @@ export default function UsuariosPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Rol *</label>
                   <select className="input-field" required value={form.rol}
-                    onChange={e => setForm({ ...form, rol: e.target.value as Rol, etiquetaCargo: '' })}>
+                    onChange={e => handleRolChange(e.target.value as Rol)}>
                     <option value="">Seleccionar...</option>
                     {ROL_OPTIONS.map(r => <option key={r} value={r}>{ROL_LABELS[r]}</option>)}
                   </select>
                 </div>
+
+                {/* Etiqueta de cargo — solo para Coordinación Académica */}
                 {form.rol === 'COORDINACION_ACADEMICA' && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Etiqueta de cargo *</label>
@@ -162,26 +184,44 @@ export default function UsuariosPage() {
                     </select>
                   </div>
                 )}
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
                   <input className="input-field" value={form.telefono}
                     onChange={e => setForm({ ...form, telefono: e.target.value })} />
                 </div>
-                {['COORDINACION_ACADEMICA'].includes(form.rol) && (
+
+                {/* Selector de facultad — para Coordinación Académica */}
+                {form.rol === 'COORDINACION_ACADEMICA' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">ID Facultad</label>
-                    <input className="input-field" type="number" value={form.facultadId}
-                      onChange={e => setForm({ ...form, facultadId: e.target.value })} />
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Facultad</label>
+                    <select className="input-field" value={form.facultadId}
+                      onChange={e => setForm({ ...form, facultadId: e.target.value })}>
+                      <option value="">— Sin asignar —</option>
+                      {facultades.map(f => (
+                        <option key={f.id} value={f.id}>{f.nombre}</option>
+                      ))}
+                    </select>
                   </div>
                 )}
+
+                {/* Selector de programa — para Coordinador de Prácticas y Estudiante */}
                 {['COORDINADOR_PRACTICAS', 'ESTUDIANTE'].includes(form.rol) && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">ID Programa</label>
-                    <input className="input-field" type="number" value={form.programaId}
-                      onChange={e => setForm({ ...form, programaId: e.target.value })} />
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Programa *</label>
+                    <select className="input-field" required value={form.programaId}
+                      onChange={e => setForm({ ...form, programaId: e.target.value })}>
+                      <option value="">— Selecciona un programa —</option>
+                      {programas.map(p => (
+                        <option key={p.id} value={p.id}>
+                          {p.nombre} ({p.facultadNombre})
+                        </option>
+                      ))}
+                    </select>
                   </div>
                 )}
               </div>
+
               <div className="flex gap-3 pt-2">
                 <button type="button" className="btn-secondary flex-1" onClick={() => setModalAbierto(false)}>
                   Cancelar

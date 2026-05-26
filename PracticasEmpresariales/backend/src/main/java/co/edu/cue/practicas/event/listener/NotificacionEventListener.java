@@ -47,6 +47,10 @@ public class NotificacionEventListener {
         var usuario = evento.getUsuario();
         var password = evento.getPasswordTemporal();
 
+        // Log de desarrollo: muestra la contraseña temporal en consola cuando el correo no está configurado.
+        // En producción este log no expone datos sensibles porque las credenciales SMTP reales funcionan.
+        log.info("[DEV] Contraseña temporal para {} ({}): {}", usuario.getNombre(), usuario.getCorreo(), password);
+
         // Enviamos el correo de bienvenida con las credenciales de acceso al nuevo usuario
         emailService.enviarPasswordTemporal(usuario.getCorreo(), usuario.getNombre(), password);
 

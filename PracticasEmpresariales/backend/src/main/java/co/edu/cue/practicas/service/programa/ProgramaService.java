@@ -143,7 +143,14 @@ public class ProgramaService {
     /**
      * Lista todos los programas activos con paginación.
      * Accesible para cualquier usuario autenticado.
+     *
+     * @Transactional(readOnly = true) mantiene la sesión JPA abierta durante el .map(),
+     * necesario porque ProgramaResponse.desde() accede a p.getFacultad().getNombre()
+     * (relación LAZY @ManyToOne) y a p.getRequisitos().stream() (colección LAZY @OneToMany).
+     * Sin esta anotación Hibernate cierra la sesión tras la consulta y lanza
+     * LazyInitializationException al intentar acceder a esas relaciones.
      */
+    @Transactional(readOnly = true)
     public Page<ProgramaResponse> listar(Pageable pageable) {
         return programaRepository.findByActivoTrue(pageable).map(ProgramaResponse::desde);
     }
@@ -152,8 +159,12 @@ public class ProgramaService {
      * Lista los programas activos de una facultad específica.
      * Se usa en el frontend para cargar el selector de programas al crear un usuario.
      *
+     * Mismo motivo que listar(): mantiene la sesión JPA abierta para el acceso
+     * a getFacultad() y getRequisitos() durante el mapeo a ProgramaResponse.
+     *
      * @param facultadId  ID de la facultad cuyos programas se quieren listar
      */
+    @Transactional(readOnly = true)
     public List<ProgramaResponse> listarPorFacultad(Long facultadId) {
         return programaRepository.findByFacultad_IdAndActivoTrue(facultadId)
                 .stream().map(ProgramaResponse::desde).toList();
@@ -162,7 +173,11 @@ public class ProgramaService {
     /**
      * Retorna un programa específico por su ID.
      * Lanza 404 si el programa no existe.
+     *
+     * Mismo motivo que listar(): la sesión JPA debe estar activa cuando
+     * ProgramaResponse.desde() accede a getFacultad() y getRequisitos().
      */
+    @Transactional(readOnly = true)
     public ProgramaResponse obtenerPorId(Long id) {
         return ProgramaResponse.desde(buscarPorId(id));
     }

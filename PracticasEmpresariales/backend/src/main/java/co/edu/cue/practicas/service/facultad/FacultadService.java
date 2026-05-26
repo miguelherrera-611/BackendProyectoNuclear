@@ -146,7 +146,13 @@ public class FacultadService {
     /**
      * Lista todas las facultades activas con paginación.
      * Disponible para cualquier usuario autenticado — no requiere rol específico.
+     *
+     * @Transactional(readOnly = true) mantiene la sesión JPA abierta durante el .map(),
+     * necesario porque FacultadResponse.desde() accede a facultad.getProgramas().size()
+     * (colección LAZY). Sin esta anotación la sesión se cierra antes del mapeo y Hibernate
+     * lanza LazyInitializationException.
      */
+    @Transactional(readOnly = true)
     public Page<FacultadResponse> listar(Pageable pageable) {
         return facultadRepository.findByActivaTrue(pageable).map(FacultadResponse::desde);
     }
@@ -154,7 +160,11 @@ public class FacultadService {
     /**
      * Retorna una facultad específica por su ID.
      * Lanza 404 si la facultad no existe.
+     *
+     * Mismo motivo que listar(): FacultadResponse.desde() accede a getProgramas().size()
+     * y necesita la sesión JPA activa.
      */
+    @Transactional(readOnly = true)
     public FacultadResponse obtenerPorId(Long id) {
         return FacultadResponse.desde(buscarPorId(id));
     }

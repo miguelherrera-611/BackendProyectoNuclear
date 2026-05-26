@@ -242,8 +242,15 @@ public class UsuarioService {
     /**
      * Retorna todos los usuarios del sistema con paginación.
      * El tamaño y orden de página se configura desde el controlador.
+     *
+     * @Transactional(readOnly = true) mantiene la sesión JPA abierta durante el .map(),
+     * necesario porque UsuarioResponse.desde() accede a u.getFacultad().getNombre()
+     * y u.getPrograma().getNombre() — ambas relaciones son LAZY @ManyToOne.
+     * Sin esta anotación Hibernate cierra la sesión tras findAll() y lanza
+     * LazyInitializationException al intentar navegar esas relaciones.
      */
     @RequiereRol(roles = {Rol.ADMIN_DTI})
+    @Transactional(readOnly = true)
     public Page<UsuarioResponse> listarUsuarios(Pageable pageable) {
         return usuarioRepository.findAll(pageable).map(UsuarioResponse::desde);
     }
@@ -251,8 +258,12 @@ public class UsuarioService {
     /**
      * Retorna los datos de un usuario específico por su ID.
      * Lanza 404 si el usuario no existe.
+     *
+     * Mismo motivo que listarUsuarios(): la sesión JPA debe estar activa cuando
+     * UsuarioResponse.desde() accede a getFacultad() y getPrograma().
      */
     @RequiereRol(roles = {Rol.ADMIN_DTI})
+    @Transactional(readOnly = true)
     public UsuarioResponse obtenerPorId(Long id) {
         return UsuarioResponse.desde(buscarPorId(id));
     }

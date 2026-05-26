@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react'
-import { ProgramaResponse } from '../../types'
+import { FacultadResponse, ProgramaResponse } from '../../types'
 import api from '../../services/api'
 import { ApiResponse, Pageable } from '../../types'
 
 export default function ProgramasPage() {
   const [programas, setProgramas] = useState<ProgramaResponse[]>([])
+  const [facultades, setFacultades] = useState<FacultadResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState(false)
   const [form, setForm] = useState({
@@ -13,6 +14,7 @@ export default function ProgramasPage() {
   })
   const [error, setError] = useState('')
 
+  // Carga la lista de programas activos desde el backend
   const cargar = () => {
     setLoading(true)
     api.get<ApiResponse<Pageable<ProgramaResponse>>>('/programas')
@@ -20,7 +22,16 @@ export default function ProgramasPage() {
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { cargar() }, [])
+  // Carga las facultades activas para el selector del formulario
+  const cargarFacultades = () => {
+    api.get<ApiResponse<Pageable<FacultadResponse>>>('/facultades?size=100')
+      .then(r => setFacultades(r.data.datos?.content ?? []))
+  }
+
+  useEffect(() => {
+    cargar()
+    cargarFacultades()
+  }, [])
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -97,11 +108,23 @@ export default function ProgramasPage() {
                   <textarea className="input-field" rows={2} value={form.descripcion}
                     onChange={e => setForm({ ...form, descripcion: e.target.value })} />
                 </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">ID Facultad *</label>
-                  <input className="input-field" type="number" required value={form.facultadId}
-                    onChange={e => setForm({ ...form, facultadId: e.target.value })} />
+
+                {/* Selector de facultad — carga las facultades activas del backend */}
+                <div className="col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Facultad *</label>
+                  <select
+                    className="input-field"
+                    required
+                    value={form.facultadId}
+                    onChange={e => setForm({ ...form, facultadId: e.target.value })}
+                  >
+                    <option value="">— Selecciona una facultad —</option>
+                    {facultades.map(f => (
+                      <option key={f.id} value={f.id}>{f.nombre}</option>
+                    ))}
+                  </select>
                 </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">N° de Prácticas *</label>
                   <input className="input-field" type="number" min={1} required value={form.numeroTotalPracticas}

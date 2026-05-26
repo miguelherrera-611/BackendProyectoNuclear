@@ -75,12 +75,6 @@ export default function DashboardPage() {
           </button>
         ))}
       </div>
-
-      {/* Nota Sprint 1 */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700">
-        <strong>Sprint 1 activo:</strong> Los contadores aparecen en 0 porque aún no hay datos en el sistema.
-        Los registros reales se cargarán a partir del Sprint 2 y Sprint 3.
-      </div>
     </div>
   )
 }
