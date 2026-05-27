@@ -4,7 +4,7 @@ import co.edu.cue.practicas.dto.request.CrearVacanteRequest;
 import co.edu.cue.practicas.dto.request.RechazarRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.VacanteResponse;
-import co.edu.cue.practicas.service.VacanteService;
+import co.edu.cue.practicas.service.vacante.VacanteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

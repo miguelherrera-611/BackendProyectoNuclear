@@ -4,7 +4,7 @@ import co.edu.cue.practicas.dto.request.CrearEmpresaRequest;
 import co.edu.cue.practicas.dto.request.RechazarRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.EmpresaResponse;
-import co.edu.cue.practicas.service.EmpresaService;
+import co.edu.cue.practicas.service.empresa.EmpresaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

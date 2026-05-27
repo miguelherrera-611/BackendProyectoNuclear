@@ -1,6 +1,6 @@
 package co.edu.cue.practicas.event;
 
-import co.edu.cue.practicas.repository.TutorEmpresarialRepository;
+import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

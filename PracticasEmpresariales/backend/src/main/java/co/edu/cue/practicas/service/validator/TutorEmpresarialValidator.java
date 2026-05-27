@@ -1,7 +1,7 @@
 package co.edu.cue.practicas.service.validator;
 
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
-import co.edu.cue.practicas.repository.TutorEmpresarialRepository;
+import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 

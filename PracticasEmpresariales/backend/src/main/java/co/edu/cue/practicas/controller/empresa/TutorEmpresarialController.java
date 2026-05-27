@@ -3,7 +3,7 @@ package co.edu.cue.practicas.controller.empresa;
 import co.edu.cue.practicas.dto.request.CrearTutorRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.TutorEmpresarialResponse;
-import co.edu.cue.practicas.service.TutorEmpresarialService;
+import co.edu.cue.practicas.service.tutor.TutorEmpresarialService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;

@@ -3,8 +3,8 @@ package co.edu.cue.practicas.service.validator;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.model.entity.Empresa;
 import co.edu.cue.practicas.model.enums.EstadoVacante;
-import co.edu.cue.practicas.repository.EmpresaRepository;
-import co.edu.cue.practicas.repository.VacanteRepository;
+import co.edu.cue.practicas.repository.empresa.EmpresaRepository;
+import co.edu.cue.practicas.repository.vacante.VacanteRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
