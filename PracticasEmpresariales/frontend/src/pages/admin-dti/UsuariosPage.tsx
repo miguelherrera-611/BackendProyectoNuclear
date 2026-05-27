@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { UsuarioResponse, Rol, EtiquetaCargo, FacultadResponse, ProgramaResponse } from '../../types'
+import { UsuarioResponse, Rol, EtiquetaCargo, EstadoCuenta, FacultadResponse, ProgramaResponse } from '../../types'
 import { usuarioService } from '../../services/usuarioService'
 import { ROL_LABELS } from '../../constants/roles'
 import api from '../../services/api'
@@ -12,8 +12,13 @@ const ROL_OPTIONS: Rol[] = [
 
 const ESTADO_BADGE = (activo: boolean) =>
   activo
-    ? <span className="badge-apto">Activo</span>
-    : <span className="badge-no-apto">Inactivo</span>
+    ? <span className="badge-apto">Habilitado</span>
+    : <span className="badge-no-apto">Deshabilitado</span>
+
+const ACCESO_BADGE = (estadoCuenta: EstadoCuenta | undefined) =>
+  estadoCuenta === 'ACTIVO'
+    ? <span className="badge-apto">Accedió</span>
+    : <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">Pendiente</span>
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<UsuarioResponse[]>([])
@@ -106,16 +111,16 @@ export default function UsuariosPage() {
         <table className="w-full text-sm">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              {['Nombre', 'Correo', 'Rol', 'Cargo', 'Estado', 'Acciones'].map(h => (
+              {['Nombre', 'Correo', 'Rol', 'Cargo', 'Cuenta', 'Primer acceso', 'Acciones'].map(h => (
                 <th key={h} className="text-left px-4 py-3 text-gray-600 font-semibold">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={6} className="text-center py-8 text-gray-400">Cargando...</td></tr>
+              <tr><td colSpan={7} className="text-center py-8 text-gray-400">Cargando...</td></tr>
             ) : usuarios.length === 0 ? (
-              <tr><td colSpan={6} className="text-center py-8 text-gray-400">No hay usuarios registrados.</td></tr>
+              <tr><td colSpan={7} className="text-center py-8 text-gray-400">No hay usuarios registrados.</td></tr>
             ) : usuarios.map(u => (
               <tr key={u.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium">{u.nombre}</td>
@@ -123,6 +128,7 @@ export default function UsuariosPage() {
                 <td className="px-4 py-3"><span className="badge-rol">{ROL_LABELS[u.rol]}</span></td>
                 <td className="px-4 py-3 text-gray-500 text-xs">{u.etiquetaCargo ?? '—'}</td>
                 <td className="px-4 py-3">{ESTADO_BADGE(u.activo)}</td>
+                <td className="px-4 py-3">{ACCESO_BADGE(u.estadoCuenta)}</td>
                 <td className="px-4 py-3">
                   <button
                     onClick={() => handleToggle(u)}

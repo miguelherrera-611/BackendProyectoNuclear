@@ -1,6 +1,7 @@
 package co.edu.cue.practicas.model.entity;
 
 import co.edu.cue.practicas.model.enums.EtiquetaCargo;
+import co.edu.cue.practicas.model.enums.EstadoCuenta;
 import co.edu.cue.practicas.model.enums.EstadoEstudiante;
 import co.edu.cue.practicas.model.enums.Rol;
 import jakarta.persistence.*;
@@ -56,6 +57,16 @@ public class Usuario {
     @Column(name = "primer_ingreso", nullable = false)
     @Builder.Default
     private boolean primerIngreso = true;
+
+    /**
+     * PENDIENTE mientras el usuario nunca haya iniciado sesión.
+     * Cambia a ACTIVO en el primer login exitoso.
+     * Permite al DTI ver quién ya accedió con su password temporal.
+     */
+    @Enumerated(EnumType.STRING)
+    @Column(name = "estado_cuenta", nullable = false, length = 15)
+    @Builder.Default
+    private EstadoCuenta estadoCuenta = EstadoCuenta.PENDIENTE;
 
     @Column(name = "ultimo_acceso")
     private LocalDateTime ultimoAcceso;

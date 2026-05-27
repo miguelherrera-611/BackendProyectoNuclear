@@ -2,6 +2,7 @@ package co.edu.cue.practicas.dto.response;
 
 import co.edu.cue.practicas.model.entity.Usuario;
 import co.edu.cue.practicas.model.enums.EtiquetaCargo;
+import co.edu.cue.practicas.model.enums.EstadoCuenta;
 import co.edu.cue.practicas.model.enums.EstadoEstudiante;
 import co.edu.cue.practicas.model.enums.Rol;
 import lombok.Builder;
@@ -29,6 +30,7 @@ public class UsuarioResponse {
     private Long programaId;
     private String programaNombre;
     private EstadoEstudiante estadoEstudiante;
+    private EstadoCuenta estadoCuenta;
 
     public static UsuarioResponse desde(Usuario u) {
         return UsuarioResponse.builder()
@@ -48,6 +50,7 @@ public class UsuarioResponse {
                 .programaId(u.getPrograma() != null ? u.getPrograma().getId() : null)
                 .programaNombre(u.getPrograma() != null ? u.getPrograma().getNombre() : null)
                 .estadoEstudiante(u.getEstadoEstudiante())
+                .estadoCuenta(u.getEstadoCuenta())
                 .build();
     }
 }

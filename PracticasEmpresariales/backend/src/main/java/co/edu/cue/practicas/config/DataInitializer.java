@@ -1,6 +1,7 @@
 package co.edu.cue.practicas.config;
 
 import co.edu.cue.practicas.model.entity.Usuario;
+import co.edu.cue.practicas.model.enums.EstadoCuenta;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -60,7 +61,8 @@ public class DataInitializer implements CommandLineRunner {
                     .passwordHash(passwordEncoder.encode(passwordDti))  // guardamos el hash BCrypt
                     .rol(Rol.ADMIN_DTI)
                     .activo(true)
-                    .primerIngreso(false)  // el DTI inicial no necesita cambiar contraseña al entrar
+                    .primerIngreso(false)           // el DTI inicial no necesita cambiar contraseña al entrar
+                    .estadoCuenta(EstadoCuenta.ACTIVO)  // sembrado directamente, no requiere activación
                     .build();
 
             usuarioRepository.save(dti);

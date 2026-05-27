@@ -9,6 +9,7 @@ import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.model.entity.BitacoraAuditoria;
 import co.edu.cue.practicas.model.entity.Usuario;
+import co.edu.cue.practicas.model.enums.EstadoCuenta;
 import co.edu.cue.practicas.model.enums.TipoAccion;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
@@ -89,6 +90,12 @@ public class AuthService {
 
             // Marcamos la fecha y hora exacta de este acceso para trazabilidad
             usuario.setUltimoAcceso(LocalDateTime.now());
+
+            // Primer login exitoso: confirmamos que el usuario usó su password temporal
+            if (EstadoCuenta.PENDIENTE.equals(usuario.getEstadoCuenta())) {
+                usuario.setEstadoCuenta(EstadoCuenta.ACTIVO);
+            }
+
             usuarioRepository.save(usuario);
 
             // Generamos el JWT con los claims del usuario (id, rol, etiqueta, facultad, programa)

@@ -12,6 +12,7 @@ import co.edu.cue.practicas.model.entity.BitacoraAuditoria;
 import co.edu.cue.practicas.model.entity.Facultad;
 import co.edu.cue.practicas.model.entity.Programa;
 import co.edu.cue.practicas.model.entity.Usuario;
+import co.edu.cue.practicas.model.enums.EstadoCuenta;
 import co.edu.cue.practicas.model.enums.EstadoEstudiante;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.model.enums.TipoAccion;
@@ -117,7 +118,8 @@ public class UsuarioService {
                 .facultad(facultad)
                 .programa(programa)
                 .activo(true)
-                .primerIngreso(true)  // obliga al usuario a cambiar la contraseña en el primer login
+                .primerIngreso(true)       // obliga al usuario a cambiar la contraseña en el primer login
+                .estadoCuenta(EstadoCuenta.PENDIENTE)  // no ha iniciado sesión aún con la password temporal
                 // OCL: todo estudiante se crea siempre con estado NO_APTO hasta que Coordinación lo valide
                 .estadoEstudiante(Rol.ESTUDIANTE.equals(request.getRol()) ? EstadoEstudiante.NO_APTO : null)
                 .build();

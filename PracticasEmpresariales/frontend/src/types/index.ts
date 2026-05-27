@@ -9,6 +9,8 @@ export type Rol =
 
 export type EtiquetaCargo = 'COORDINACION_ACADEMICA' | 'SECRETARIA'
 
+export type EstadoCuenta = 'PENDIENTE' | 'ACTIVO'
+
 export type EstadoEstudiante = 'NO_APTO' | 'APTO'
 
 export type TipoAccion =
@@ -46,6 +48,7 @@ export interface UsuarioResponse {
   programaId?: number
   programaNombre?: string
   estadoEstudiante?: EstadoEstudiante
+  estadoCuenta?: EstadoCuenta
 }
 
 export interface FacultadResponse {
