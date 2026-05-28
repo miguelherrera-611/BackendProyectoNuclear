@@ -85,7 +85,9 @@ class AuthServiceTest {
     @DisplayName("Login exitoso debe retornar token y datos del usuario")
     void loginExitosoDebeRetornarToken() {
         // ARRANGE
-        LoginRequest request = new LoginRequest("dti@test.com", "Admin2026!");
+        LoginRequest request = new LoginRequest();
+        request.setCorreo("dti@test.com");
+        request.setPassword("Admin2026!");
 
         // Configuramos el mock: cuando authenticationManager.authenticate() sea llamado,
         // devolvemos un objeto Authentication con nuestro userDetails
@@ -117,7 +119,9 @@ class AuthServiceTest {
     @DisplayName("Login con credenciales incorrectas debe lanzar AccesoNoAutorizadoException")
     void loginConCredencialesInvalidasDebeLanzarExcepcion() {
         // ARRANGE
-        LoginRequest request = new LoginRequest("dti@test.com", "contraseña_incorrecta");
+        LoginRequest request = new LoginRequest();
+        request.setCorreo("dti@test.com");
+        request.setPassword("contraseña_incorrecta");
 
         // Configuramos el mock para que simule credenciales incorrectas
         when(authenticationManager.authenticate(any()))
@@ -141,11 +145,10 @@ class AuthServiceTest {
     @DisplayName("Cambio de contraseña exitoso cuando las contraseñas coinciden y la actual es correcta")
     void cambiarPasswordExitoso() {
         // ARRANGE
-        CambiarPasswordRequest request = new CambiarPasswordRequest(
-                "Admin2026!",     // passwordActual
-                "NuevaClave123!", // passwordNueva
-                "NuevaClave123!"  // passwordConfirmacion (igual a la nueva)
-        );
+        CambiarPasswordRequest request = new CambiarPasswordRequest();
+        request.setPasswordActual("Admin2026!");
+        request.setPasswordNueva("NuevaClave123!");
+        request.setPasswordConfirmacion("NuevaClave123!");
 
         // Simulamos que la contraseña actual sí coincide con el hash
         when(passwordEncoder.matches("Admin2026!", usuarioEjemplo.getPasswordHash())).thenReturn(true);
@@ -165,11 +168,10 @@ class AuthServiceTest {
     @DisplayName("Cambio de contraseña debe fallar si las contraseñas nuevas no coinciden")
     void cambiarPasswordFallaSiConfirmacionNoCoincidie() {
         // ARRANGE
-        CambiarPasswordRequest request = new CambiarPasswordRequest(
-                "Admin2026!",
-                "NuevaClave123!",
-                "ClaveDistinta!"  // confirmación diferente a la nueva contraseña
-        );
+        CambiarPasswordRequest request = new CambiarPasswordRequest();
+        request.setPasswordActual("Admin2026!");
+        request.setPasswordNueva("NuevaClave123!");
+        request.setPasswordConfirmacion("ClaveDistinta!");
 
         // ACT + ASSERT
         assertThatThrownBy(() -> authService.cambiarPassword(request, userDetails))
@@ -184,12 +186,10 @@ class AuthServiceTest {
     @DisplayName("Cambio de contraseña debe fallar si la contraseña actual es incorrecta")
     void cambiarPasswordFallaSiContrasenaActualIncorrecta() {
         // ARRANGE
-        CambiarPasswordRequest request = new CambiarPasswordRequest(
-                "ClaveActualEquivocada",
-                "NuevaClave123!",
-                "NuevaClave123!"
-        );
-
+        CambiarPasswordRequest request = new CambiarPasswordRequest();
+        request.setPasswordActual("ClaveActualEquivocada");
+        request.setPasswordNueva("NuevaClave123!");
+        request.setPasswordConfirmacion("NuevaClave123!");
         // Simulamos que la contraseña actual NO coincide con el hash
         when(passwordEncoder.matches("ClaveActualEquivocada", usuarioEjemplo.getPasswordHash()))
                 .thenReturn(false);
