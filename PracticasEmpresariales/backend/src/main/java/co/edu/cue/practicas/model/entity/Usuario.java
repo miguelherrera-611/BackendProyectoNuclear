@@ -85,6 +85,18 @@ public class Usuario {
 
     // ===== Atributos exclusivos de ESTUDIANTE =====
 
+    /** OCL: identificacionUnica — único en todo el sistema para estudiantes */
+    @Column(name = "identificacion", unique = true, length = 20)
+    private String identificacion;
+
+    /** Semestre actual del estudiante al momento de crear el registro */
+    @Column(name = "semestre")
+    private Integer semestre;
+
+    /** Contacto de emergencia: "Nombre - 3009876543" */
+    @Column(name = "contacto_emergencia", length = 200)
+    private String contactoEmergencia;
+
     /** Estado del estudiante. Solo aplica cuando rol = ESTUDIANTE. */
     @Enumerated(EnumType.STRING)
     @Column(name = "estado_estudiante", length = 15)
@@ -94,6 +106,16 @@ public class Usuario {
     /** Motivo obligatorio cuando el estudiante se mantiene en NO_APTO */
     @Column(name = "motivo_no_apto", length = 500)
     private String motivoNoApto;
+
+    /**
+     * GPE-147 — indica que la Coordinación Académica ya envió formalmente
+     * al estudiante al proceso de práctica. Solo cuando es true el
+     * Coordinador de Prácticas puede ver al estudiante.
+     * OCL: soloAptoPostulable — debe estar en estado APTO para poder enviarse.
+     */
+    @Column(name = "enviado_al_proceso", nullable = false)
+    @Builder.Default
+    private boolean enviadoAlProceso = false;
 
     @Column(nullable = false, updatable = false)
     @Builder.Default

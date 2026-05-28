@@ -30,6 +30,7 @@ export default function UsuariosPage() {
     nombre: '', correo: '', rol: '' as Rol,
     etiquetaCargo: '' as EtiquetaCargo | '',
     telefono: '', facultadId: '', programaId: '',
+    identificacion: '', semestre: '', contactoEmergencia: '',
   })
   const [error, setError] = useState('')
   const [exito, setExito] = useState('')
@@ -52,9 +53,10 @@ export default function UsuariosPage() {
     cargarOpciones()
   }, [])
 
-  // Cuando cambia el rol, limpiamos facultad y programa para evitar enviar IDs inconsistentes
+  // Cuando cambia el rol, limpiamos los campos específicos de cada rol
   const handleRolChange = (rol: Rol) => {
-    setForm({ ...form, rol, etiquetaCargo: '', facultadId: '', programaId: '' })
+    setForm({ ...form, rol, etiquetaCargo: '', facultadId: '', programaId: '',
+      identificacion: '', semestre: '', contactoEmergencia: '' })
   }
 
   const handleCrear = async (e: React.FormEvent) => {
@@ -69,10 +71,14 @@ export default function UsuariosPage() {
         telefono: form.telefono || undefined,
         facultadId: form.facultadId ? Number(form.facultadId) : undefined,
         programaId: form.programaId ? Number(form.programaId) : undefined,
+        identificacion: form.rol === 'ESTUDIANTE' ? form.identificacion || undefined : undefined,
+        semestre: form.rol === 'ESTUDIANTE' && form.semestre ? Number(form.semestre) : undefined,
+        contactoEmergencia: form.rol === 'ESTUDIANTE' ? form.contactoEmergencia || undefined : undefined,
       })
       setExito('Usuario creado. Se envió la contraseña temporal al correo.')
       setModalAbierto(false)
-      setForm({ nombre: '', correo: '', rol: '' as Rol, etiquetaCargo: '', telefono: '', facultadId: '', programaId: '' })
+      setForm({ nombre: '', correo: '', rol: '' as Rol, etiquetaCargo: '', telefono: '',
+        facultadId: '', programaId: '', identificacion: '', semestre: '', contactoEmergencia: '' })
       cargar()
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
@@ -225,6 +231,32 @@ export default function UsuariosPage() {
                       ))}
                     </select>
                   </div>
+                )}
+
+                {/* Campos exclusivos de ESTUDIANTE */}
+                {form.rol === 'ESTUDIANTE' && (
+                  <>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Identificación *</label>
+                      <input className="input-field" required value={form.identificacion}
+                        placeholder="Número de cédula o documento"
+                        onChange={e => setForm({ ...form, identificacion: e.target.value })} />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Semestre *</label>
+                      <input className="input-field" type="number" min={1} max={12} required
+                        value={form.semestre}
+                        onChange={e => setForm({ ...form, semestre: e.target.value })} />
+                    </div>
+                    <div className="col-span-2">
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Contacto de Emergencia <span className="text-gray-400 font-normal">(nombre - teléfono)</span>
+                      </label>
+                      <input className="input-field" value={form.contactoEmergencia}
+                        placeholder="Ana Herrera - 3001234567"
+                        onChange={e => setForm({ ...form, contactoEmergencia: e.target.value })} />
+                    </div>
+                  </>
                 )}
               </div>
 
