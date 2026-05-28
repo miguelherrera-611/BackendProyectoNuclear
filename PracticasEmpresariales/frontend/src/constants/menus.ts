@@ -22,11 +22,13 @@ export const MENUS_POR_ROL: Record<Rol, MenuItem[]> = {
     { id: 'practicas',          label: 'Catálogo de Prácticas',  ruta: '/practicas',              icono: '📄' },
   ],
   COORDINADOR_PRACTICAS: [
-    { id: 'dashboard',   label: 'Panel Principal',      ruta: '/dashboard',  icono: '🏠' },
-    { id: 'estudiantes', label: 'Estudiantes APTOS',    ruta: '/estudiantes?estado=APTO', icono: '✅' },
-    { id: 'vacantes',    label: 'Vacantes',              ruta: '/vacantes',   icono: '💼' },
+    { id: 'dashboard',    label: 'Panel Principal',      ruta: '/dashboard',  icono: '🏠' },
+    { id: 'empresas',     label: 'Empresas',             ruta: '/empresas',   icono: '🏢' },
+    { id: 'vacantes',     label: 'Vacantes',             ruta: '/vacantes',   icono: '💼' },
+    { id: 'tutores',      label: 'Tutores Empresariales', ruta: '/tutores',   icono: '👨‍💼' },
+    { id: 'estudiantes',  label: 'Estudiantes APTOS',    ruta: '/estudiantes?estado=APTO', icono: '✅' },
     { id: 'asignaciones', label: 'Asignaciones',         ruta: '/asignaciones', icono: '🔗' },
-    { id: 'practicas',   label: 'Prácticas Activas',    ruta: '/practicas',  icono: '📊' },
+    { id: 'practicas',    label: 'Prácticas Activas',    ruta: '/practicas',  icono: '📊' },
   ],
   DOCENTE_ASESOR: [
     { id: 'dashboard',    label: 'Panel Principal',        ruta: '/dashboard',    icono: '🏠' },

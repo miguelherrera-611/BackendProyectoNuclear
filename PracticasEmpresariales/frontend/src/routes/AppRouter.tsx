@@ -8,6 +8,9 @@ import UsuariosPage from '../pages/admin-dti/UsuariosPage'
 import FacultadesPage from '../pages/admin-dti/FacultadesPage'
 import ProgramasPage from '../pages/admin-dti/ProgramasPage'
 import AuditoriaPage from '../pages/admin-dti/AuditoriaPage'
+import EmpresasPage from '../pages/coordinador-practicas/EmpresasPage'
+import VacantesPage from '../pages/coordinador-practicas/VacantesPage'
+import TutoresPage from '../pages/coordinador-practicas/TutoresPage'
 import NoAutorizadoPage from '../pages/NoAutorizadoPage'
 import MainLayout from '../layouts/MainLayout'
 
@@ -37,6 +40,13 @@ export default function AppRouter() {
               <Route path="/facultades" element={<FacultadesPage />} />
               <Route path="/programas" element={<ProgramasPage />} />
               <Route path="/auditoria" element={<AuditoriaPage />} />
+            </Route>
+
+            {/* Coordinador de Prácticas */}
+            <Route element={<ProtectedRoute rolesPermitidos={['COORDINADOR_PRACTICAS']} />}>
+              <Route path="/empresas" element={<EmpresasPage />} />
+              <Route path="/vacantes" element={<VacantesPage />} />
+              <Route path="/tutores" element={<TutoresPage />} />
             </Route>
           </Route>
         </Route>

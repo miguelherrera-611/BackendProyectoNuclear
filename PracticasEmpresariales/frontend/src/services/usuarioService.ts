@@ -9,6 +9,10 @@ interface CrearUsuarioRequest {
   telefono?: string
   facultadId?: number
   programaId?: number
+  // Campos exclusivos de ESTUDIANTE
+  identificacion?: string
+  semestre?: number
+  contactoEmergencia?: string
 }
 
 export const usuarioService = {

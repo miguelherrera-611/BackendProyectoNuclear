@@ -49,6 +49,10 @@ export interface UsuarioResponse {
   programaNombre?: string
   estadoEstudiante?: EstadoEstudiante
   estadoCuenta?: EstadoCuenta
+  identificacion?: string
+  semestre?: number
+  contactoEmergencia?: string
+  enviadoAlProceso?: boolean
 }
 
 export interface FacultadResponse {
@@ -104,6 +108,114 @@ export interface DashboardResponse {
   titulo: string
   soloLectura: boolean
   secciones: DashboardSeccion[]
+}
+
+export type EstadoEmpresa = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'INACTIVA'
+export type EstadoVacante = 'PENDIENTE' | 'DISPONIBLE' | 'RECHAZADA' | 'CERRADA'
+
+export interface EmpresaResponse {
+  id: number
+  razonSocial: string
+  nit: string
+  sector?: string
+  direccion?: string
+  municipio?: string
+  telefono?: string
+  nombreContacto: string
+  correo?: string
+  estado: EstadoEmpresa
+  areasDisponibles: string[]
+  creadoEn: string
+}
+
+export interface TutorEmpresarialResponse {
+  id: number
+  nombre: string
+  cargo?: string
+  correo: string
+  telefono?: string
+  empresaId: number
+  razonSocialEmpresa: string
+  disponible: boolean
+  activo: boolean
+  creadoEn: string
+}
+
+export interface VacanteResponse {
+  id: number
+  empresaId: number
+  razonSocialEmpresa: string
+  area: string
+  cuposTotales: number
+  cuposOcupados: number
+  estado: EstadoVacante
+  fechaPublicacion: string
+  motivoRechazo?: string
+  creadoEn: string
+}
+
+export type EstadoPractica = 'ASIGNADA_PENDIENTE_INICIO' | 'EN_CURSO' | 'FINALIZADA' | 'CANCELADA'
+export type EstadoHojaDeVida = 'PENDIENTE' | 'VALIDA' | 'RECHAZADA'
+
+export interface CatalogoPracticaResponse {
+  id: number
+  programaId: number
+  programaNombre: string
+  numeroPractica: number
+  nombre: string
+  materiaNucleo: string
+  codigoMateria: string
+  numCortes: number
+  duracionSemanas: number
+  documentosRequeridos?: string
+  activo: boolean
+  creadoEn: string
+}
+
+export interface InstanciaPracticaResponse {
+  id: number
+  numeroPractica: number
+  nombre: string
+  materiaNucleo: string
+  codigoMateria: string
+  numCortes: number
+  duracionSemanas: number
+  documentosRequeridos?: string
+  estado: EstadoPractica
+  empresaId?: number
+  razonSocialEmpresa?: string
+  docenteAsesorId?: number
+  nombreDocenteAsesor?: string
+  tutorEmpresarialId?: number
+  nombreTutorEmpresarial?: string
+  creadoEn: string
+}
+
+export interface HojaDeVidaResponse {
+  id: number
+  estudianteId: number
+  version: number
+  fechaCarga: string
+  urlArchivo: string
+  estado: EstadoHojaDeVida
+  validadoPor?: number
+  fechaValidacion?: string
+  motivoRechazo?: string
+  creadoEn: string
+}
+
+export interface ExpedienteResponse {
+  expedienteId: number
+  estudianteId: number
+  nombreEstudiante: string
+  identificacion?: string
+  programa?: string
+  semestre?: number
+  estadoEstudiante: EstadoEstudiante
+  hvActual?: HojaDeVidaResponse
+  historialHv: HojaDeVidaResponse[]
+  practicas: InstanciaPracticaResponse[]
+  creadoEn: string
 }
 
 export interface ApiResponse<T> {

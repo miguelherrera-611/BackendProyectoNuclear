@@ -33,4 +33,15 @@ public class CrearUsuarioRequest {
 
     /** ID de programa — requerido para COORDINADOR_PRACTICAS y ESTUDIANTE */
     private Long programaId;
+
+    // ── Campos exclusivos de ESTUDIANTE ──────────────────────────────────────
+
+    /** OCL: identificacionUnica — requerido cuando rol = ESTUDIANTE */
+    private String identificacion;
+
+    /** Semestre actual — requerido cuando rol = ESTUDIANTE */
+    private Integer semestre;
+
+    /** Nombre y teléfono del contacto de emergencia (ej. "Ana Herrera - 3001234567") */
+    private String contactoEmergencia;
 }

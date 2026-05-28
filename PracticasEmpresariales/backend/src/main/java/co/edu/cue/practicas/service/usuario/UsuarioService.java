@@ -101,6 +101,14 @@ public class UsuarioService {
             throw new OperacionNoPermitidaException("La etiqueta de cargo es obligatoria para el rol Coordinación Académica.");
         }
 
+        // OCL: identificacionUnica — solo aplica para estudiantes
+        if (Rol.ESTUDIANTE.equals(request.getRol())
+                && request.getIdentificacion() != null
+                && usuarioRepository.existsByIdentificacion(request.getIdentificacion())) {
+            throw new OperacionNoPermitidaException(
+                    "Ya existe un estudiante con la identificación: " + request.getIdentificacion());
+        }
+
         // Resolvemos las relaciones opcionales (facultad y programa) si vienen en el request
         Facultad facultad = resolverFacultad(request);
         Programa programa = resolverPrograma(request);
@@ -122,6 +130,9 @@ public class UsuarioService {
                 .estadoCuenta(EstadoCuenta.PENDIENTE)  // no ha iniciado sesión aún con la password temporal
                 // OCL: todo estudiante se crea siempre con estado NO_APTO hasta que Coordinación lo valide
                 .estadoEstudiante(Rol.ESTUDIANTE.equals(request.getRol()) ? EstadoEstudiante.NO_APTO : null)
+                .identificacion(Rol.ESTUDIANTE.equals(request.getRol()) ? request.getIdentificacion() : null)
+                .semestre(Rol.ESTUDIANTE.equals(request.getRol()) ? request.getSemestre() : null)
+                .contactoEmergencia(Rol.ESTUDIANTE.equals(request.getRol()) ? request.getContactoEmergencia() : null)
                 .build();
 
         // Persistimos el usuario en la base de datos
