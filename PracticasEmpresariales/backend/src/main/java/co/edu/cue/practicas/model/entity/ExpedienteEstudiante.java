@@ -49,7 +49,7 @@ public class ExpedienteEstudiante {
     private List<InstanciaPractica> practicas = new ArrayList<>();
 
     /** Historial de versiones de la hoja de vida */
-    @OneToMany(mappedBy = "estudiante", cascade = CascadeType.ALL, orphanRemoval = false)
+    @OneToMany(mappedBy = "expediente", cascade = CascadeType.ALL, orphanRemoval = false)
     @OrderBy("version DESC")
     @Builder.Default
     private List<HojaDeVida> historialHv = new ArrayList<>();

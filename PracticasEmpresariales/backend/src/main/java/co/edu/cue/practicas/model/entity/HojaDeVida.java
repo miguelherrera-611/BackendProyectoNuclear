@@ -45,6 +45,11 @@ public class HojaDeVida {
     @JoinColumn(name = "estudiante_id", nullable = false)
     private Usuario estudiante;
 
+    /** Expediente al que pertenece esta HV — usado por la relación bidireccional con ExpedienteEstudiante */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "expediente_id")
+    private ExpedienteEstudiante expediente;
+
     /** OCL: versionPositiva — auto-gestionado por HojaDeVidaService */
     @Column(name = "version", nullable = false)
     private int version;
