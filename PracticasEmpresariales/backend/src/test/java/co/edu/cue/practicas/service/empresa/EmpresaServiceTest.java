@@ -73,7 +73,7 @@ class EmpresaServiceTest {
 
         EmpresaResponse resultado = service.crearEmpresa(req);
 
-        assertThat(resultado.getRazonSocial()).isEqualTo("TechCo S.A.");
+        assertThat(resultado.razonSocial()).isEqualTo("TechCo S.A.");
         verify(validator).validarNitUnico("900.123.456-7");
         verify(empresaRepository).save(any(Empresa.class));
     }
