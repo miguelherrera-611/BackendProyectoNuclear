@@ -31,6 +31,10 @@ public class UsuarioResponse {
     private String programaNombre;
     private EstadoEstudiante estadoEstudiante;
     private EstadoCuenta estadoCuenta;
+    private String identificacion;
+    private Integer semestre;
+    private String contactoEmergencia;
+    private boolean enviadoAlProceso;
 
     public static UsuarioResponse desde(Usuario u) {
         return UsuarioResponse.builder()
@@ -51,6 +55,10 @@ public class UsuarioResponse {
                 .programaNombre(u.getPrograma() != null ? u.getPrograma().getNombre() : null)
                 .estadoEstudiante(u.getEstadoEstudiante())
                 .estadoCuenta(u.getEstadoCuenta())
+                .identificacion(u.getIdentificacion())
+                .semestre(u.getSemestre())
+                .contactoEmergencia(u.getContactoEmergencia())
+                .enviadoAlProceso(u.isEnviadoAlProceso())
                 .build();
     }
 }

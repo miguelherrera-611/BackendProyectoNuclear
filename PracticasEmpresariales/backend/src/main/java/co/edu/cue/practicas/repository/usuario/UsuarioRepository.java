@@ -42,5 +42,18 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
             @Param("facultadId") Long facultadId,
             Pageable pageable);
 
+    /** GPE-147 — todos los estudiantes de una facultad sin importar estado (scope Coordinación Académica) */
+    @Query("SELECT u FROM Usuario u WHERE u.rol = :rol AND u.programa.facultad.id = :facultadId AND u.activo = true")
+    Page<Usuario> findEstudiantesPorFacultad(
+            @Param("rol") Rol rol,
+            @Param("facultadId") Long facultadId,
+            Pageable pageable);
+
+    /** GPE-147 — Coordinador de Prácticas: solo APTOS enviados al proceso de su programa */
+    Page<Usuario> findByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndPrograma_IdAndActivoTrue(
+            Rol rol, EstadoEstudiante estadoEstudiante, Long programaId, Pageable pageable);
+
+    boolean existsByIdentificacion(String identificacion);
+
     Page<Usuario> findByFacultad_IdAndActivoTrue(Long facultadId, Pageable pageable);
 }
