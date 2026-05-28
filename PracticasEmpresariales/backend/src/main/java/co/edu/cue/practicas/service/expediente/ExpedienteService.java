@@ -87,6 +87,7 @@ public class ExpedienteService {
     @CacheEvict(value = "expedientes", key = "#estudianteId")
     public HojaDeVidaResponse subirHojaDeVida(Long estudianteId, SubirHojaDeVidaRequest req) {
         Usuario estudiante = buscarEstudianteOFallar(estudianteId);
+        ExpedienteEstudiante expediente = buscarExpedienteOFallar(estudianteId);
 
         // PROXY PROTECCIÓN: OCL hvInmutableEnPractica
         validarHvNoInmutable(estudianteId);
@@ -95,6 +96,7 @@ public class ExpedienteService {
 
         HojaDeVida hv = HojaDeVida.builder()
                 .estudiante(estudiante)
+                .expediente(expediente)
                 .version(nuevaVersion)
                 .urlArchivo(req.urlArchivo())
                 .build();
