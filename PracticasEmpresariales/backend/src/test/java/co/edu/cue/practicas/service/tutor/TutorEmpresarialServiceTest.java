@@ -76,7 +76,7 @@ class TutorEmpresarialServiceTest {
 
         TutorEmpresarialResponse resultado = service.crearTutor(req);
 
-        assertThat(resultado.getNombre()).isEqualTo("Laura Gómez");
+        assertThat(resultado.nombre()).isEqualTo("Laura Gómez");
         // OCL empresaActiva: debe validarse que la empresa esté APROBADA
         verify(empresaValidator).validarEmpresaAprobadaParaTutores(empresaAprobada);
         // OCL correoUnico: debe validarse que el correo no exista
@@ -155,6 +155,6 @@ class TutorEmpresarialServiceTest {
         List<TutorEmpresarialResponse> resultado = service.listarPorEmpresa(1L);
 
         assertThat(resultado).hasSize(1);
-        assertThat(resultado.get(0).getNombre()).isEqualTo("Laura Gómez");
+        assertThat(resultado.get(0).nombre()).isEqualTo("Laura Gómez");
     }
 }

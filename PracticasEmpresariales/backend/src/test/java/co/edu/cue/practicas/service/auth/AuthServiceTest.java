@@ -171,7 +171,7 @@ class AuthServiceTest {
         CambiarPasswordRequest request = new CambiarPasswordRequest();
         request.setPasswordActual("Admin2026!");
         request.setPasswordNueva("NuevaClave123!");
-        request.setPasswordConfirmacion("ClaveDistinta!"); // confirmación diferente a la nueva contraseña
+        request.setPasswordConfirmacion("ClaveDistinta!");
 
         // ACT + ASSERT
         assertThatThrownBy(() -> authService.cambiarPassword(request, userDetails))
@@ -190,7 +190,6 @@ class AuthServiceTest {
         request.setPasswordActual("ClaveActualEquivocada");
         request.setPasswordNueva("NuevaClave123!");
         request.setPasswordConfirmacion("NuevaClave123!");
-
         // Simulamos que la contraseña actual NO coincide con el hash
         when(passwordEncoder.matches("ClaveActualEquivocada", usuarioEjemplo.getPasswordHash()))
                 .thenReturn(false);

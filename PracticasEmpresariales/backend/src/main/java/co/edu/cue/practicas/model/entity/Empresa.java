@@ -77,7 +77,7 @@ public class Empresa {
     @Builder.Default
     private EstadoEmpresa estado = EstadoEmpresa.PENDIENTE;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "empresa_areas", joinColumns = @JoinColumn(name = "empresa_id"))
     @Column(name = "area")
     @Builder.Default

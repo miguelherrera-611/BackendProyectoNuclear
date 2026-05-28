@@ -76,8 +76,8 @@ class VacanteServiceTest {
 
         VacanteResponse resultado = service.crearVacante(req);
 
-        assertThat(resultado.getArea()).isEqualTo("Desarrollo");
-        assertThat(resultado.getEstado()).isEqualTo(EstadoVacante.PENDIENTE);
+        assertThat(resultado.area()).isEqualTo("Desarrollo");
+        assertThat(resultado.estado()).isEqualTo(EstadoVacante.PENDIENTE);
         verify(empresaValidator).validarEmpresaAprobadaParaVacantes(empresaAprobada);
         verify(vacanteRepository).save(vacanteEnPendiente);
     }
