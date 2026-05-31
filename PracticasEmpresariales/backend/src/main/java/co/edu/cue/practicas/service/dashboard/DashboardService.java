@@ -6,22 +6,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 /**
- * PATRON MEDIATOR — GPE-131
- *
  * Capa de servicio delgada que actúa como punto de entrada al DashboardMediator.
- * Separa la responsabilidad del controlador HTTP de la lógica de resolución del panel,
- * permitiendo que el DashboardMediator pueda usarse también desde otros contextos
- * sin pasar por el controlador REST.
- *
- * El DashboardMediator es quien contiene toda la lógica de qué panel
- * mostrar según el rol del usuario.
+ * Mantiene SRP: solo coordina el cálculo de indicadores y la construcción del panel.
  */
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
 
-    // El Mediator concentra la lógica de qué panel corresponde a cada rol
     private final DashboardMediator dashboardMediator;
+    private final DashboardIndicadorService dashboardIndicadorService;
 
     /**
      * Retorna la estructura del dashboard correspondiente al rol del usuario autenticado.
@@ -31,6 +24,7 @@ public class DashboardService {
      * @return estructura del panel con título, secciones y permisos de escritura
      */
     public DashboardResponse obtenerDashboard(CustomUserDetails userDetails) {
-        return dashboardMediator.resolverDashboard(userDetails);
+        DashboardIndicadores indicadores = dashboardIndicadorService.obtenerIndicadores(userDetails);
+        return dashboardMediator.resolverDashboard(userDetails, indicadores);
     }
 }

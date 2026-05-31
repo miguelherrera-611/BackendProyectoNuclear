@@ -62,25 +62,27 @@ public class AuditoriaLogger {
         try {
             // Construimos el objeto final y lo persistimos en la base de datos
             BitacoraAuditoria entrada = builder.build();
-            bitacoraRepository.save(entrada);
-
-            // Publicamos el evento para que los observadores reaccionen (PATRON OBSERVER)
-            // AuditoriaEventListener lo captura y genera alertas de seguridad si es necesario
-            eventPublisher.publishEvent(new AuditoriaEvent(this, entrada));
-
-            // Log de consola con el resumen de la acción registrada
-            log.info("[AUDITORIA] {} | {} | {} | ID:{} | Exitoso:{}",
-                    entrada.getFechaHora(),
-                    entrada.getNombreUsuario(),
-                    entrada.getTipoAccion(),
-                    entrada.getRegistroAfectadoId(),
-                    entrada.isExitoso());
+            registrar(entrada);
 
         } catch (Exception e) {
             log.error("[AUDITORIA-ERROR] No se pudo registrar la acción: {}", e.getMessage());
             // Lanzamos excepción para que la transacción del servicio llamador se revierta
             throw new RuntimeException("Error crítico: no se pudo registrar en la bitácora de auditoría. Acción abortada.", e);
         }
+    }
+
+    /**
+     * Sobrecarga conveniente para servicios que ya construyeron la entidad completa.
+     */
+    public void registrar(BitacoraAuditoria entrada) {
+        bitacoraRepository.save(entrada);
+        eventPublisher.publishEvent(new AuditoriaEvent(this, entrada));
+        log.info("[AUDITORIA] {} | {} | {} | ID:{} | Exitoso:{}",
+                entrada.getFechaHora(),
+                entrada.getNombreUsuario(),
+                entrada.getTipoAccion(),
+                entrada.getRegistroAfectadoId(),
+                entrada.isExitoso());
     }
 
     /**

@@ -43,9 +43,19 @@ public class SystemConfig {
     @Value("${app.mail.from.address}")
     private String mailFromAddress;
 
+    // Número de reintentos para envío de correo (por defecto 3)
+    @Value("${app.mail.retry.attempts:3}")
+    private int mailRetryAttempts;
+
+    // Retraso entre reintentos en milisegundos (por defecto 120000 = 2 minutos)
+    @Value("${app.mail.retry.delay-ms:120000}")
+    private long mailRetryDelayMs;
+
     public String getNombreSistema() { return nombreSistema; }
     public String getNombreUniversidad() { return nombreUniversidad; }
     public long getJwtExpirationMs() { return jwtExpirationMs; }
     public String getMailFromName() { return mailFromName; }
     public String getMailFromAddress() { return mailFromAddress; }
+    public int getMailRetryAttempts() { return mailRetryAttempts; }
+    public long getMailRetryDelayMs() { return mailRetryDelayMs; }
 }

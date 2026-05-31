@@ -1,7 +1,9 @@
 package co.edu.cue.practicas.repository.usuario;
 
 import co.edu.cue.practicas.model.entity.Usuario;
+import co.edu.cue.practicas.model.entity.InstanciaPractica;
 import co.edu.cue.practicas.model.enums.EstadoEstudiante;
+import co.edu.cue.practicas.model.enums.EstadoPractica;
 import co.edu.cue.practicas.model.enums.Rol;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -52,6 +54,35 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     /** GPE-147 — Coordinador de Prácticas: solo APTOS enviados al proceso de su programa */
     Page<Usuario> findByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndPrograma_IdAndActivoTrue(
             Rol rol, EstadoEstudiante estadoEstudiante, Long programaId, Pageable pageable);
+
+    long countByRolAndEstadoEstudianteAndActivoTrue(Rol rol, EstadoEstudiante estadoEstudiante);
+
+    long countByRolAndEstadoEstudianteAndEnviadoAlProcesoFalseAndActivoTrue(
+            Rol rol, EstadoEstudiante estadoEstudiante);
+
+    long countByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndActivoTrue(
+            Rol rol, EstadoEstudiante estadoEstudiante);
+
+    @Query("""
+            SELECT COUNT(u)
+            FROM Usuario u
+            WHERE u.rol = :rol
+              AND u.estadoEstudiante = :estado
+              AND u.enviadoAlProceso = true
+              AND u.activo = true
+              AND u.programa.id = :programaId
+              AND NOT EXISTS (
+                  SELECT i
+                  FROM InstanciaPractica i
+                  WHERE i.expediente.estudiante = u
+                    AND i.estado NOT IN :estadosFinales
+              )
+            """)
+    long countEstudiantesAptosDisponibles(
+            @Param("rol") Rol rol,
+            @Param("estado") EstadoEstudiante estado,
+            @Param("programaId") Long programaId,
+            @Param("estadosFinales") java.util.List<EstadoPractica> estadosFinales);
 
     boolean existsByIdentificacion(String identificacion);
 

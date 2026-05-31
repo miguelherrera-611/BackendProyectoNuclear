@@ -6,6 +6,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 /**
  * GPE-141 / GPE-145 — InstanciaPractica
@@ -96,6 +97,31 @@ public class InstanciaPractica {
     @JoinColumn(name = "tutor_empresarial_id")
     private TutorEmpresarial tutorEmpresarial;
 
+    /** Vacante origen (se almacena para poder liberar cupo si la asignación se cancela) */
+    @Column(name = "vacante_id")
+    private Long vacanteId;
+
+    @Column(name = "fecha_inicio")
+    private LocalDate fechaInicio;
+
+    @Column(name = "fecha_fin")
+    private LocalDate fechaFin;
+
+    @Column(name = "firma_tutor")
+    @Builder.Default
+    private boolean firmaTutor = false;
+
+    @Column(name = "firma_docente")
+    @Builder.Default
+    private boolean firmaDocente = false;
+
+    @Column(name = "firma_estudiante")
+    @Builder.Default
+    private boolean firmaEstudiante = false;
+
+    @Column(name = "vinculacion_confirmada_en")
+    private LocalDateTime vinculacionConfirmadaEn;
+
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime creadoEn = LocalDateTime.now();
@@ -123,6 +149,26 @@ public class InstanciaPractica {
         if (this.estado == EstadoPractica.FINALIZADA)
             throw new OperacionNoPermitidaException("Una práctica FINALIZADA no puede cancelarse.");
         this.estado = EstadoPractica.CANCELADA;
+    }
+
+    public void confirmarVinculacion(LocalDate fechaInicio, LocalDate fechaFin,
+                                     boolean firmaTutor, boolean firmaDocente, boolean firmaEstudiante) {
+        if (this.estado != EstadoPractica.ASIGNADA_PENDIENTE_INICIO)
+            throw new OperacionNoPermitidaException("Solo se puede confirmar la vinculación cuando la práctica está ASIGNADA_PENDIENTE_INICIO.");
+        if (fechaInicio == null || fechaFin == null)
+            throw new OperacionNoPermitidaException("Las fechas de inicio y fin son obligatorias.");
+        if (fechaFin.isBefore(fechaInicio))
+            throw new OperacionNoPermitidaException("La fecha fin no puede ser anterior a la fecha inicio.");
+        if (!firmaTutor || !firmaDocente || !firmaEstudiante)
+            throw new OperacionNoPermitidaException("Deben existir las tres firmas para confirmar la vinculación.");
+
+        this.fechaInicio = fechaInicio;
+        this.fechaFin = fechaFin;
+        this.firmaTutor = true;
+        this.firmaDocente = true;
+        this.firmaEstudiante = true;
+        this.vinculacionConfirmadaEn = LocalDateTime.now();
+        this.estado = EstadoPractica.EN_CURSO;
     }
 
     /** OCL: practicaInmutableCuandoFinalizada */

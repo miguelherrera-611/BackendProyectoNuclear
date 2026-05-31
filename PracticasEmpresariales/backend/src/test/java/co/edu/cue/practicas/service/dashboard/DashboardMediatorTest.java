@@ -57,7 +57,7 @@ class DashboardMediatorTest {
 
         assertThat(r.getTitulo()).isEqualTo("Panel Administrador DTI");
         assertThat(r.isSoloLectura()).isFalse();
-        assertThat(r.getSecciones()).hasSize(4);
+        assertThat(r.getSecciones()).hasSize(7);
     }
 
     @Test
@@ -118,5 +118,20 @@ class DashboardMediatorTest {
                     .as("El panel del rol %s debe tener ese rol en su respuesta", rol)
                     .isEqualTo(rol);
         }
+    }
+
+    @Test
+    @DisplayName("El mediador debe reflejar los indicadores reales enviados por el servicio")
+    void mediadorDebeReflejarIndicadoresReales() {
+        DashboardIndicadores indicadores = DashboardIndicadores.builder()
+                .usuariosActivosAdminDti(2)
+                .estudiantesApto(5)
+                .build();
+
+        DashboardResponse r = mediator.resolverDashboard(udConRol(Rol.ADMIN_DTI), indicadores);
+
+        assertThat(r.getSecciones())
+                .extracting(seccion -> ((Number) seccion.get("contador")).longValue())
+                .contains(2L, 5L);
     }
 }
