@@ -108,6 +108,13 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- ── DRIVER MYSQL (XAMPP) ─────────────────────────────────── -->
+        <dependency>
+            <groupId>com.mysql</groupId>
+            <artifactId>mysql-connector-j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+
         <!-- ── DEVTOOLS (reinicio automático al cambiar código) ─────── -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
