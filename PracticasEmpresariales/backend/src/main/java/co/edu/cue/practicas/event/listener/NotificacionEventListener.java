@@ -1,6 +1,9 @@
 package co.edu.cue.practicas.event.listener;
 
 import co.edu.cue.practicas.event.UsuarioCreadoEvent;
+import co.edu.cue.practicas.event.AsignacionCreadaEvent;
+import co.edu.cue.practicas.event.AsignacionCanceladaEvent;
+import co.edu.cue.practicas.event.VinculacionConfirmadaEvent;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.service.notificacion.EmailService;
 import lombok.RequiredArgsConstructor;
@@ -59,6 +62,84 @@ public class NotificacionEventListener {
         if (Rol.ESTUDIANTE.equals(usuario.getRol())) {
             log.info("[OBSERVER] Nuevo estudiante creado: {} — notificando a Coordinación Académica", usuario.getNombre());
             emailService.notificarNuevoEstudiante(usuario);
+        }
+    }
+
+    @EventListener
+    @Async
+    public void manejarAsignacionCreada(AsignacionCreadaEvent evento) {
+        var instancia = evento.getInstancia();
+        if (instancia == null) return;
+
+        // Notificamos al estudiante y a la empresa (si tienen correo conocido)
+        try {
+            if (instancia.getExpediente() != null && instancia.getExpediente().getEstudiante() != null) {
+                var estudiante = instancia.getExpediente().getEstudiante();
+                if (estudiante.getCorreo() != null) {
+                    String html = "<p>Estimado/a " + estudiante.getNombre() + ",</p>" +
+                            "<p>Has sido asignado a la vacante en la empresa <strong>" + (instancia.getEmpresa()!=null?instancia.getEmpresa().getRazonSocial():"(empresa)") + "</strong>." +
+                            " Por favor revisa el sistema para más detalles.</p>";
+                    emailService.notificarAsignacion(estudiante.getCorreo(), estudiante.getNombre(), html, "Asignación a vacante");
+                }
+            }
+
+            var empresa = instancia.getEmpresa();
+            if (empresa != null && empresa.getCorreo() != null) {
+                String htmlEmpresa = "<p>Se ha asignado al estudiante <strong>" +
+                        (instancia.getExpediente()!=null && instancia.getExpediente().getEstudiante()!=null?
+                                instancia.getExpediente().getEstudiante().getNombre() : "(estudiante)") +
+                        "</strong> a la vacante publicada en su empresa.</p>";
+                emailService.notificarAsignacion(empresa.getCorreo(), empresa.getRazonSocial(), htmlEmpresa, "Nuevo practicante asignado");
+            }
+        } catch (Exception e) {
+            log.error("[NOTIFICACION] Error al procesar evento AsignacionCreada: {}", e.getMessage());
+        }
+    }
+
+    @EventListener
+    @Async
+    public void manejarAsignacionCancelada(AsignacionCanceladaEvent evento) {
+        var instancia = evento.getInstancia();
+        if (instancia == null) return;
+        try {
+            if (instancia.getExpediente() != null && instancia.getExpediente().getEstudiante() != null) {
+                var estudiante = instancia.getExpediente().getEstudiante();
+                if (estudiante.getCorreo() != null) {
+                    String html = "<p>Estimado/a " + estudiante.getNombre() + ",</p>" +
+                            "<p>Tu asignación a la vacante en la empresa <strong>" + (instancia.getEmpresa()!=null?instancia.getEmpresa().getRazonSocial():"(empresa)") + "</strong> ha sido cancelada." +
+                            " Por favor contacta a tu coordinador para más información.</p>";
+                    emailService.notificarAsignacion(estudiante.getCorreo(), estudiante.getNombre(), html, "Asignación cancelada");
+                }
+            }
+            var empresa = instancia.getEmpresa();
+            if (empresa != null && empresa.getCorreo() != null) {
+                String htmlEmpresa = "<p>Se ha cancelado la asignación del estudiante <strong>" +
+                        (instancia.getExpediente()!=null && instancia.getExpediente().getEstudiante()!=null?
+                                instancia.getExpediente().getEstudiante().getNombre() : "(estudiante)") +
+                        "</strong> a la vacante publicada en su empresa.</p>";
+                emailService.notificarAsignacion(empresa.getCorreo(), empresa.getRazonSocial(), htmlEmpresa, "Asignación cancelada");
+            }
+        } catch (Exception e) {
+            log.error("[NOTIFICACION] Error al procesar evento AsignacionCancelada: {}", e.getMessage());
+        }
+    }
+
+    @EventListener
+    @Async
+    public void manejarVinculacionConfirmada(VinculacionConfirmadaEvent evento) {
+        var instancia = evento.getInstancia();
+        if (instancia == null) return;
+        try {
+            if (instancia.getExpediente() != null && instancia.getExpediente().getEstudiante() != null) {
+                var estudiante = instancia.getExpediente().getEstudiante();
+                if (estudiante.getCorreo() != null) {
+                    String html = "<p>Estimado/a " + estudiante.getNombre() + ",</p>" +
+                            "<p>Tu vinculación ha sido confirmada y la práctica ya está en <strong>EN_CURSO</strong>.</p>";
+                    emailService.notificarAsignacion(estudiante.getCorreo(), estudiante.getNombre(), html, "Vinculación confirmada");
+                }
+            }
+        } catch (Exception e) {
+            log.error("[NOTIFICACION] Error al procesar evento VinculacionConfirmada: {}", e.getMessage());
         }
     }
 }

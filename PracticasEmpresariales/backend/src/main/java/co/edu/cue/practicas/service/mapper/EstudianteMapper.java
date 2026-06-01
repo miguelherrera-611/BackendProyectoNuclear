@@ -48,13 +48,21 @@ public class EstudianteMapper {
                 .duracionSemanas(i.getDuracionSemanas())
                 .documentosRequeridos(i.getDocumentosRequeridos())
                 .estado(i.getEstado())
+                .vacanteId(i.getVacanteId())
                 .empresaId(i.getEmpresa() != null ? i.getEmpresa().getId() : null)
                 .razonSocialEmpresa(i.getEmpresa() != null ? i.getEmpresa().getRazonSocial() : null)
                 .docenteAsesorId(i.getDocenteAsesor() != null ? i.getDocenteAsesor().getId() : null)
                 .nombreDocenteAsesor(i.getDocenteAsesor() != null ? i.getDocenteAsesor().getNombre() : null)
                 .tutorEmpresarialId(i.getTutorEmpresarial() != null ? i.getTutorEmpresarial().getId() : null)
                 .nombreTutorEmpresarial(i.getTutorEmpresarial() != null ? i.getTutorEmpresarial().getNombre() : null)
+                .fechaInicio(i.getFechaInicio())
+                .fechaFin(i.getFechaFin())
+                .firmaTutor(i.isFirmaTutor())
+                .firmaDocente(i.isFirmaDocente())
+                .firmaEstudiante(i.isFirmaEstudiante())
+                .vinculacionConfirmadaEn(i.getVinculacionConfirmadaEn())
                 .creadoEn(i.getCreadoEn())
+                .actualizadoEn(i.getActualizadoEn())
                 .build();
     }
 

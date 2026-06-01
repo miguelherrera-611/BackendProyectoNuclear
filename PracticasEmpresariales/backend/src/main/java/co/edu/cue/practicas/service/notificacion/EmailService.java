@@ -67,4 +67,29 @@ public class EmailService {
         log.info("[EMAIL] Notificación de nuevo estudiante pendiente: {} → Coordinación Académica", estudiante.getNombre());
         // En Sprint 2 se implementa la consulta de coordinadores por facultad para notificarlos
     }
+
+    @Async
+    public void notificarAsignacion(String destinatario, String nombreDestinatario, String mensajeHtml, String asunto) {
+        int attempts = systemConfig.getMailRetryAttempts();
+        long delayMs = systemConfig.getMailRetryDelayMs();
+        for (int i = 1; i <= attempts; i++) {
+            try {
+                MimeMessage message = mailSender.createMimeMessage();
+                MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+                helper.setFrom(systemConfig.getMailFromAddress(), systemConfig.getMailFromName());
+                helper.setTo(destinatario);
+                helper.setSubject(asunto != null ? asunto : "Notificación de asignación - " + systemConfig.getNombreSistema());
+                helper.setText(mensajeHtml, true);
+                mailSender.send(message);
+                log.info("[EMAIL] Notificación de asignación enviada a: {} (intento {}/{})", destinatario, i, attempts);
+                return;
+            } catch (Exception e) {
+                log.error("[EMAIL] Error enviando notificación de asignación a {} en intento {}/{}: {}", destinatario, i, attempts, e.getMessage());
+                if (i < attempts) {
+                    try { Thread.sleep(delayMs); } catch (InterruptedException ex) { Thread.currentThread().interrupt(); }
+                }
+            }
+        }
+    }
 }

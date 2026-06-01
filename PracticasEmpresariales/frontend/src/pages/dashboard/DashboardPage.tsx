@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { dashboardService } from '../../services/dashboardService'
-import { DashboardResponse } from '../../types'
+import type { DashboardResponse } from '../../types'
 import { useNavigate } from 'react-router-dom'
 
 /**
@@ -31,6 +31,8 @@ export default function DashboardPage() {
     )
   }
 
+  const soloLectura = dashboard?.soloLectura ?? false
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -53,26 +55,49 @@ export default function DashboardPage() {
       {/* Secciones del panel */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {dashboard?.secciones.map((seccion) => (
+          soloLectura ? (
+            <div
+              key={seccion.id}
+              className="card text-left border-amber-200 bg-amber-50/30 group"
+              aria-disabled="true"
+            >
+              <div className="flex items-start justify-between">
+                <div>
+                  <h3 className="font-semibold text-gray-800">
+                    {seccion.titulo}
+                  </h3>
+                  <p className={`text-3xl font-bold mt-3 ${seccion.contador > 0 ? 'text-red-600' : 'text-cue-primary'}`}>
+                    {seccion.contador}
+                  </p>
+                  <p className={`text-xs mt-1 ${seccion.contador > 0 ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                    {seccion.contador > 0 ? 'Requiere atención' : 'Sin registros aún'}
+                  </p>
+                </div>
+                <span className="text-amber-400 text-lg">→</span>
+              </div>
+            </div>
+          ) : (
           <button
             key={seccion.id}
             onClick={() => navigate(seccion.ruta)}
-            className="card text-left hover:shadow-md transition-shadow hover:border-cue-accent group cursor-pointer"
+            className={`card text-left hover:shadow-md transition-shadow hover:border-cue-accent group cursor-pointer ${seccion.contador > 0 ? 'border-red-200' : ''}`}
           >
             <div className="flex items-start justify-between">
               <div>
                 <h3 className="font-semibold text-gray-800 group-hover:text-cue-primary transition-colors">
                   {seccion.titulo}
                 </h3>
-                <p className="text-3xl font-bold text-cue-primary mt-3">
+                <p className={`text-3xl font-bold mt-3 ${seccion.contador > 0 ? 'text-red-600' : 'text-cue-primary'}`}>
                   {seccion.contador}
                 </p>
-                <p className="text-xs text-gray-400 mt-1">
-                  {seccion.contador === 0 ? 'Sin registros aún' : 'registros'}
+                <p className={`text-xs mt-1 ${seccion.contador > 0 ? 'text-red-500 font-medium' : 'text-gray-400'}`}>
+                  {seccion.contador === 0 ? 'Sin registros aún' : 'Requiere atención'}
                 </p>
               </div>
               <span className="text-gray-300 group-hover:text-cue-accent transition-colors text-lg">→</span>
             </div>
           </button>
+          )
         ))}
       </div>
     </div>

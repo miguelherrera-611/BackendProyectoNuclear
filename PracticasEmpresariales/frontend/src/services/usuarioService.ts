@@ -22,7 +22,7 @@ export const usuarioService = {
   },
 
   async listar(page = 0, size = 20): Promise<Pageable<UsuarioResponse>> {
-    const res = await api.get<ApiResponse<Pageable<UsuarioResponse>>>(`/usuarios?page=${page}&size=${size}`)
+    const res = await api.get<ApiResponse<Pageable<UsuarioResponse>>>('/usuarios', { params: { page, size } })
     return res.data.datos!
   },
 

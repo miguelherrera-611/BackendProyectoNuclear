@@ -113,6 +113,16 @@ public class Vacante {
         if (this.cuposOcupados == this.cuposTotales) cerrar();
     }
 
+    /** Libera un cupo ocupado (usado cuando se cancela una asignación antes de iniciar) */
+    public void liberarCupo() {
+        if (this.cuposOcupados <= 0) return;
+        this.cuposOcupados--;
+        if (this.estado == EstadoVacante.CERRADA) {
+            // Si estaba cerrada por estar llena, al liberar un cupo la vacante vuelve a DISPONIBLE
+            this.estado = EstadoVacante.DISPONIBLE;
+        }
+    }
+
     private void validarEstado(EstadoVacante requerido, String operacion) {
         if (this.estado != requerido)
             throw new OperacionNoPermitidaException(

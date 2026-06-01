@@ -231,3 +231,53 @@ export interface Pageable<T> {
   number: number
   size: number
 }
+
+// ── Sprint 3: Plan de práctica ────────────────────────────────────────────────
+export type EstadoPlan = 'BORRADOR' | 'APROBADO_TUTOR' | 'APROBADO_DOCENTE' | 'RECHAZADO'
+
+export interface PlanPracticaResponse {
+  id: number
+  instanciaPracticaId: number
+  objetivos: string
+  cronograma: string
+  estado: EstadoPlan
+  cargadoPorId?: number
+  aprobadoPorTutorEn?: string
+  aprobadoPorDocenteEn?: string
+  motivoRechazo?: string
+  rechazadoPorId?: number
+  creadoEn: string
+  actualizadoEn: string
+}
+
+// ── Sprint 3: Seguimiento semanal ─────────────────────────────────────────────
+export type EstadoSeguimiento = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO'
+
+export interface SeguimientoSemanalResponse {
+  id: number
+  instanciaPracticaId: number
+  semana: number
+  actividades: string
+  logros: string
+  dificultades?: string
+  evidencias?: string
+  observacionesDocente?: string
+  estado: EstadoSeguimiento
+  creadoPorId?: number
+  revisadoPorId?: number
+  revisadoEn?: string
+  creadoEn: string
+  actualizadoEn: string
+}
+
+// ── Sprint 3: InstanciaPractica extendida ─────────────────────────────────────
+export interface InstanciaPracticaResponseV2 extends InstanciaPracticaResponse {
+  vacanteId?: number
+  fechaInicio?: string
+  fechaFin?: string
+  firmaTutor: boolean
+  firmaDocente: boolean
+  firmaEstudiante: boolean
+  vinculacionConfirmadaEn?: string
+  actualizadoEn?: string
+}

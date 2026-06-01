@@ -6,6 +6,7 @@ import co.edu.cue.practicas.dto.request.LoginRequest;
 import co.edu.cue.practicas.dto.response.LoginResponse;
 import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
+import co.edu.cue.practicas.model.entity.BitacoraAuditoria;
 import co.edu.cue.practicas.model.entity.Usuario;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
@@ -112,7 +113,7 @@ class AuthServiceTest {
         assertThat(response.getRol()).isEqualTo(Rol.ADMIN_DTI);
 
         // Verificamos que la bitácora fue llamada exactamente 1 vez
-        verify(auditoriaLogger, times(1)).registrar(any());
+        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
     }
 
     @Test
@@ -134,7 +135,7 @@ class AuthServiceTest {
                 .hasMessageContaining("Credenciales incorrectas");
 
         // Verificamos que se registró el login fallido en la bitácora
-        verify(auditoriaLogger, times(1)).registrar(any());
+        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
     }
 
     // =================================================================
@@ -161,7 +162,7 @@ class AuthServiceTest {
 
         // ASSERT — verificamos que se guardó el usuario con la nueva contraseña
         verify(usuarioRepository, times(1)).save(any(Usuario.class));
-        verify(auditoriaLogger, times(1)).registrar(any());
+        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
     }
 
     @Test

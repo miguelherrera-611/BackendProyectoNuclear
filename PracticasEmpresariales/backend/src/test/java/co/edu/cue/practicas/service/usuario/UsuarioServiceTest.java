@@ -5,6 +5,7 @@ import co.edu.cue.practicas.dto.request.CrearUsuarioRequest;
 import co.edu.cue.practicas.dto.response.UsuarioResponse;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
+import co.edu.cue.practicas.model.entity.BitacoraAuditoria;
 import co.edu.cue.practicas.model.entity.Usuario;
 import co.edu.cue.practicas.model.enums.EstadoEstudiante;
 import co.edu.cue.practicas.model.enums.Rol;
@@ -105,7 +106,7 @@ class UsuarioServiceTest {
         verify(usuarioRepository, times(1)).save(any(Usuario.class));
         // PATRON OBSERVER: el evento debe publicarse para que EmailService envíe la contraseña temporal
         verify(eventPublisher, times(1)).publishEvent(any());
-        verify(auditoriaLogger, times(1)).registrar(any());
+        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
     }
 
     @Test
@@ -211,7 +212,7 @@ class UsuarioServiceTest {
         // La entidad queda marcada como inactiva (soft delete)
         assertThat(dtiEjemplo.isActivo()).isFalse();
         verify(usuarioRepository, times(1)).save(dtiEjemplo);
-        verify(auditoriaLogger, times(1)).registrar(any());
+        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
     }
 
     // =================================================================
@@ -240,7 +241,7 @@ class UsuarioServiceTest {
 
         // El usuario debe haber quedado activo
         assertThat(usuarioInactivo.isActivo()).isTrue();
-        verify(auditoriaLogger, times(1)).registrar(any());
+        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
     }
 
     // =================================================================
