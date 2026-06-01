@@ -227,6 +227,7 @@ public class AsignacionService {
     }
 
     /** GPE-158 — Lista asignaciones activas con filtro opcional por estado */
+    @Transactional
     public List<InstanciaPracticaResponse> listarAsignaciones(String estadoStr, CustomUserDetails actor) {
         if (actor == null || actor.getRol() != Rol.COORDINADOR_PRACTICAS)
             throw new AccesoNoAutorizadoException("Solo el Coordinador de Prácticas puede ver las asignaciones.");
@@ -246,6 +247,7 @@ public class AsignacionService {
     }
 
     /** GPE-159 — Detalle de una asignación */
+    @Transactional
     public InstanciaPracticaResponse obtenerAsignacion(Long id, CustomUserDetails actor) {
         if (actor == null || actor.getRol() != Rol.COORDINADOR_PRACTICAS)
             throw new AccesoNoAutorizadoException("Solo el Coordinador de Prácticas puede ver el detalle de asignaciones.");

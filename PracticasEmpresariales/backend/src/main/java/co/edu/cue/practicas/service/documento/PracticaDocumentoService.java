@@ -103,14 +103,17 @@ public class PracticaDocumentoService {
         return PracticaDocumentoResponse.desde(documento);
     }
 
-    public List<PracticaDocumentoResponse> listarDocumentos(Long instanciaPracticaId, CustomUserDetails actor) {
+    @Transactional
+    public List<PracticaDocumentoResponse> listarDocumentos(Long instanciaPracticaId, TipoDocumento tipo, CustomUserDetails actor) {
         validarAcceso(actor);
         if (!instanciaPracticaRepository.existsById(instanciaPracticaId)) {
             throw new RecursoNoEncontradoException("Instancia de práctica no encontrada.");
         }
-        return documentoRepository.findByInstanciaPractica_IdOrderByCreadoEnDesc(instanciaPracticaId).stream()
-                .map(PracticaDocumentoResponse::desde)
-                .toList();
+        List<PracticaDocumento> docs = documentoRepository.findByInstanciaPractica_IdOrderByCreadoEnDesc(instanciaPracticaId);
+        if (tipo != null) {
+            docs = docs.stream().filter(d -> d.getTipo() == tipo).toList();
+        }
+        return docs.stream().map(PracticaDocumentoResponse::desde).toList();
     }
 
     private void validarAcceso(CustomUserDetails actor) {

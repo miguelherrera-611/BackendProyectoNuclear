@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +49,15 @@ public class GlobalExceptionHandler {
                         .mensaje("Errores de validación")
                         .datos(errores)
                         .build());
+    }
+
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiResponse<Void>> manejarTipoInvalido(MethodArgumentTypeMismatchException e) {
+        String mensaje = "Valor inválido '" + e.getValue() + "' para el parámetro '" + e.getName() + "'.";
+        if (e.getRequiredType() != null && e.getRequiredType().isEnum()) {
+            mensaje += " Valores permitidos: " + java.util.Arrays.toString(e.getRequiredType().getEnumConstants());
+        }
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(mensaje));
     }
 
     @ExceptionHandler(Exception.class)

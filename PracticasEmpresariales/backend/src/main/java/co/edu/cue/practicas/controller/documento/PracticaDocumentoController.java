@@ -34,9 +34,10 @@ public class PracticaDocumentoController {
 	@GetMapping("/{instanciaPracticaId}")
 	public ResponseEntity<ApiResponse<List<PracticaDocumentoResponse>>> listar(
 			@PathVariable Long instanciaPracticaId,
+			@RequestParam(required = false) TipoDocumento tipo,
 			@AuthenticationPrincipal CustomUserDetails actor) {
 		return ResponseEntity.ok(ApiResponse.ok("Documentos de práctica.",
-				service.listarDocumentos(instanciaPracticaId, actor)));
+				service.listarDocumentos(instanciaPracticaId, tipo, actor)));
 	}
 }
 

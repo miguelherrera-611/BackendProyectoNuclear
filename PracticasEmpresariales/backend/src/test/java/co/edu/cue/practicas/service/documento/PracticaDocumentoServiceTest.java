@@ -204,7 +204,7 @@ class PracticaDocumentoServiceTest {
         when(documentoRepository.findByInstanciaPractica_IdOrderByCreadoEnDesc(INSTANCIA_ID))
                 .thenReturn(List.of(doc));
 
-        var resultado = service.listarDocumentos(INSTANCIA_ID, coordinador);
+        var resultado = service.listarDocumentos(INSTANCIA_ID, null, coordinador);
 
         assertThat(resultado).hasSize(1);
         assertThat(resultado.get(0).getTipo()).isEqualTo(TipoDocumento.CARTA_PRESENTACION);
@@ -215,7 +215,7 @@ class PracticaDocumentoServiceTest {
     void listarDocumentosInstanciaNoEncontradaLanza404() {
         when(instanciaRepository.existsById(99L)).thenReturn(false);
 
-        assertThatThrownBy(() -> service.listarDocumentos(99L, coordinador))
+        assertThatThrownBy(() -> service.listarDocumentos(99L, null, coordinador))
                 .isInstanceOf(RecursoNoEncontradoException.class);
     }
 
