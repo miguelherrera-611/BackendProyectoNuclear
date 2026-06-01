@@ -5,6 +5,7 @@ import co.edu.cue.practicas.dto.request.CrearFacultadRequest;
 import co.edu.cue.practicas.dto.response.FacultadResponse;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
+import co.edu.cue.practicas.model.entity.BitacoraAuditoria;
 import co.edu.cue.practicas.model.entity.Facultad;
 import co.edu.cue.practicas.model.entity.Programa;
 import co.edu.cue.practicas.model.entity.Usuario;
@@ -96,7 +97,7 @@ class FacultadServiceTest {
         assertThat(response.getNombre()).isEqualTo("Facultad de Ingeniería");
         assertThat(response.isActiva()).isTrue();
         verify(facultadRepository, times(1)).save(any(Facultad.class));
-        verify(auditoriaLogger, times(1)).registrar(any());
+        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
     }
 
     @Test
@@ -144,7 +145,7 @@ class FacultadServiceTest {
         // ASSERT
         assertThat(response.getNombre()).isEqualTo("Nombre Actualizado");
         verify(facultadRepository, times(1)).save(facultadExistente);
-        verify(auditoriaLogger, times(1)).registrar(any());
+        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
     }
 
     // =================================================================
@@ -200,7 +201,7 @@ class FacultadServiceTest {
         // La entidad debe haber quedado inactiva
         assertThat(facultadSinProgramas.isActiva()).isFalse();
         verify(facultadRepository, times(1)).save(facultadSinProgramas);
-        verify(auditoriaLogger, times(1)).registrar(any());
+        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
     }
 
     // =================================================================

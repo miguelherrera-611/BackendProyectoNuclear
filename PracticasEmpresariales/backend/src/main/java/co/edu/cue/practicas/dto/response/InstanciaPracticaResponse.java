@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Data;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Data
@@ -21,11 +22,19 @@ public class InstanciaPracticaResponse {
     private int duracionSemanas;
     private String documentosRequeridos;
     private EstadoPractica estado;
+    private Long vacanteId;
     private Long empresaId;
     private String razonSocialEmpresa;
     private Long docenteAsesorId;
     private String nombreDocenteAsesor;
     private Long tutorEmpresarialId;
     private String nombreTutorEmpresarial;
+    private LocalDate fechaInicio;
+    private LocalDate fechaFin;
+    private boolean firmaTutor;
+    private boolean firmaDocente;
+    private boolean firmaEstudiante;
+    private LocalDateTime vinculacionConfirmadaEn;
     private LocalDateTime creadoEn;
+    private LocalDateTime actualizadoEn;
 }

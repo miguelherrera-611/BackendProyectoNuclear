@@ -2,10 +2,14 @@ package co.edu.cue.practicas.service.dashboard;
 
 import co.edu.cue.practicas.model.entity.TutorEmpresarial;
 import co.edu.cue.practicas.model.enums.EstadoEstudiante;
+import co.edu.cue.practicas.model.enums.EstadoPlan;
 import co.edu.cue.practicas.model.enums.EstadoPractica;
+import co.edu.cue.practicas.model.enums.EstadoSeguimiento;
 import co.edu.cue.practicas.model.enums.EstadoVacante;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
+import co.edu.cue.practicas.repository.seguimiento.PlanPracticaRepository;
+import co.edu.cue.practicas.repository.seguimiento.SeguimientoSemanalRepository;
 import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
@@ -33,6 +37,8 @@ public class DashboardIndicadorService {
     private final UsuarioRepository usuarioRepository;
     private final InstanciaPracticaRepository instanciaPracticaRepository;
     private final TutorEmpresarialRepository tutorEmpresarialRepository;
+    private final PlanPracticaRepository planPracticaRepository;
+    private final SeguimientoSemanalRepository seguimientoSemanalRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -85,19 +91,28 @@ public class DashboardIndicadorService {
                         programaId,
                         ESTADOS_FINALES);
 
+        long planesPendientes = planPracticaRepository.countByEstadoIn(
+                List.of(EstadoPlan.BORRADOR, EstadoPlan.APROBADO_TUTOR));
+
         return DashboardIndicadores.builder()
                 .estudiantesAptoDisponibles(estudiantesAptosDisponibles)
                 .vacantesDisponibles(contarVacantesDisponibles())
                 .practicasEnCurso(instanciaPracticaRepository.countByEstado(EstadoPractica.EN_CURSO))
-                .planesPendientesAprobacion(0L)
+                .planesPendientesAprobacion(planesPendientes)
                 .build();
     }
 
     private DashboardIndicadores indicadoresDocente(CustomUserDetails userDetails) {
         Long docenteId = userDetails.getId();
+        long seguimientosPendientes = seguimientoSemanalRepository
+                .countByInstanciaPractica_DocenteAsesor_IdAndEstado(docenteId, EstadoSeguimiento.PENDIENTE);
+        long planesPendientes = planPracticaRepository
+                .countByInstanciaPractica_DocenteAsesor_IdAndEstadoIn(
+                        docenteId, List.of(EstadoPlan.APROBADO_TUTOR));
+
         return DashboardIndicadores.builder()
                 .estudiantesAsignadosDocente(instanciaPracticaRepository.countByDocenteAsesor_IdAndEstadoNotIn(docenteId, ESTADOS_FINALES))
-                .seguimientosPendientesRevision(0L)
+                .seguimientosPendientesRevision(seguimientosPendientes + planesPendientes)
                 .sustentacionesProgramadas(0L)
                 .build();
     }
@@ -111,9 +126,13 @@ public class DashboardIndicadorService {
             return DashboardIndicadores.vacio();
         }
 
+        long planesPendientes = planPracticaRepository
+                .countByInstanciaPractica_TutorEmpresarial_IdAndEstadoIn(
+                        tutor.getId(), List.of(EstadoPlan.BORRADOR));
+
         return DashboardIndicadores.builder()
                 .practicantesACargo(instanciaPracticaRepository.countByTutorEmpresarial_IdAndEstadoNotIn(tutor.getId(), ESTADOS_FINALES))
-                .planesPendientesAprobacion(0L)
+                .planesPendientesAprobacion(planesPendientes)
                 .encuestasPendientes(0L)
                 .build();
     }
@@ -153,10 +172,27 @@ public class DashboardIndicadorService {
     }
 
     private DashboardIndicadores indicadoresEstudiante(CustomUserDetails userDetails) {
-        long practicaActiva = instanciaPracticaRepository.countByExpediente_Estudiante_IdAndEstado(userDetails.getId(), EstadoPractica.EN_CURSO);
+        long practicaActiva = instanciaPracticaRepository.countByExpediente_Estudiante_IdAndEstado(
+                userDetails.getId(), EstadoPractica.EN_CURSO);
+
+        long semanaActual = 0L;
+        long docsPendientes = 0L;
+
+        if (practicaActiva > 0) {
+            var instanciaOpt = instanciaPracticaRepository
+                    .findTopByExpediente_Estudiante_IdAndEstadoOrderByCreadoEnDesc(
+                            userDetails.getId(), EstadoPractica.EN_CURSO);
+            if (instanciaOpt.isPresent()) {
+                Long instanciaId = instanciaOpt.get().getId();
+                long seguimientosCreados = seguimientoSemanalRepository
+                        .countByInstanciaPractica_Id(instanciaId);
+                semanaActual = seguimientosCreados + 1;
+            }
+        }
+
         return DashboardIndicadores.builder()
-                .semanaSeguimientoActual(practicaActiva > 0 ? 1L : 0L)
-                .documentosPendientes(0L)
+                .semanaSeguimientoActual(semanaActual)
+                .documentosPendientes(docsPendientes)
                 .build();
     }
 }

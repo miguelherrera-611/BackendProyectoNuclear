@@ -1,5 +1,7 @@
 package co.edu.cue.practicas.service.dashboard;
 
+import lombok.Builder;
+
 import java.util.List;
 
 /**
@@ -8,7 +10,11 @@ import java.util.List;
  * Se mantiene separado del DTO de salida para conservar SRP:
  * - DashboardIndicadorService calcula métricas
  * - DashboardMediator arma la estructura visual
+ *
+ * PATRON BUILDER: Lombok genera el builder para construir instancias con solo
+ * los campos relevantes para cada rol, dejando el resto en 0 por defecto.
  */
+@Builder
 public record DashboardIndicadores(
         long usuariosActivosAdminDti,
         long usuariosActivosCoordinacionAcademica,

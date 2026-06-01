@@ -1,0 +1,17 @@
+package co.edu.cue.practicas.dto.request;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+public class ObservacionDocenteRequest {
+
+    @NotBlank(message = "La observación es obligatoria al rechazar un seguimiento.")
+    private String observacion;
+}

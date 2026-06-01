@@ -120,8 +120,6 @@ class EstudianteServiceTest {
         when(catalogoService.buscarOFallar(1L)).thenReturn(catalogo);
         when(hvRepository.findTopByEstudiante_IdAndEstadoOrderByVersionDesc(anyLong(), any()))
                 .thenReturn(Optional.empty());
-        when(instanciaRepository.findPorEstudianteYNumero(anyLong(), anyInt()))
-                .thenReturn(Optional.empty());
         when(expedienteRepository.findByEstudiante_Id(10L)).thenReturn(Optional.of(expediente));
         when(instanciaRepository.save(any())).thenAnswer(i -> i.getArgument(0));
         when(expedienteRepository.save(any())).thenReturn(expediente);
@@ -148,8 +146,6 @@ class EstudianteServiceTest {
         when(catalogoService.buscarOFallar(1L)).thenReturn(catalogo);
         when(hvRepository.findTopByEstudiante_IdAndEstadoOrderByVersionDesc(anyLong(), any()))
                 .thenReturn(Optional.empty());
-        when(instanciaRepository.findPorEstudianteYNumero(anyLong(), anyInt()))
-                .thenReturn(Optional.empty());
         when(expedienteRepository.findByEstudiante_Id(10L)).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.marcarApto(10L, req, coordinacionAcademica))
@@ -168,8 +164,6 @@ class EstudianteServiceTest {
         when(usuarioRepository.findById(10L)).thenReturn(Optional.of(estudianteNoApto));
         when(catalogoService.buscarOFallar(1L)).thenReturn(catalogo);
         when(hvRepository.findTopByEstudiante_IdAndEstadoOrderByVersionDesc(anyLong(), any()))
-                .thenReturn(Optional.empty());
-        when(instanciaRepository.findPorEstudianteYNumero(anyLong(), anyInt()))
                 .thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> service.marcarApto(10L, req, coordinacionAcademica))
