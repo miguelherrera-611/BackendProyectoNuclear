@@ -106,7 +106,7 @@ public class ExpedienteService {
         return mapper.toHojaDeVidaResponse(hv);
     }
 
-    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA})
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
     @CacheEvict(value = "expedientes", key = "#estudianteId")
     public HojaDeVidaResponse validarHojaDeVida(Long estudianteId, Long hvId,
                                                   CustomUserDetails validador) {
@@ -117,7 +117,7 @@ public class ExpedienteService {
         return mapper.toHojaDeVidaResponse(hv);
     }
 
-    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA})
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
     @CacheEvict(value = "expedientes", key = "#estudianteId")
     public HojaDeVidaResponse rechazarHojaDeVida(Long estudianteId, Long hvId,
                                                    MantenerNoAptoRequest req,

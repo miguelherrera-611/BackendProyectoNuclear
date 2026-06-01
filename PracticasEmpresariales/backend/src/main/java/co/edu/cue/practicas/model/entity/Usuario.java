@@ -44,7 +44,7 @@ public class Usuario {
     @Column(nullable = false, length = 30)
     private Rol rol;
 
-    /** Solo aplica al rol COORDINACION_ACADEMICA. Informativa, no altera permisos. */
+    /** Solo aplica al rol COORDINADOR_PRACTICAS. Informativa, no altera permisos. */
     @Enumerated(EnumType.STRING)
     @Column(name = "etiqueta_cargo", length = 30)
     private EtiquetaCargo etiquetaCargo;

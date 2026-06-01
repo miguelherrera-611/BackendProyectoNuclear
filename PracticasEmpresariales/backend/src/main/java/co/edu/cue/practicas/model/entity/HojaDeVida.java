@@ -67,7 +67,7 @@ public class HojaDeVida {
     @Builder.Default
     private EstadoHojaDeVida estado = EstadoHojaDeVida.PENDIENTE;
 
-    /** ID del usuario (Coordinación Académica) que validó o rechazó esta HV */
+    /** ID del usuario (Coordinación de Prácticas / Secretaría) que validó o rechazó esta HV */
     @Column(name = "validado_por")
     private Long validadoPor;
 
