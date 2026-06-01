@@ -9,42 +9,42 @@ interface CrearVacanteRequest {
 
 export const vacanteService = {
   async listar(): Promise<VacanteResponse[]> {
-    const res = await api.get<ApiResponse<VacanteResponse[]>>('/v1/vacantes')
+    const res = await api.get<ApiResponse<VacanteResponse[]>>('/api/v1/vacantes')
     return res.data.datos ?? []
   },
 
   async listarPendientes(): Promise<VacanteResponse[]> {
-    const res = await api.get<ApiResponse<VacanteResponse[]>>('/v1/vacantes/pendientes')
+    const res = await api.get<ApiResponse<VacanteResponse[]>>('/api/v1/vacantes/pendientes')
     return res.data.datos ?? []
   },
 
   async listarDisponibles(): Promise<VacanteResponse[]> {
-    const res = await api.get<ApiResponse<VacanteResponse[]>>('/v1/vacantes/disponibles')
+    const res = await api.get<ApiResponse<VacanteResponse[]>>('/api/v1/vacantes/disponibles')
     return res.data.datos ?? []
   },
 
   async listarPorEmpresa(empresaId: number): Promise<VacanteResponse[]> {
-    const res = await api.get<ApiResponse<VacanteResponse[]>>(`/v1/vacantes/empresa/${empresaId}`)
+    const res = await api.get<ApiResponse<VacanteResponse[]>>(`/api/v1/vacantes/empresa/${empresaId}`)
     return res.data.datos ?? []
   },
 
   async crear(data: CrearVacanteRequest): Promise<VacanteResponse> {
-    const res = await api.post<ApiResponse<VacanteResponse>>('/v1/vacantes', data)
+    const res = await api.post<ApiResponse<VacanteResponse>>('/api/v1/vacantes', data)
     return res.data.datos!
   },
 
   async aprobar(id: number): Promise<VacanteResponse> {
-    const res = await api.patch<ApiResponse<VacanteResponse>>(`/v1/vacantes/${id}/aprobar`)
+    const res = await api.patch<ApiResponse<VacanteResponse>>(`/api/v1/vacantes/${id}/aprobar`)
     return res.data.datos!
   },
 
   async rechazar(id: number, motivo: string): Promise<VacanteResponse> {
-    const res = await api.patch<ApiResponse<VacanteResponse>>(`/v1/vacantes/${id}/rechazar`, { motivo })
+    const res = await api.patch<ApiResponse<VacanteResponse>>(`/api/v1/vacantes/${id}/rechazar`, { motivo })
     return res.data.datos!
   },
 
   async cerrar(id: number): Promise<VacanteResponse> {
-    const res = await api.patch<ApiResponse<VacanteResponse>>(`/v1/vacantes/${id}/cerrar`)
+    const res = await api.patch<ApiResponse<VacanteResponse>>(`/api/v1/vacantes/${id}/cerrar`)
     return res.data.datos!
   },
 }

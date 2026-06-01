@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { InstanciaPracticaResponse } from '../../types'
+import type { InstanciaPracticaResponseV2 } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 
 export default function MiPracticaPage() {
   const navigate = useNavigate()
-  const [practica, setPractica] = useState<InstanciaPracticaResponse | null>(null)
+  const [practica, setPractica] = useState<InstanciaPracticaResponseV2 | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 

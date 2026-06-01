@@ -5,7 +5,7 @@ import { seguimientoService } from '../../services/seguimientoService'
 
 const BADGE: Record<EstadoSeguimiento, string> = {
   PENDIENTE: 'bg-yellow-100 text-yellow-800',
-  APROBADO: 'bg-green-100 text-green-800',
+  APROBADO:  'bg-green-100 text-green-800',
   RECHAZADO: 'bg-red-100 text-red-800',
 }
 
@@ -13,10 +13,10 @@ export default function SeguimientoDetallePage() {
   const { instanciaId } = useParams<{ instanciaId: string }>()
   const navigate = useNavigate()
   const [seguimientos, setSeguimientos] = useState<SeguimientoSemanalResponse[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
-  const [procesando, setProcesando] = useState<number | null>(null)
-  const [observacion, setObservacion] = useState<Record<number, string>>({})
+  const [loading, setLoading]           = useState(true)
+  const [error, setError]               = useState('')
+  const [procesando, setProcesando]     = useState<number | null>(null)
+  const [observacion, setObservacion]   = useState<Record<number, string>>({})
 
   const cargar = async () => {
     if (!instanciaId) return
@@ -47,10 +47,7 @@ export default function SeguimientoDetallePage() {
 
   const handleRechazar = async (id: number) => {
     const obs = observacion[id]?.trim()
-    if (!obs) {
-      setError('La observación es obligatoria para rechazar.')
-      return
-    }
+    if (!obs) { setError('La observación es obligatoria para rechazar.'); return }
     setProcesando(id)
     try {
       await seguimientoService.rechazar(id, obs)
@@ -66,8 +63,8 @@ export default function SeguimientoDetallePage() {
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
       <div>
-        <button className="text-sm text-gray-500 hover:text-gray-700 mb-2" onClick={() => navigate('/mis-practicantes')}>
-          ← Volver a mis practicantes
+        <button className="text-sm text-gray-500 hover:text-gray-700 mb-2" onClick={() => navigate(-1)}>
+          ← Volver
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Seguimientos semanales</h1>
         <p className="text-sm text-gray-500">Práctica #{instanciaId}</p>
@@ -76,9 +73,12 @@ export default function SeguimientoDetallePage() {
       {error && <div className="card border-red-200 bg-red-50 text-red-700 text-sm">{error}</div>}
 
       {loading ? (
-        <div className="text-center py-8 text-gray-400">Cargando...</div>
+        <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cue-primary" /></div>
       ) : seguimientos.length === 0 ? (
-        <div className="card text-center text-gray-400">El estudiante no ha registrado seguimientos aún.</div>
+        <div className="card text-center py-12">
+          <div className="text-gray-300 text-4xl mb-3">📝</div>
+          <p className="text-gray-400 text-sm">El estudiante no ha registrado seguimientos aún.</p>
+        </div>
       ) : seguimientos.map(s => (
         <div key={s.id} className="card space-y-4">
           <div className="flex items-center justify-between">

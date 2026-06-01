@@ -12,19 +12,19 @@ type Paso = 1 | 2 | 3
 export default function NuevaAsignacionPage() {
   const navigate = useNavigate()
 
-  const [paso, setPaso] = useState<Paso>(1)
-  const [vacantes, setVacantes] = useState<VacanteResponse[]>([])
+  const [paso, setPaso]           = useState<Paso>(1)
+  const [vacantes, setVacantes]   = useState<VacanteResponse[]>([])
   const [estudiantes, setEstudiantes] = useState<UsuarioResponse[]>([])
-  const [tutores, setTutores] = useState<TutorEmpresarialResponse[]>([])
-  const [docentes, setDocentes] = useState<DocenteResponse[]>([])
+  const [tutores, setTutores]     = useState<TutorEmpresarialResponse[]>([])
+  const [docentes, setDocentes]   = useState<UsuarioResponse[]>([])
 
-  const [vacanteId, setVacanteId] = useState<number | null>(null)
+  const [vacanteId, setVacanteId]     = useState<number | null>(null)
   const [estudianteId, setEstudianteId] = useState<number | null>(null)
-  const [tutorId, setTutorId] = useState<number | null>(null)
-  const [docenteId, setDocenteId] = useState<number | null>(null)
+  const [tutorId, setTutorId]         = useState<number | null>(null)
+  const [docenteId, setDocenteId]     = useState<number | null>(null)
 
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState('')
+  const [error, setError]     = useState('')
 
   const vacanteSeleccionada = vacantes.find(v => v.id === vacanteId)
 
@@ -45,10 +45,7 @@ export default function NuevaAsignacionPage() {
   }, [paso])
 
   const handleAsignar = async () => {
-    if (!vacanteId || !estudianteId) {
-      setError('Debes seleccionar una vacante y un estudiante.')
-      return
-    }
+    if (!vacanteId || !estudianteId) { setError('Debes seleccionar una vacante y un estudiante.'); return }
     setLoading(true)
     setError('')
     try {
@@ -59,8 +56,8 @@ export default function NuevaAsignacionPage() {
         docenteAsesorId: docenteId ?? undefined,
       })
       navigate('/asignaciones')
-    } catch (e: any) {
-      setError(e?.response?.data?.mensaje ?? 'No se pudo crear la asignación.')
+    } catch (e: unknown) {
+      setError((e as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'No se pudo crear la asignación.')
     } finally {
       setLoading(false)
     }
@@ -76,7 +73,6 @@ export default function NuevaAsignacionPage() {
         <p className="text-sm text-gray-500">Paso {paso} de 3</p>
       </div>
 
-      {/* Progress */}
       <div className="flex gap-2">
         {([1, 2, 3] as Paso[]).map(p => (
           <div key={p} className={`flex-1 h-2 rounded-full ${paso >= p ? 'bg-cue-primary' : 'bg-gray-200'}`} />
@@ -85,7 +81,6 @@ export default function NuevaAsignacionPage() {
 
       {error && <div className="card border-red-200 bg-red-50 text-red-700 text-sm">{error}</div>}
 
-      {/* Paso 1: Vacante */}
       {paso === 1 && (
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-800">1. Selecciona la vacante disponible</h2>
@@ -101,13 +96,10 @@ export default function NuevaAsignacionPage() {
               </label>
             ))}
           </div>
-          <button className="btn-primary w-full" disabled={!vacanteId} onClick={() => setPaso(2)}>
-            Siguiente →
-          </button>
+          <button className="btn-primary w-full" disabled={!vacanteId} onClick={() => setPaso(2)}>Siguiente →</button>
         </div>
       )}
 
-      {/* Paso 2: Estudiante */}
       {paso === 2 && (
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-800">2. Selecciona el estudiante APTO</h2>
@@ -130,7 +122,6 @@ export default function NuevaAsignacionPage() {
         </div>
       )}
 
-      {/* Paso 3: Tutor y Docente (opcionales) */}
       {paso === 3 && (
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-800">3. Asignar docente y tutor (opcional)</h2>
@@ -148,13 +139,11 @@ export default function NuevaAsignacionPage() {
               {tutores.map(t => <option key={t.id} value={t.id}>{t.nombre} — {t.cargo}</option>)}
             </select>
           </div>
-
           <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 space-y-1">
             <p><strong>Resumen:</strong></p>
             <p>Vacante: <strong>{vacanteSeleccionada?.area}</strong> en {vacanteSeleccionada?.razonSocialEmpresa}</p>
             <p>Estudiante ID: <strong>{estudianteId}</strong></p>
           </div>
-
           <div className="flex gap-2">
             <button className="btn-secondary flex-1" onClick={() => setPaso(2)}>← Anterior</button>
             <button className="btn-primary flex-1" disabled={loading} onClick={handleAsignar}>

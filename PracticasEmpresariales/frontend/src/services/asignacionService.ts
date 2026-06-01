@@ -11,22 +11,22 @@ interface CrearAsignacionRequest {
 
 export const asignacionService = {
   async crear(data: CrearAsignacionRequest): Promise<InstanciaPracticaResponse> {
-    const res = await api.post<ApiResponse<InstanciaPracticaResponse>>('/asignaciones', data)
+    const res = await api.post<ApiResponse<InstanciaPracticaResponse>>('/api/asignaciones', data)
     return res.data.datos!
   },
 
   async listar(estado?: string): Promise<InstanciaPracticaResponse[]> {
     const params = estado ? { estado } : {}
-    const res = await api.get<ApiResponse<InstanciaPracticaResponse[]>>('/asignaciones', { params })
+    const res = await api.get<ApiResponse<InstanciaPracticaResponse[]>>('/api/asignaciones', { params })
     return res.data.datos ?? []
   },
 
   async detalle(id: number): Promise<InstanciaPracticaResponse> {
-    const res = await api.get<ApiResponse<InstanciaPracticaResponse>>(`/asignaciones/${id}`)
+    const res = await api.get<ApiResponse<InstanciaPracticaResponse>>(`/api/asignaciones/${id}`)
     return res.data.datos!
   },
 
   async cancelar(id: number, motivo: string): Promise<void> {
-    await api.patch(`/asignaciones/${id}/cancelar`, { motivo })
+    await api.patch(`/api/asignaciones/${id}/cancelar`, { motivo })
   },
 }

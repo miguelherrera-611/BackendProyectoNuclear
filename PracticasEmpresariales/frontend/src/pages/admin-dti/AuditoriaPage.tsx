@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { BitacoraResponse, TipoAccion } from '../../types'
+import { TipoAccion } from '../../types'
 import api from '../../services/api'
 import { ApiResponse, Pageable } from '../../types'
 

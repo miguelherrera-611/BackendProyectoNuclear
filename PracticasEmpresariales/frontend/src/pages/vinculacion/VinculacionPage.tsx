@@ -1,19 +1,18 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import type { InstanciaPracticaResponse } from '../../types'
+import type { InstanciaPracticaResponseV2 } from '../../types'
 import api from '../../services/api'
 import type { ApiResponse } from '../../types'
 
 export default function VinculacionPage() {
   const { instanciaId } = useParams<{ instanciaId: string }>()
   const navigate = useNavigate()
-  const [instancia, setInstancia] = useState<InstanciaPracticaResponse | null>(null)
+  const [instancia, setInstancia] = useState<InstanciaPracticaResponseV2 | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null)
 
-  // Confirmación vinculación
   const [fechaInicio, setFechaInicio] = useState('')
   const [fechaFin, setFechaFin] = useState('')
   const [firmaTutor, setFirmaTutor] = useState(false)
@@ -25,7 +24,7 @@ export default function VinculacionPage() {
     if (!instanciaId) return
     setLoading(true)
     try {
-      const res = await api.get<ApiResponse<InstanciaPracticaResponse>>(`/v1/vinculaciones/${instanciaId}`)
+      const res = await api.get<ApiResponse<InstanciaPracticaResponseV2>>(`/api/v1/vinculaciones/${instanciaId}`)
       const data = res.data.datos!
       setInstancia(data)
       if (data.firmaTutor) setFirmaTutor(true)
@@ -53,7 +52,7 @@ export default function VinculacionPage() {
       const form = new FormData()
       form.append('archivo', file)
       try {
-        await api.post(`/v1/documentos-practica/${instanciaId}?tipo=${tipo}`, form, {
+        await api.post(`/api/v1/documentos-practica/${instanciaId}?tipo=${tipo}`, form, {
           headers: { 'Content-Type': 'multipart/form-data' },
         })
         setError('')
@@ -69,7 +68,7 @@ export default function VinculacionPage() {
   const handleRegistrarFirma = async (tipo: string) => {
     setSaving(true)
     try {
-      const res = await api.patch<ApiResponse<InstanciaPracticaResponse>>(`/v1/vinculaciones/${instanciaId}/firmas/${tipo}`)
+      const res = await api.patch<ApiResponse<InstanciaPracticaResponseV2>>(`/api/v1/vinculaciones/${instanciaId}/firmas/${tipo}`)
       setInstancia(res.data.datos!)
     } catch {
       setError('Error al registrar la firma.')
@@ -79,30 +78,23 @@ export default function VinculacionPage() {
   }
 
   const handleConfirmar = async () => {
-    if (!fechaInicio || !fechaFin) {
-      setError('Las fechas de inicio y fin son obligatorias.')
-      return
-    }
+    if (!fechaInicio || !fechaFin) { setError('Las fechas de inicio y fin son obligatorias.'); return }
     setSaving(true)
     setError('')
     try {
-      await api.patch(`/v1/vinculaciones/${instanciaId}/confirmar`, {
-        fechaInicio,
-        fechaFin,
-        firmaTutor,
-        firmaDocente,
-        firmaEstudiante,
+      await api.patch(`/api/v1/vinculaciones/${instanciaId}/confirmar`, {
+        fechaInicio, fechaFin, firmaTutor, firmaDocente, firmaEstudiante,
         docenteAsesorId: docenteAsesorId ? Number(docenteAsesorId) : null,
       })
       navigate('/asignaciones')
-    } catch (e: any) {
-      setError(e?.response?.data?.mensaje ?? 'Error al confirmar la vinculación.')
+    } catch (e: unknown) {
+      setError((e as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al confirmar la vinculación.')
     } finally {
       setSaving(false)
     }
   }
 
-  if (loading) return <div className="flex justify-center py-16 text-gray-400">Cargando...</div>
+  if (loading) return <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cue-primary" /></div>
 
   return (
     <div className="space-y-6 max-w-3xl mx-auto">
@@ -121,30 +113,24 @@ export default function VinculacionPage() {
 
       {error && <div className="card border-red-200 bg-red-50 text-red-700 text-sm">{error}</div>}
 
-      {/* Documentos */}
       <div className="card space-y-4">
-        <h2 className="font-semibold text-gray-800">GPE-162 — Carta de presentación</h2>
-        <button
-          className="btn-secondary"
+        <h2 className="font-semibold text-gray-800">Carta de presentación</h2>
+        <button className="btn-secondary"
           onClick={() => handleSubirDocumento('CARTA_PRESENTACION')}
-          disabled={uploadingDocType !== null || instancia?.estado === 'FINALIZADA' || instancia?.estado === 'CANCELADA'}
-        >
+          disabled={uploadingDocType !== null || instancia?.estado === 'FINALIZADA' || instancia?.estado === 'CANCELADA'}>
           {uploadingDocType === 'CARTA_PRESENTACION' ? 'Subiendo...' : 'Subir carta (PDF / JPG / PNG)'}
         </button>
       </div>
 
       <div className="card space-y-4">
-        <h2 className="font-semibold text-gray-800">GPE-163 — Convenio de práctica</h2>
-        <button
-          className="btn-secondary"
+        <h2 className="font-semibold text-gray-800">Convenio de práctica</h2>
+        <button className="btn-secondary"
           onClick={() => handleSubirDocumento('CONVENIO')}
-          disabled={uploadingDocType !== null || instancia?.estado === 'FINALIZADA' || instancia?.estado === 'CANCELADA'}
-        >
+          disabled={uploadingDocType !== null || instancia?.estado === 'FINALIZADA' || instancia?.estado === 'CANCELADA'}>
           {uploadingDocType === 'CONVENIO' ? 'Subiendo...' : 'Subir convenio (PDF)'}
         </button>
       </div>
 
-      {/* Firmas */}
       <div className="card space-y-4">
         <h2 className="font-semibold text-gray-800">Firmas del convenio</h2>
         <div className="grid grid-cols-3 gap-3">
@@ -155,11 +141,7 @@ export default function VinculacionPage() {
                 <div className="text-lg mb-1">{confirmada ? '✓' : '○'}</div>
                 <div className="text-sm font-medium text-gray-700">{tipo}</div>
                 {!confirmada && (
-                  <button
-                    className="mt-2 text-xs btn-secondary"
-                    onClick={() => handleRegistrarFirma(tipo)}
-                    disabled={saving}
-                  >
+                  <button className="mt-2 text-xs btn-secondary" onClick={() => handleRegistrarFirma(tipo)} disabled={saving}>
                     Registrar
                   </button>
                 )}
@@ -169,10 +151,9 @@ export default function VinculacionPage() {
         </div>
       </div>
 
-      {/* Confirmación vinculación */}
       {instancia?.estado === 'ASIGNADA_PENDIENTE_INICIO' && (
         <div className="card space-y-4">
-          <h2 className="font-semibold text-gray-800">GPE-164 — Confirmar vinculación y activar EN_CURSO</h2>
+          <h2 className="font-semibold text-gray-800">Confirmar vinculación → EN_CURSO</h2>
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de inicio *</label>
@@ -185,18 +166,15 @@ export default function VinculacionPage() {
           </div>
           {!instancia.docenteAsesorId && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">ID Docente Asesor (si no fue asignado antes)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">ID Docente Asesor</label>
               <input type="number" className="input-field" placeholder="ID del docente" value={docenteAsesorId} onChange={e => setDocenteAsesorId(e.target.value)} />
             </div>
           )}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
             <strong>Requiere las tres firmas:</strong> tutor, docente y estudiante confirmadas para activar EN_CURSO.
           </div>
-          <button
-            className="btn-primary w-full"
-            onClick={handleConfirmar}
-            disabled={saving || !firmaTutor || !firmaDocente || !firmaEstudiante}
-          >
+          <button className="btn-primary w-full" onClick={handleConfirmar}
+            disabled={saving || !firmaTutor || !firmaDocente || !firmaEstudiante}>
             {saving ? 'Confirmando...' : 'Confirmar vinculación → EN_CURSO'}
           </button>
         </div>

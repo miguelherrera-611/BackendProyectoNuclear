@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { InstanciaPracticaResponse } from '../../types'
+import type { InstanciaPracticaResponseV2 } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 
 export default function TableroSeguimientoPage() {
   const navigate = useNavigate()
-  const [practicas, setPracticas] = useState<InstanciaPracticaResponse[]>([])
+  const [practicas, setPracticas] = useState<InstanciaPracticaResponseV2[]>([])
   const [filtroEmpresa, setFiltroEmpresa] = useState('')
   const [filtroDocente, setFiltroDocente] = useState('')
   const [loading, setLoading] = useState(true)
@@ -56,9 +56,9 @@ export default function TableroSeguimientoPage() {
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8} className="text-center py-8 text-gray-400">Cargando...</td></tr>
+              <tr><td colSpan={8} className="py-12 text-center"><div className="flex justify-center"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cue-primary" /></div></td></tr>
             ) : filtradas.length === 0 ? (
-              <tr><td colSpan={8} className="text-center py-8 text-gray-400">No hay prácticas EN_CURSO.</td></tr>
+              <tr><td colSpan={8} className="text-center py-12 text-gray-400">No hay prácticas EN_CURSO.</td></tr>
             ) : filtradas.map(p => (
               <tr key={p.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="px-4 py-3">
@@ -72,19 +72,15 @@ export default function TableroSeguimientoPage() {
                 <td className="px-4 py-3 text-gray-600 whitespace-nowrap">{p.fechaFin ?? '—'}</td>
                 <td className="px-4 py-3">
                   <div className="flex gap-1 text-xs">
-                    <span className={p.firmaTutor ? 'text-green-600' : 'text-gray-300'}>T</span>
-                    <span className={p.firmaDocente ? 'text-green-600' : 'text-gray-300'}>D</span>
-                    <span className={p.firmaEstudiante ? 'text-green-600' : 'text-gray-300'}>E</span>
+                    <span className={p.firmaTutor ? 'text-green-600 font-semibold' : 'text-gray-300'}>T</span>
+                    <span className={p.firmaDocente ? 'text-green-600 font-semibold' : 'text-gray-300'}>D</span>
+                    <span className={p.firmaEstudiante ? 'text-green-600 font-semibold' : 'text-gray-300'}>E</span>
                   </div>
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
-                    <button className="btn-secondary text-xs" onClick={() => navigate(`/vinculacion/${p.id}`)}>
-                      Ver
-                    </button>
-                    <button className="btn-secondary text-xs" onClick={() => navigate(`/seguimiento/${p.id}`)}>
-                      Seguimientos
-                    </button>
+                    <button className="btn-secondary text-xs" onClick={() => navigate(`/vinculacion/${p.id}`)}>Ver</button>
+                    <button className="btn-secondary text-xs" onClick={() => navigate(`/seguimiento/${p.id}`)}>Seguimientos</button>
                   </div>
                 </td>
               </tr>
