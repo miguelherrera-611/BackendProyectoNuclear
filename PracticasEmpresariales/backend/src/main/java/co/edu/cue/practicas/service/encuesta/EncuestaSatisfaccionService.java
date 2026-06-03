@@ -133,6 +133,7 @@ public class EncuestaSatisfaccionService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Encuesta no encontrada o token invalido."));
     }
 
+    @Transactional
     public java.util.List<EncuestaResponse> misEncuestas(CustomUserDetails actor) {
         if (actor.getRol() == Rol.TUTOR_EMPRESARIAL) {
             return encuestaRepository.findByActorAsignadoCorreoIgnoreCaseOrderByFechaEnvioDesc(actor.getUsername())

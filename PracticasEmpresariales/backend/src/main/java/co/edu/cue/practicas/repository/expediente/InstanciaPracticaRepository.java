@@ -19,6 +19,9 @@ public interface InstanciaPracticaRepository extends JpaRepository<InstanciaPrac
 
     List<InstanciaPractica> findByDocenteAsesor_IdAndEstadoNotIn(Long docenteAsesorId, List<EstadoPractica> estados);
 
+    List<InstanciaPractica> findByTutorEmpresarial_CorreoIgnoreCaseAndEstadoNotIn(
+            String tutorCorreo, List<EstadoPractica> estados);
+
     long countByEstado(EstadoPractica estado);
 
     long countByEstadoAndExpediente_Estudiante_Programa_Id(EstadoPractica estado, Long programaId);

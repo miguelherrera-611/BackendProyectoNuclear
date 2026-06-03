@@ -126,6 +126,18 @@ public class VinculacionService {
                 .stream().map(mapper::toInstanciaPracticaResponse).toList();
     }
 
+    /** GPE-168 — Prácticas activas asignadas al actor académico o empresarial autenticado. */
+    @Transactional
+    public List<InstanciaPracticaResponse> listarMisPracticantes(CustomUserDetails actor) {
+        if (actor.getRol() == Rol.DOCENTE_ASESOR) {
+            return listarPracticasDeDocente(actor);
+        }
+        if (actor.getRol() == Rol.TUTOR_EMPRESARIAL) {
+            return listarPracticasDeTutor(actor);
+        }
+        throw new AccesoNoAutorizadoException("Solo docente asesor o tutor empresarial pueden consultar sus practicantes.");
+    }
+
     /** GPE-168 — Prácticas activas asignadas a un docente asesor. */
     @Transactional
     public List<InstanciaPracticaResponse> listarPracticasDeDocente(CustomUserDetails actor) {
@@ -134,6 +146,18 @@ public class VinculacionService {
 
         return instanciaPracticaRepository
                 .findByDocenteAsesor_IdAndEstadoNotIn(actor.getId(),
+                        List.of(EstadoPractica.FINALIZADA, EstadoPractica.CANCELADA))
+                .stream().map(mapper::toInstanciaPracticaResponse).toList();
+    }
+
+    /** Prácticas activas asignadas al tutor empresarial autenticado. */
+    @Transactional
+    public List<InstanciaPracticaResponse> listarPracticasDeTutor(CustomUserDetails actor) {
+        if (actor.getRol() != Rol.TUTOR_EMPRESARIAL)
+            throw new AccesoNoAutorizadoException("Solo el tutor empresarial puede consultar sus practicantes.");
+
+        return instanciaPracticaRepository
+                .findByTutorEmpresarial_CorreoIgnoreCaseAndEstadoNotIn(actor.getUsername(),
                         List.of(EstadoPractica.FINALIZADA, EstadoPractica.CANCELADA))
                 .stream().map(mapper::toInstanciaPracticaResponse).toList();
     }
@@ -171,7 +195,7 @@ public class VinculacionService {
         }
         if (rol == Rol.TUTOR_EMPRESARIAL) {
             if (instancia.getTutorEmpresarial() == null
-                    || !instancia.getTutorEmpresarial().getCorreo().equals(actor.getUsername()))
+                    || !instancia.getTutorEmpresarial().getCorreo().equalsIgnoreCase(actor.getUsername()))
                 throw new AccesoNoAutorizadoException("No tiene acceso a esta instancia de práctica.");
             return;
         }

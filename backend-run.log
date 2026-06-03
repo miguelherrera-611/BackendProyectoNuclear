@@ -1,0 +1,202 @@
+[INFO] Scanning for projects...
+[INFO] 
+[INFO] -----------------< co.edu.cue:practicas-empresariales >-----------------
+[INFO] Building Practicas Empresariales CUE 1.0.0-SNAPSHOT
+[INFO]   from pom.xml
+[INFO] --------------------------------[ jar ]---------------------------------
+[INFO] 
+[INFO] >>> spring-boot:3.3.6:run (default-cli) > test-compile @ practicas-empresariales >>>
+[INFO] 
+[INFO] --- resources:3.3.1:resources (default-resources) @ practicas-empresariales ---
+[INFO] Copying 7 resources from PracticasEmpresariales\backend\src\main\resources to target\classes
+[INFO] 
+[INFO] --- compiler:3.13.0:compile (default-compile) @ practicas-empresariales ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] --- resources:3.3.1:testResources (default-testResources) @ practicas-empresariales ---
+[INFO] Copying 1 resource from PracticasEmpresariales\backend\src\test\resources to target\test-classes
+[INFO] 
+[INFO] --- compiler:3.13.0:testCompile (default-testCompile) @ practicas-empresariales ---
+[INFO] Nothing to compile - all classes are up to date.
+[INFO] 
+[INFO] <<< spring-boot:3.3.6:run (default-cli) < test-compile @ practicas-empresariales <<<
+[INFO] 
+[INFO] 
+[INFO] --- spring-boot:3.3.6:run (default-cli) @ practicas-empresariales ---
+Downloading from central: https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-buildpack-platform/3.3.6/spring-boot-buildpack-platform-3.3.6.jar
+Progress (1): 1.4/296 kBProgress (1): 2.7/296 kBProgress (1): 4.1/296 kBProgress (1): 5.5/296 kBProgress (1): 6.8/296 kBProgress (1): 8.2/296 kBProgress (1): 9.6/296 kBProgress (1): 11/296 kB Progress (1): 12/296 kBProgress (1): 14/296 kBProgress (1): 15/296 kBProgress (1): 16/296 kBProgress (1): 18/296 kBProgress (1): 19/296 kBProgress (1): 21/296 kBProgress (1): 22/296 kBProgress (1): 23/296 kBProgress (1): 25/296 kBProgress (1): 26/296 kBProgress (1): 27/296 kBProgress (1): 29/296 kBProgress (1): 30/296 kBProgress (1): 31/296 kBProgress (1): 33/296 kBProgress (1): 34/296 kBProgress (1): 36/296 kBProgress (1): 37/296 kBProgress (1): 38/296 kBProgress (1): 40/296 kBProgress (1): 41/296 kBProgress (1): 42/296 kBProgress (1): 44/296 kBProgress (1): 45/296 kBProgress (1): 46/296 kBProgress (1): 48/296 kBProgress (1): 49/296 kBProgress (1): 51/296 kBProgress (1): 52/296 kBProgress (1): 53/296 kBProgress (1): 55/296 kBProgress (1): 59/296 kBProgress (1): 63/296 kBProgress (1): 66/296 kBProgress (1): 70/296 kBProgress (1): 74/296 kBProgress (1): 78/296 kBProgress (1): 82/296 kBProgress (1): 86/296 kBProgress (1): 91/296 kBProgress (1): 95/296 kBProgress (1): 98/296 kBProgress (1): 103/296 kBProgress (1): 107/296 kBProgress (1): 111/296 kBProgress (1): 115/296 kBProgress (1): 119/296 kBProgress (1): 123/296 kBProgress (1): 127/296 kBProgress (1): 132/296 kBProgress (1): 136/296 kBProgress (1): 140/296 kBProgress (1): 144/296 kBProgress (1): 149/296 kBProgress (1): 153/296 kBProgress (1): 157/296 kBProgress (1): 161/296 kBProgress (1): 164/296 kBProgress (1): 168/296 kBProgress (1): 172/296 kBProgress (1): 177/296 kBProgress (1): 181/296 kBProgress (1): 185/296 kBProgress (1): 189/296 kBProgress (1): 193/296 kBProgress (1): 198/296 kBProgress (1): 202/296 kBProgress (1): 206/296 kBProgress (1): 210/296 kBProgress (1): 215/296 kBProgress (1): 219/296 kBProgress (1): 235/296 kBProgress (1): 252/296 kBProgress (1): 268/296 kBProgress (1): 284/296 kBProgress (1): 295/296 kBProgress (1): 296 kB                        Downloaded from central: https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-buildpack-platform/3.3.6/spring-boot-buildpack-platform-3.3.6.jar (296 kB at 155 kB/s)
+Downloading from central: https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-loader-tools/3.3.6/spring-boot-loader-tools-3.3.6.jar
+Downloading from central: https://repo.maven.apache.org/maven2/io/micrometer/micrometer-observation/1.12.12/micrometer-observation-1.12.12.jar
+Downloading from central: https://repo.maven.apache.org/maven2/io/micrometer/micrometer-commons/1.12.12/micrometer-commons-1.12.12.jar
+Progress (1): 7.7/464 kBProgress (1): 8.2/464 kBProgress (1): 16/464 kB Progress (1): 33/464 kBProgress (1): 41/464 kBProgress (1): 57/464 kBProgress (2): 57/464 kB | 1.4/72 kBProgress (2): 57/464 kB | 2.7/72 kBProgress (2): 57/464 kB | 4.1/72 kBProgress (2): 57/464 kB | 5.5/72 kBProgress (2): 57/464 kB | 6.8/72 kBProgress (2): 57/464 kB | 8.2/72 kBProgress (2): 57/464 kB | 9.6/72 kBProgress (2): 57/464 kB | 11/72 kB Progress (2): 57/464 kB | 12/72 kBProgress (2): 57/464 kB | 14/72 kBProgress (2): 57/464 kB | 15/72 kBProgress (2): 57/464 kB | 16/72 kBProgress (2): 57/464 kB | 18/72 kBProgress (2): 57/464 kB | 19/72 kBProgress (2): 57/464 kB | 21/72 kBProgress (2): 66/464 kB | 21/72 kBProgress (2): 66/464 kB | 22/72 kBProgress (2): 66/464 kB | 23/72 kBProgress (2): 66/464 kB | 25/72 kBProgress (2): 66/464 kB | 26/72 kBProgress (2): 66/464 kB | 27/72 kBProgress (2): 66/464 kB | 29/72 kBProgress (2): 66/464 kB | 30/72 kBProgress (2): 66/464 kB | 31/72 kBProgress (2): 66/464 kB | 33/72 kBProgress (2): 66/464 kB | 34/72 kBProgress (2): 66/464 kB | 36/72 kBProgress (2): 66/464 kB | 37/72 kBProgress (2): 66/464 kB | 38/72 kBProgress (2): 66/464 kB | 40/72 kBProgress (2): 66/464 kB | 41/72 kBProgress (2): 66/464 kB | 42/72 kBProgress (2): 66/464 kB | 44/72 kBProgress (2): 66/464 kB | 45/72 kBProgress (2): 66/464 kB | 46/72 kBProgress (2): 66/464 kB | 48/72 kBProgress (2): 66/464 kB | 49/72 kBProgress (2): 66/464 kB | 51/72 kBProgress (2): 66/464 kB | 52/72 kBProgress (2): 66/464 kB | 53/72 kBProgress (2): 66/464 kB | 55/72 kBProgress (2): 66/464 kB | 57/72 kBProgress (2): 66/464 kB | 62/72 kBProgress (2): 66/464 kB | 66/72 kBProgress (2): 66/464 kB | 70/72 kBProgress (2): 66/464 kB | 72 kB   Progress (2): 82/464 kB | 72 kBProgress (2): 90/464 kB | 72 kB                               Downloaded from central: https://repo.maven.apache.org/maven2/io/micrometer/micrometer-observation/1.12.12/micrometer-observation-1.12.12.jar (72 kB at 153 kB/s)
+Progress (1): 106/464 kBProgress (1): 123/464 kBProgress (2): 123/464 kB | 0.9/47 kBProgress (2): 123/464 kB | 2.3/47 kBProgress (2): 123/464 kB | 3.6/47 kBProgress (2): 123/464 kB | 5.0/47 kBProgress (2): 123/464 kB | 6.4/47 kBProgress (2): 123/464 kB | 7.7/47 kBProgress (2): 123/464 kB | 8.2/47 kBProgress (2): 123/464 kB | 9.6/47 kBProgress (2): 123/464 kB | 11/47 kB Progress (2): 123/464 kB | 12/47 kBProgress (2): 123/464 kB | 14/47 kBProgress (2): 123/464 kB | 15/47 kBProgress (2): 123/464 kB | 16/47 kBProgress (2): 123/464 kB | 18/47 kBProgress (2): 123/464 kB | 19/47 kBProgress (2): 123/464 kB | 21/47 kBProgress (2): 123/464 kB | 22/47 kBProgress (2): 123/464 kB | 23/47 kBProgress (2): 123/464 kB | 25/47 kBProgress (2): 123/464 kB | 26/47 kBProgress (2): 123/464 kB | 27/47 kBProgress (2): 123/464 kB | 29/47 kBProgress (2): 123/464 kB | 30/47 kBProgress (2): 123/464 kB | 31/47 kBProgress (2): 123/464 kB | 33/47 kBProgress (2): 123/464 kB | 34/47 kBProgress (2): 139/464 kB | 34/47 kBProgress (2): 156/464 kB | 34/47 kBProgress (2): 172/464 kB | 34/47 kBProgress (2): 188/464 kB | 34/47 kBProgress (2): 188/464 kB | 36/47 kBProgress (2): 188/464 kB | 37/47 kBProgress (2): 205/464 kB | 37/47 kBProgress (2): 205/464 kB | 38/47 kBProgress (2): 205/464 kB | 40/47 kBProgress (2): 205/464 kB | 41/47 kBProgress (2): 205/464 kB | 42/47 kBProgress (2): 205/464 kB | 44/47 kBProgress (2): 205/464 kB | 45/47 kBProgress (2): 205/464 kB | 47/47 kBProgress (2): 205/464 kB | 47 kB   Progress (2): 221/464 kB | 47 kBProgress (2): 238/464 kB | 47 kBProgress (2): 254/464 kB | 47 kBProgress (2): 270/464 kB | 47 kBProgress (2): 287/464 kB | 47 kBProgress (2): 303/464 kB | 47 kBProgress (2): 319/464 kB | 47 kBProgress (2): 336/464 kB | 47 kBProgress (2): 352/464 kB | 47 kBProgress (2): 369/464 kB | 47 kBProgress (2): 385/464 kB | 47 kBProgress (2): 401/464 kB | 47 kBProgress (2): 418/464 kB | 47 kBProgress (2): 434/464 kB | 47 kBProgress (2): 451/464 kB | 47 kBProgress (2): 464 kB | 47 kB                                Downloaded from central: https://repo.maven.apache.org/maven2/org/springframework/boot/spring-boot-loader-tools/3.3.6/spring-boot-loader-tools-3.3.6.jar (464 kB at 310 kB/s)
+Downloaded from central: https://repo.maven.apache.org/maven2/io/micrometer/micrometer-commons/1.12.12/micrometer-commons-1.12.12.jar (47 kB at 24 kB/s)
+[INFO] Attaching agents: []
+
+  .   ____          _            __ _ _
+ /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
+( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
+ \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
+  '  |____| .__|_| |_|_| |_\__, | / / / /
+ =========|_|==============|___/=/_/_/_/
+
+ :: Spring Boot ::                (v3.3.6)
+
+2026-06-03T15:23:43.199-05:00  INFO 1984 --- [  restartedMain] .e.c.p.PracticasEmpresarialesApplication : Starting PracticasEmpresarialesApplication using Java 21.0.11 with PID 1984 (C:\Users\VALENTINA BARRETO\IdeaProjects\ProyectoNuclearPracticas\target\classes started by VALENTINA BARRETO in C:\Users\VALENTINA BARRETO\IdeaProjects\ProyectoNuclearPracticas)
+2026-06-03T15:23:43.204-05:00  INFO 1984 --- [  restartedMain] .e.c.p.PracticasEmpresarialesApplication : The following 1 profile is active: "h2"
+2026-06-03T15:23:43.311-05:00  INFO 1984 --- [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : Devtools property defaults active! Set 'spring.devtools.add-properties' to 'false' to disable
+2026-06-03T15:23:43.312-05:00  INFO 1984 --- [  restartedMain] .e.DevToolsPropertyDefaultsPostProcessor : For additional web related logging consider setting the 'logging.level.web' property to 'DEBUG'
+2026-06-03T15:23:45.200-05:00  INFO 1984 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2026-06-03T15:23:45.500-05:00  INFO 1984 --- [  restartedMain] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 278 ms. Found 22 JPA repository interfaces.
+2026-06-03T15:23:47.031-05:00  INFO 1984 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8080 (http)
+2026-06-03T15:23:47.058-05:00  INFO 1984 --- [  restartedMain] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2026-06-03T15:23:47.058-05:00  INFO 1984 --- [  restartedMain] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.33]
+2026-06-03T15:23:47.155-05:00  INFO 1984 --- [  restartedMain] o.a.c.c.C.[Tomcat].[localhost].[/api]    : Initializing Spring embedded WebApplicationContext
+2026-06-03T15:23:47.156-05:00  INFO 1984 --- [  restartedMain] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 3841 ms
+2026-06-03T15:23:47.213-05:00  INFO 1984 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2026-06-03T15:23:47.536-05:00  INFO 1984 --- [  restartedMain] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection conn0: url=jdbc:h2:mem:practicas_cue user=SA
+2026-06-03T15:23:47.539-05:00  INFO 1984 --- [  restartedMain] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2026-06-03T15:23:47.551-05:00  INFO 1984 --- [  restartedMain] o.s.b.a.h2.H2ConsoleAutoConfiguration    : H2 console available at '/h2-console'. Database available at 'jdbc:h2:mem:practicas_cue'
+2026-06-03T15:23:47.777-05:00  INFO 1984 --- [  restartedMain] o.hibernate.jpa.internal.util.LogHelper  : HHH000204: Processing PersistenceUnitInfo [name: default]
+2026-06-03T15:23:47.886-05:00  INFO 1984 --- [  restartedMain] org.hibernate.Version                    : HHH000412: Hibernate ORM core version 6.5.3.Final
+2026-06-03T15:23:47.951-05:00  INFO 1984 --- [  restartedMain] o.h.c.internal.RegionFactoryInitiator    : HHH000026: Second-level cache disabled
+2026-06-03T15:23:48.438-05:00  INFO 1984 --- [  restartedMain] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2026-06-03T15:23:48.531-05:00  WARN 1984 --- [  restartedMain] org.hibernate.orm.deprecation            : HHH90000025: H2Dialect does not need to be specified explicitly using 'hibernate.dialect' (remove the property setting and it will be selected by default)
+2026-06-03T15:23:50.716-05:00  INFO 1984 --- [  restartedMain] o.h.e.t.j.p.i.JtaPlatformInitiator       : HHH000489: No JTA platform available (set 'hibernate.transaction.jta.platform' to enable JTA platform integration)
+Hibernate: drop table if exists bitacora_auditoria cascade 
+Hibernate: drop table if exists bitacora_correos cascade 
+Hibernate: drop table if exists catalogo_practicas cascade 
+Hibernate: drop table if exists empresa_areas cascade 
+Hibernate: drop table if exists empresas cascade 
+Hibernate: drop table if exists encuesta_preguntas cascade 
+Hibernate: drop table if exists encuesta_respuestas cascade 
+Hibernate: drop table if exists encuestas_satisfaccion cascade 
+Hibernate: drop table if exists evaluacion_final_criterios cascade 
+Hibernate: drop table if exists evaluaciones_finales cascade 
+Hibernate: drop table if exists expedientes_estudiantes cascade 
+Hibernate: drop table if exists facultades cascade 
+Hibernate: drop table if exists hojas_de_vida cascade 
+Hibernate: drop table if exists instancias_practica cascade 
+Hibernate: drop table if exists notas_finales_coordinador cascade 
+Hibernate: drop table if exists paz_y_salvos cascade 
+Hibernate: drop table if exists planes_practica cascade 
+Hibernate: drop table if exists plantillas_notificacion cascade 
+Hibernate: drop table if exists practica_documentos cascade 
+Hibernate: drop table if exists programa_configuraciones cascade 
+Hibernate: drop table if exists programas cascade 
+Hibernate: drop table if exists requisitos_practica cascade 
+Hibernate: drop table if exists seguimientos_semanales cascade 
+Hibernate: drop table if exists sustentacion_jurados cascade 
+Hibernate: drop table if exists sustentaciones_practica cascade 
+Hibernate: drop table if exists tutores_empresariales cascade 
+Hibernate: drop table if exists usuarios cascade 
+Hibernate: drop table if exists vacantes cascade 
+Hibernate: create table bitacora_auditoria (exitoso boolean not null, fecha_hora timestamp(6) not null, id bigint generated by default as identity, registro_afectado_id bigint, usuario_id bigint, ip_origen varchar(50), modulo varchar(100) not null, registro_afectado_tipo varchar(100), nombre_usuario varchar(200), motivo_fallo varchar(500), valores_anteriores TEXT, valores_nuevos TEXT, etiqueta_cargo_usuario enum ('COORDINACION_ACADEMICA','SECRETARIA'), rol_usuario enum ('ADMIN_DTI','COORDINACION_ACADEMICA','COORDINADOR_PRACTICAS','DIRECCION','DOCENTE_ASESOR','ESTUDIANTE','TUTOR_EMPRESARIAL'), tipo_accion enum ('ACCESO_NO_AUTORIZADO','ACTIVAR','CAMBIO_ESTADO','CAMBIO_PASSWORD','CONSULTAR','CREAR','DESACTIVAR','EDITAR','EXPORTAR','LOGIN_EXITOSO','LOGIN_FALLIDO','LOGOUT','RESET_PASSWORD') not null, primary key (id))
+Hibernate: create table bitacora_correos (actor_id bigint, fecha_envio timestamp(6) not null, id bigint generated by default as identity, asunto varchar(180) not null, destinatario varchar(180) not null, detalle varchar(1000), estado enum ('ENVIADO','FALLIDO') not null, tipo_evento enum ('CIERRE_FORMAL_EJECUTADO','COORDINACION_ACADEMICA_RESULTADO','ENCUESTA_COMPLETADA','ENCUESTA_ESTUDIANTE_ENVIADA','ENCUESTA_TUTOR_ENVIADA','EVALUACION_DOCENTE_COMPLETADA','EVALUACION_TUTOR_COMPLETADA','NOTA_FINAL_REGISTRADA') not null, primary key (id))
+Hibernate: create table catalogo_practicas (activo boolean not null, duracion_semanas integer not null check (duracion_semanas>=1), num_cortes integer not null check (num_cortes>=1), numero_practica integer not null check (numero_practica>=1), actualizado_en timestamp(6) not null, creado_en timestamp(6) not null, id bigint generated by default as identity, programa_id bigint not null, codigo_materia varchar(20) not null, materia_nucleo varchar(200) not null, nombre varchar(200) not null, documentos_requeridos varchar(1000), primary key (id), constraint uk_catalogo_numero_programa unique (numero_practica, programa_id))
+Hibernate: create table empresa_areas (empresa_id bigint not null, area varchar(255))
+Hibernate: create table empresas (actualizado_en timestamp(6) not null, creado_en timestamp(6) not null, id bigint generated by default as identity, nit varchar(20) not null unique, telefono varchar(20), municipio varchar(100), sector varchar(100), correo varchar(150), nombre_contacto varchar(150) not null, razon_social varchar(200) not null, direccion varchar(300), estado enum ('APROBADA','INACTIVA','PENDIENTE','RECHAZADA') not null, primary key (id))
+Hibernate: create table encuesta_preguntas (encuesta_id bigint not null, pregunta varchar(500))
+Hibernate: create table encuesta_respuestas (encuesta_id bigint not null, respuesta varchar(1000))
+Hibernate: create table encuestas_satisfaccion (completada boolean not null, enviada boolean not null, ultimo_recordatorio date, actor_asignado_id bigint not null, fecha_completada timestamp(6), fecha_envio timestamp(6), id bigint generated by default as identity, instancia_practica_id bigint not null, token_acceso varchar(80) unique, actor_asignado_correo varchar(150) not null, titulo varchar(180) not null, estado enum ('COMPLETADA','EN_BORRADOR','PENDIENTE') not null, tipo enum ('PARA_ESTUDIANTE','PARA_TUTOR') not null, primary key (id), constraint idx_encuesta_instancia_tipo unique (instancia_practica_id, tipo))
+Hibernate: create table evaluacion_final_criterios (peso float(53) not null, puntaje float(53) not null, evaluacion_id bigint not null, nombre varchar(120) not null)
+Hibernate: create table evaluaciones_finales (promedio_final float(53) not null, actualizado_en timestamp(6) not null, creado_en timestamp(6) not null, evaluador_id bigint not null, fecha timestamp(6), id bigint generated by default as identity, instancia_practica_id bigint not null, evaluador_nombre varchar(180) not null, observaciones varchar(2000), estado enum ('COMPLETADA','FUERA_DE_PLAZO','PENDIENTE') not null, tipo enum ('DOCENTE_ASESOR','TUTOR_EMPRESARIAL') not null, primary key (id), constraint idx_eval_instancia_tipo unique (instancia_practica_id, tipo))
+Hibernate: create table expedientes_estudiantes (creado_en timestamp(6) not null, estudiante_id bigint not null unique, id bigint generated by default as identity, primary key (id))
+Hibernate: create table facultades (activa boolean not null, actualizada_en timestamp(6) not null, creada_en timestamp(6) not null, id bigint generated by default as identity, nombre varchar(150) not null unique, descripcion varchar(500), primary key (id))
+Hibernate: create table hojas_de_vida (fecha_carga date not null, fecha_validacion date, version integer not null, creado_en timestamp(6) not null, estudiante_id bigint not null, expediente_id bigint, id bigint generated by default as identity, validado_por bigint, motivo_rechazo varchar(500), url_archivo varchar(500) not null, estado enum ('PENDIENTE','RECHAZADA','VALIDA') not null, primary key (id))
+Hibernate: create table instancias_practica (duracion_semanas integer not null, fecha_fin date, fecha_inicio date, firma_docente boolean, firma_estudiante boolean, firma_tutor boolean, num_cortes integer not null, numero_practica integer not null, actualizado_en timestamp(6) not null, catalogo_practica_id bigint not null, creado_en timestamp(6) not null, docente_asesor_id bigint, empresa_id bigint, expediente_id bigint not null, fecha_cierre timestamp(6), id bigint generated by default as identity, tutor_empresarial_id bigint, vacante_id bigint, vinculacion_confirmada_en timestamp(6), codigo_materia varchar(20) not null, semestre_academico varchar(20), materia_nucleo varchar(200) not null, nombre varchar(200) not null, documentos_requeridos varchar(1000), estado enum ('ASIGNADA_PENDIENTE_INICIO','CANCELADA','EN_CURSO','FINALIZADA') not null, resultado_cierre enum ('APROBADO','NO_APROBADO'), primary key (id))
+Hibernate: create table notas_finales_coordinador (nota_final float(53) not null, nota_minima_aplicada float(53) not null, coordinador_id bigint not null, fecha timestamp(6) not null, id bigint generated by default as identity, instancia_practica_id bigint not null unique, observaciones varchar(2000), resultado enum ('APROBADO','NO_APROBADO') not null, primary key (id))
+Hibernate: create table paz_y_salvos (generado_en timestamp(6) not null, id bigint generated by default as identity, instancia_practica_id bigint not null unique, codigo varchar(60) not null unique, contenido varchar(4000) not null, primary key (id))
+Hibernate: create table planes_practica (actualizado_en timestamp(6) not null, aprobado_por_docente_en timestamp(6), aprobado_por_tutor_en timestamp(6), cargado_por_id bigint, creado_en timestamp(6) not null, id bigint generated by default as identity, instancia_practica_id bigint not null, rechazado_por_id bigint, motivo_rechazo varchar(500), cronograma TEXT, objetivos TEXT, estado enum ('APROBADO_DOCENTE','APROBADO_TUTOR','BORRADOR','RECHAZADO') not null, primary key (id))
+Hibernate: create table plantillas_notificacion (frecuencia_recordatorio_dias integer not null, actualizado_en timestamp(6) not null, id bigint generated by default as identity, asunto varchar(180) not null, roles_receptores varchar(400), cuerpo varchar(5000) not null, tipo_evento enum ('CIERRE_FORMAL_EJECUTADO','COORDINACION_ACADEMICA_RESULTADO','ENCUESTA_COMPLETADA','ENCUESTA_ESTUDIANTE_ENVIADA','ENCUESTA_TUTOR_ENVIADA','EVALUACION_DOCENTE_COMPLETADA','EVALUACION_TUTOR_COMPLETADA','NOTA_FINAL_REGISTRADA') not null unique, primary key (id))
+Hibernate: create table practica_documentos (creado_en timestamp(6) not null, id bigint generated by default as identity, instancia_practica_id bigint not null, tamano_bytes bigint not null, mime_type varchar(120) not null, ruta_archivo varchar(1000) not null, nombre_original varchar(255) not null, tipo enum ('CARTA_PRESENTACION','CONVENIO','OTRO') not null, primary key (id))
+Hibernate: create table programa_configuraciones (nota_minima_aprobacion float(53) not null, numero_practicas integer not null, semanas_seguimiento integer not null, umbral_inactividad_dias integer not null, vigente boolean not null, creado_en timestamp(6) not null, id bigint generated by default as identity, programa_id bigint not null, requisitos_cierre varchar(1500), primary key (id))
+Hibernate: create table programas (activo boolean not null, numero_total_practicas integer not null, promedio_minimo_general float(53), actualizado_en timestamp(6) not null, creado_en timestamp(6) not null, facultad_id bigint not null, id bigint generated by default as identity, nombre varchar(150) not null, descripcion varchar(500), primary key (id))
+Hibernate: create table requisitos_practica (creditos_minimos integer not null, numero_practica integer not null, promedio_minimo float(53) not null, requiere_practica_anterior_aprobada boolean not null, id bigint generated by default as identity, programa_id bigint not null, documentos_requeridos varchar(1000), primary key (id))
+Hibernate: create table seguimientos_semanales (semana integer not null, actualizado_en timestamp(6) not null, creado_en timestamp(6) not null, creado_por_id bigint, id bigint generated by default as identity, instancia_practica_id bigint not null, revisado_en timestamp(6), revisado_por_id bigint, evidencias varchar(2000), actividades TEXT, dificultades TEXT, logros TEXT, observaciones_docente TEXT, estado enum ('APROBADO','PENDIENTE','RECHAZADO') not null, primary key (id), constraint uq_seguimiento_semana unique (instancia_practica_id, semana))
+Hibernate: create table sustentacion_jurados (sustentacion_id bigint not null, jurado varchar(180))
+Hibernate: create table sustentaciones_practica (acta_firmada boolean not null, fecha date not null, coordinador_id bigint not null, creado_en timestamp(6) not null, id bigint generated by default as identity, instancia_practica_id bigint not null unique, acta_url varchar(1000), resultado enum ('APROBADO','NO_APROBADO'), primary key (id))
+Hibernate: create table tutores_empresariales (activo boolean not null, disponible boolean not null, actualizado_en timestamp(6) not null, creado_en timestamp(6) not null, empresa_id bigint not null, id bigint generated by default as identity, telefono varchar(20), cargo varchar(100), correo varchar(150) not null unique, nombre varchar(150) not null, primary key (id))
+Hibernate: create table usuarios (activo boolean not null, enviado_al_proceso boolean not null, primer_ingreso boolean not null, semestre integer, actualizado_en timestamp(6) not null, creado_en timestamp(6) not null, facultad_id bigint, id bigint generated by default as identity, programa_id bigint, ultimo_acceso timestamp(6), identificacion varchar(20) unique, telefono varchar(20), correo varchar(150) not null unique, contacto_emergencia varchar(200), nombre varchar(200) not null, foto_perfil varchar(500), motivo_no_apto varchar(500), password_hash varchar(255) not null, estado_cuenta enum ('ACTIVO','PENDIENTE') not null, estado_estudiante enum ('APTO','NO_APTO'), etiqueta_cargo enum ('COORDINACION_ACADEMICA','SECRETARIA'), rol enum ('ADMIN_DTI','COORDINACION_ACADEMICA','COORDINADOR_PRACTICAS','DIRECCION','DOCENTE_ASESOR','ESTUDIANTE','TUTOR_EMPRESARIAL') not null, primary key (id))
+Hibernate: create table vacantes (cupos_ocupados integer not null, cupos_totales integer not null check (cupos_totales>=1), fecha_publicacion date, actualizado_en timestamp(6) not null, creado_en timestamp(6) not null, empresa_id bigint not null, id bigint generated by default as identity, area varchar(200) not null, motivo_rechazo varchar(500), estado enum ('CERRADA','DISPONIBLE','PENDIENTE','RECHAZADA') not null, primary key (id))
+Hibernate: create index idx_bitacora_fecha on bitacora_auditoria (fecha_hora)
+Hibernate: create index idx_bitacora_usuario on bitacora_auditoria (usuario_id)
+Hibernate: create index idx_bitacora_tipo on bitacora_auditoria (tipo_accion)
+Hibernate: create index idx_correo_actor_fecha on bitacora_correos (actor_id, fecha_envio)
+Hibernate: create index idx_correo_evento on bitacora_correos (tipo_evento)
+Hibernate: create index idx_empresa_estado on empresas (estado)
+Hibernate: create index idx_encuesta_estado on encuestas_satisfaccion (estado)
+Hibernate: create index idx_eval_estado on evaluaciones_finales (estado)
+Hibernate: create index idx_hv_estudiante on hojas_de_vida (estudiante_id)
+Hibernate: create index idx_hv_estado on hojas_de_vida (estado)
+Hibernate: create index idx_instancia_expediente on instancias_practica (expediente_id)
+Hibernate: create index idx_instancia_estado on instancias_practica (estado)
+Hibernate: create index idx_plan_instancia on planes_practica (instancia_practica_id)
+Hibernate: create index idx_doc_instancia on practica_documentos (instancia_practica_id)
+Hibernate: create index idx_doc_tipo on practica_documentos (tipo)
+Hibernate: create index idx_config_programa_vigente on programa_configuraciones (programa_id, vigente)
+Hibernate: create index idx_config_programa_fecha on programa_configuraciones (programa_id, creado_en)
+Hibernate: create index idx_seg_instancia on seguimientos_semanales (instancia_practica_id)
+Hibernate: create index idx_seg_estado on seguimientos_semanales (estado)
+Hibernate: create index idx_tutor_empresa on tutores_empresariales (empresa_id)
+Hibernate: create index idx_usuario_rol on usuarios (rol)
+Hibernate: create index idx_vacante_empresa on vacantes (empresa_id)
+Hibernate: create index idx_vacante_estado on vacantes (estado)
+Hibernate: alter table if exists bitacora_auditoria add constraint FKbf19my35voa0s7lkgbxjxinfk foreign key (usuario_id) references usuarios
+Hibernate: alter table if exists catalogo_practicas add constraint FKtih09c02bkad0poowhi47cwyn foreign key (programa_id) references programas
+Hibernate: alter table if exists empresa_areas add constraint FKl62begeiurmmif89i7em7itnu foreign key (empresa_id) references empresas
+Hibernate: alter table if exists encuesta_preguntas add constraint FK1sxyne2sn0bqrhmeohoqcpnmj foreign key (encuesta_id) references encuestas_satisfaccion
+Hibernate: alter table if exists encuesta_respuestas add constraint FKh148uxeppxqo3i6a0rvgfan04 foreign key (encuesta_id) references encuestas_satisfaccion
+Hibernate: alter table if exists encuestas_satisfaccion add constraint FK6fasgwpu1cwqesfigki8de3p9 foreign key (instancia_practica_id) references instancias_practica
+Hibernate: alter table if exists evaluacion_final_criterios add constraint FKc6k0saqikt7fo1ovcwcwmou1k foreign key (evaluacion_id) references evaluaciones_finales
+Hibernate: alter table if exists evaluaciones_finales add constraint FKtk93sj65jtya2hpnbeqmjrjtx foreign key (instancia_practica_id) references instancias_practica
+Hibernate: alter table if exists expedientes_estudiantes add constraint FK2upqdv04bbeyfdq459w2swasy foreign key (estudiante_id) references usuarios
+Hibernate: alter table if exists hojas_de_vida add constraint FK1dsh6i8nfhuttxwnv6vhagq8o foreign key (estudiante_id) references usuarios
+Hibernate: alter table if exists hojas_de_vida add constraint FKqith6l14w3rt9klymmbggsr18 foreign key (expediente_id) references expedientes_estudiantes
+Hibernate: alter table if exists instancias_practica add constraint FKfs1jjoq4js43kipu2jpvtg748 foreign key (docente_asesor_id) references usuarios
+Hibernate: alter table if exists instancias_practica add constraint FK550ehm16b5y95hu9t91mfiawi foreign key (empresa_id) references empresas
+Hibernate: alter table if exists instancias_practica add constraint FK3srtx021kimugr2q9ysb977f1 foreign key (expediente_id) references expedientes_estudiantes
+Hibernate: alter table if exists instancias_practica add constraint FKnlpgfgtoulk47djecv9lotkw2 foreign key (tutor_empresarial_id) references tutores_empresariales
+Hibernate: alter table if exists notas_finales_coordinador add constraint FKj6072u9ajal7khowuaqgo4qaa foreign key (coordinador_id) references usuarios
+Hibernate: alter table if exists notas_finales_coordinador add constraint FKmk3uj6a4w69rtc3tkocv4xt37 foreign key (instancia_practica_id) references instancias_practica
+Hibernate: alter table if exists paz_y_salvos add constraint FKsrm6pejibgsmesyt7avtfdmgd foreign key (instancia_practica_id) references instancias_practica
+Hibernate: alter table if exists planes_practica add constraint FKhaly7viwvf8lgaj8nh8usyrof foreign key (instancia_practica_id) references instancias_practica
+Hibernate: alter table if exists practica_documentos add constraint FKtk53jmmg6hvj9ie455xalksm1 foreign key (instancia_practica_id) references instancias_practica
+Hibernate: alter table if exists programa_configuraciones add constraint FKpx6e8xduhb36schd492ctaoab foreign key (programa_id) references programas
+Hibernate: alter table if exists programas add constraint FK7i0bt2wwphl18q1l6wipufr8c foreign key (facultad_id) references facultades
+Hibernate: alter table if exists requisitos_practica add constraint FKrkesnl01kgcayqmo5n526bar0 foreign key (programa_id) references programas
+Hibernate: alter table if exists seguimientos_semanales add constraint FKqthrf1wt40y9dftegcg7vvqt4 foreign key (instancia_practica_id) references instancias_practica
+Hibernate: alter table if exists sustentacion_jurados add constraint FKgyojvcynnttmhjianta0auao7 foreign key (sustentacion_id) references sustentaciones_practica
+Hibernate: alter table if exists sustentaciones_practica add constraint FK62uddaq03m8d97tgroq2yui1y foreign key (coordinador_id) references usuarios
+Hibernate: alter table if exists sustentaciones_practica add constraint FKmc7w78ehg7o1qe4tw6v7p1r86 foreign key (instancia_practica_id) references instancias_practica
+Hibernate: alter table if exists tutores_empresariales add constraint FKf0v7fou1msy3bgoibhl5jpjjq foreign key (empresa_id) references empresas
+Hibernate: alter table if exists usuarios add constraint FKgk4ningm4jbhp2a0odrq9kpwl foreign key (facultad_id) references facultades
+Hibernate: alter table if exists usuarios add constraint FKfh1anse1pqcjxltak4oxqf8jj foreign key (programa_id) references programas
+Hibernate: alter table if exists vacantes add constraint FKtelie5sd8rei8md4xr0ui1mox foreign key (empresa_id) references empresas
+2026-06-03T15:23:50.926-05:00  INFO 1984 --- [  restartedMain] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2026-06-03T15:23:51.369-05:00  INFO 1984 --- [  restartedMain] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2026-06-03T15:23:52.459-05:00  INFO 1984 --- [  restartedMain] eAuthenticationProviderManagerConfigurer : Global AuthenticationManager configured with AuthenticationProvider bean with name authenticationProvider
+2026-06-03T15:23:52.462-05:00  WARN 1984 --- [  restartedMain] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with an AuthenticationProvider bean. UserDetailsService beans will not be used for username/password login. Consider removing the AuthenticationProvider bean. Alternatively, consider using the UserDetailsService in a manually instantiated DaoAuthenticationProvider.
+2026-06-03T15:23:54.224-05:00  INFO 1984 --- [  restartedMain] o.s.b.d.a.OptionalLiveReloadServer       : LiveReload server is running on port 35729
+2026-06-03T15:23:54.286-05:00  INFO 1984 --- [  restartedMain] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8080 (http) with context path '/api'
+2026-06-03T15:23:54.305-05:00  INFO 1984 --- [  restartedMain] .e.c.p.PracticasEmpresarialesApplication : Started PracticasEmpresarialesApplication in 11.947 seconds (process running for 12.687)
+Hibernate: select u1_0.id from usuarios u1_0 where u1_0.correo=? fetch first ? rows only
+Hibernate: insert into usuarios (activo,actualizado_en,contacto_emergencia,correo,creado_en,enviado_al_proceso,estado_cuenta,estado_estudiante,etiqueta_cargo,facultad_id,foto_perfil,identificacion,motivo_no_apto,nombre,password_hash,primer_ingreso,programa_id,rol,semestre,telefono,ultimo_acceso,id) values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,default)
+2026-06-03T15:23:54.636-05:00  INFO 1984 --- [  restartedMain] c.e.c.practicas.config.DataInitializer   : =======================================================
+2026-06-03T15:23:54.637-05:00  INFO 1984 --- [  restartedMain] c.e.c.practicas.config.DataInitializer   :   USUARIO DTI INICIAL CREADO
+2026-06-03T15:23:54.638-05:00  INFO 1984 --- [  restartedMain] c.e.c.practicas.config.DataInitializer   :   Correo : dti@cue.edu.co
+2026-06-03T15:23:54.639-05:00  INFO 1984 --- [  restartedMain] c.e.c.practicas.config.DataInitializer   :   CAMBIA app.init.admin.password EN PRODUCCIÓN
+2026-06-03T15:23:54.640-05:00  INFO 1984 --- [  restartedMain] c.e.c.practicas.config.DataInitializer   : =======================================================
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD FAILURE
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  03:46 min
+[INFO] Finished at: 2026-06-03T15:26:59-05:00
+[INFO] ------------------------------------------------------------------------
+[ERROR] Failed to execute goal org.springframework.boot:spring-boot-maven-plugin:3.3.6:run (default-cli) on project practicas-empresariales: Process terminated with exit code: -1 -> [Help 1]
+[ERROR] 
+[ERROR] To see the full stack trace of the errors, re-run Maven with the -e switch.
+[ERROR] Re-run Maven using the -X switch to enable full debug logging.
+[ERROR] 
+[ERROR] For more information about the errors and possible solutions, please read the following articles:
+[ERROR] [Help 1] http://cwiki.apache.org/confluence/display/MAVEN/MojoExecutionException

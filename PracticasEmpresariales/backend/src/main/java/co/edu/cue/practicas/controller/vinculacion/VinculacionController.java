@@ -51,12 +51,12 @@ public class VinculacionController {
                 service.listarPracticasEnCurso(actor)));
     }
 
-    /** GPE-168 — Prácticas activas del docente asesor */
+    /** GPE-168 — Prácticas activas del docente asesor o tutor empresarial autenticado */
     @GetMapping("/mis-practicantes")
     public ResponseEntity<ApiResponse<List<InstanciaPracticaResponse>>> misPracticantes(
             @AuthenticationPrincipal CustomUserDetails actor) {
         return ResponseEntity.ok(ApiResponse.ok("Practicantes asignados.",
-                service.listarPracticasDeDocente(actor)));
+                service.listarMisPracticantes(actor)));
     }
 
     /** GPE-132 — Práctica activa del estudiante autenticado */

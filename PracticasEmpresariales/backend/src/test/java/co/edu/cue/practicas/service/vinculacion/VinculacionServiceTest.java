@@ -46,6 +46,7 @@ class VinculacionServiceTest {
     private CustomUserDetails coordinador;
     private CustomUserDetails noCoordinador;
     private CustomUserDetails docente;
+    private CustomUserDetails tutor;
     private InstanciaPractica instanciaAsignada;
     private InstanciaPracticaResponse responseEjemplo;
 
@@ -58,6 +59,7 @@ class VinculacionServiceTest {
         coordinador = udConRol(Rol.COORDINADOR_PRACTICAS, 1L);
         noCoordinador = udConRol(Rol.ESTUDIANTE, 10L);
         docente = udConRol(Rol.DOCENTE_ASESOR, 5L);
+        tutor = udConRolYCorreo(Rol.TUTOR_EMPRESARIAL, 6L, "tutor@corp.com");
 
         Empresa empresa = Empresa.builder().id(1L).razonSocial("TechCorp")
                 .correo("tech@corp.com").nombreContacto("Juan").estado(EstadoEmpresa.APROBADA).build();
@@ -273,13 +275,40 @@ class VinculacionServiceTest {
                 .isInstanceOf(AccesoNoAutorizadoException.class);
     }
 
+    @Test
+    @DisplayName("listarMisPracticantes() para tutor retorna prácticas por correo del tutor asignado")
+    void listarMisPracticantesTutorExitoso() {
+        when(instanciaPracticaRepository.findByTutorEmpresarial_CorreoIgnoreCaseAndEstadoNotIn(
+                eq("tutor@corp.com"), anyList()))
+                .thenReturn(List.of(instanciaAsignada));
+        when(mapper.toInstanciaPracticaResponse(any())).thenReturn(responseEjemplo);
+
+        List<InstanciaPracticaResponse> resultado = service.listarMisPracticantes(tutor);
+
+        assertThat(resultado).hasSize(1);
+        verify(instanciaPracticaRepository).findByTutorEmpresarial_CorreoIgnoreCaseAndEstadoNotIn(
+                eq("tutor@corp.com"),
+                eq(List.of(EstadoPractica.FINALIZADA, EstadoPractica.CANCELADA)));
+    }
+
+    @Test
+    @DisplayName("listarMisPracticantes() bloquea roles no autorizados")
+    void listarMisPracticantesRolNoAutorizado() {
+        assertThatThrownBy(() -> service.listarMisPracticantes(noCoordinador))
+                .isInstanceOf(AccesoNoAutorizadoException.class);
+    }
+
     // =================================================================
     // Helpers
     // =================================================================
 
     private CustomUserDetails udConRol(Rol rol, Long id) {
+        return udConRolYCorreo(rol, id, "test@cue.edu.co");
+    }
+
+    private CustomUserDetails udConRolYCorreo(Rol rol, Long id, String correo) {
         return new CustomUserDetails(Usuario.builder()
-                .id(id).nombre("Test " + rol).correo("test@cue.edu.co")
+                .id(id).nombre("Test " + rol).correo(correo)
                 .passwordHash("hash").rol(rol).activo(true).build());
     }
 }

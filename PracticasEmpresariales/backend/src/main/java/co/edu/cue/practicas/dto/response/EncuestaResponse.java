@@ -7,6 +7,7 @@ import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -36,8 +37,8 @@ public class EncuestaResponse {
                 .actorAsignadoId(e.getActorAsignadoId())
                 .actorAsignadoCorreo(e.getActorAsignadoCorreo())
                 .enlaceDirecto(e.getTokenAcceso() != null ? "/api/v1/encuestas-satisfaccion/publica/" + e.getTokenAcceso() : null)
-                .preguntas(e.getPreguntas())
-                .respuestas(e.getRespuestas())
+                .preguntas(e.getPreguntas() != null ? new ArrayList<>(e.getPreguntas()) : List.of())
+                .respuestas(e.getRespuestas() != null ? new ArrayList<>(e.getRespuestas()) : List.of())
                 .enviada(e.isEnviada())
                 .completada(e.isCompletada())
                 .estado(e.getEstado())

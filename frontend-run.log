@@ -1,0 +1,57 @@
+
+> practicas-empresariales-cue@1.0.0 dev
+> vite --host 127.0.0.1
+
+
+  [32m[1mVITE[22m v6.4.2[39m  [2mready in [0m[1m668[22m[2m[0m ms[22m
+
+  [32m➜[39m  [1mLocal[22m:   [36mhttp://127.0.0.1:[1m5173[22m/[39m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/encuestas/EncuestaPublicaPage.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/reportes/ReportesPage.tsx, /src/pages/direccion/IndicadoresPage.tsx[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/calificaciones/EvaluacionFinalForm.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/cierre/ChecklistCierrePanel.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/encuestas/EncuestaRespuestaForm.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/encuestas/EncuestasAsignadasPanel.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/calificaciones/EvaluacionFinalPage.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/calificaciones/NotaFinalCoordinadorPage.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/configuracion/ConfiguracionSprint4Page.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/cierre/CierrePracticaPage.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/estudiante/EncuestasEstudiantePage.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/common/Sidebar/Sidebar.tsx[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/direccion/IndicadoresPage.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/docente-asesor/MisPracticantesPage.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/reportes/ReportesPage.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/seguimiento/TableroSeguimientoPage.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tutor-empresarial/EncuestasPage.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/routes/AppRouter.tsx, /src/index.css[22m
+[2m5:15:42 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/types/index.ts[22m
+[2m5:15:43 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/common/Sidebar/Sidebar.tsx[22m
+[2m5:15:43 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tutor-empresarial/MisPracticantesPage.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/calificaciones/EvaluacionFinalForm.tsx[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/components/common/Sidebar/Sidebar.tsx[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/cierre/ChecklistCierrePanel.tsx[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/calificaciones/EvaluacionFinalPage.tsx[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/calificaciones/NotaFinalCoordinadorPage.tsx[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/dashboard/DashboardPage.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/direccion/IndicadoresPage.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/docente-asesor/MisPracticantesPage.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/cierre/CierrePracticaPage.tsx[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/reportes/ReportesPage.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/seguimiento/TableroSeguimientoPage.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/configuracion/ConfiguracionSprint4Page.tsx[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tutor-empresarial/EncuestasPage.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/routes/AppRouter.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/admin-dti/FacultadesPage.tsx, /src/context/AuthContext.tsx, /src/pages/auth/CambiarPasswordPage.tsx, /src/pages/coordinacion-academica/EstudiantesValidacionPage.tsx, /src/pages/estudiante/MisDocumentosPage.tsx, /src/pages/admin-dti/ProgramasPage.tsx, /src/pages/admin-dti/AuditoriaPage.tsx, /src/pages/vinculacion/VinculacionPage.tsx, /src/pages/coordinacion-academica/PracticasPage.tsx, /src/pages/usuarios/UsuariosPage.tsx, /src/pages/dashboard/DashboardPage.tsx, /src/pages/docente-asesor/SustentacionesPage.tsx, /src/pages/seguimiento/TableroSeguimientoPage.tsx, /src/pages/docente-asesor/MisPracticantesPage.tsx, /src/pages/estudiante/PlanPracticaPage.tsx, /src/pages/estudiante/SeguimientoEstudiantePage.tsx, /src/pages/estudiante/MiPracticaPage.tsx, /src/pages/seguimiento/SeguimientoDetallePage.tsx, /src/pages/tutor-empresarial/MisPracticantesPage.tsx, /src/pages/tutor-empresarial/PlanesPage.tsx, /src/pages/direccion/IndicadoresPage.tsx, /src/pages/asignaciones/NuevaAsignacionPage.tsx, /src/pages/estudiantes/EstudiantesPage.tsx, /src/pages/asignaciones/AsignacionesPage.tsx, /src/pages/empresas/EmpresasPage.tsx, /src/pages/vacantes/VacantesPage.tsx, /src/pages/empresas/TutoresPage.tsx, /src/pages/estudiante/MiExpedientePage.tsx[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/estudiante/PlanPracticaPage.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/types/index.ts[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/reportes/ReportesPage.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/estudiante/EncuestasEstudiantePage.tsx[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tutor-empresarial/EncuestasPage.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/tutor-empresarial/MisPracticantesPage.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/routes/AppRouter.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/estudiantes/EstudiantesPage.tsx, /src/pages/coordinacion-academica/PracticasPage.tsx[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/index.css, /src/pages/docente-asesor/SustentacionesPage.tsx, /src/pages/seguimiento/TableroSeguimientoPage.tsx, /src/pages/docente-asesor/MisPracticantesPage.tsx, /src/pages/estudiante/PlanPracticaPage.tsx, /src/pages/estudiante/SeguimientoEstudiantePage.tsx, /src/pages/estudiante/MiPracticaPage.tsx, /src/pages/seguimiento/SeguimientoDetallePage.tsx, /src/pages/tutor-empresarial/MisPracticantesPage.tsx, /src/pages/tutor-empresarial/PlanesPage.tsx, /src/pages/direccion/IndicadoresPage.tsx[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mpage reload [39m[2msrc/services/sprint4Service.ts[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/encuestas/EncuestaRespuestaForm.tsx, /src/index.css[22m
+[2m5:15:57 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/components/encuestas/EncuestasAsignadasPanel.tsx, /src/index.css[22m
+[2m5:15:58 p. m.[22m [36m[1m[vite][22m[39m [90m[2m(client)[22m[39m [32mhmr update [39m[2m/src/pages/encuestas/EncuestaPublicaPage.tsx, /src/index.css[22m
