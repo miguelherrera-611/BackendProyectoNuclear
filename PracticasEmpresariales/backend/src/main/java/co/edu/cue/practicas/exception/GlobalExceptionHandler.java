@@ -9,6 +9,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -58,6 +59,12 @@ public class GlobalExceptionHandler {
             mensaje += " Valores permitidos: " + java.util.Arrays.toString(e.getRequiredType().getEnumConstants());
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(mensaje));
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<ApiResponse<Void>> manejarMetodoNoSoportado(HttpRequestMethodNotSupportedException e) {
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(ApiResponse.error("Método HTTP no permitido: " + e.getMethod()));
     }
 
     @ExceptionHandler(Exception.class)

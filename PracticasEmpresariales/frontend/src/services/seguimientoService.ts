@@ -50,4 +50,9 @@ export const seguimientoService = {
     const res = await api.get<ApiResponse<InstanciaPracticaResponseV2>>('/api/v1/vinculaciones/mi-practica')
     return res.data.datos!
   },
+
+  async obtenerInstancia(instanciaId: number): Promise<InstanciaPracticaResponseV2> {
+    const res = await api.get<ApiResponse<InstanciaPracticaResponseV2>>(`/api/v1/vinculaciones/${instanciaId}`)
+    return res.data.datos!
+  },
 }

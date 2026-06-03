@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import type { PlanPracticaResponse, InstanciaPracticaResponse, EstadoPlan } from '../../types'
 import { planPracticaService } from '../../services/planPracticaService'
 import { seguimientoService } from '../../services/seguimientoService'
@@ -15,6 +15,7 @@ const BADGE: Record<EstadoPlan, string> = {
 export default function PlanPracticaPage() {
   const { user } = useAuth()
   const navigate = useNavigate()
+  const { instanciaId } = useParams<{ instanciaId: string }>()
   const [practica, setPractica] = useState<InstanciaPracticaResponse | null>(null)
   const [plan, setPlan] = useState<PlanPracticaResponse | null>(null)
   const [objetivos, setObjetivos] = useState('')
@@ -31,7 +32,10 @@ export default function PlanPracticaPage() {
   useEffect(() => {
     const init = async () => {
       try {
-        const p = await seguimientoService.miPractica()
+        // Estudiante usa su propio endpoint; docente y tutor usan el instanciaId de la ruta
+        const p = instanciaId
+          ? await seguimientoService.obtenerInstancia(Number(instanciaId))
+          : await seguimientoService.miPractica()
         setPractica(p)
         try {
           const planData = await planPracticaService.obtenerActual(p.id)
@@ -39,7 +43,7 @@ export default function PlanPracticaPage() {
           setObjetivos(planData.objetivos)
           setCronograma(planData.cronograma)
         } catch {
-          // No plan yet
+          // No hay plan aún
         }
       } catch {
         setError('No se pudo cargar la práctica activa.')
@@ -48,7 +52,7 @@ export default function PlanPracticaPage() {
       }
     }
     init()
-  }, [])
+  }, [instanciaId])
 
   const handleGuardar = async () => {
     if (!practica) return

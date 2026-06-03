@@ -2,6 +2,7 @@ package co.edu.cue.practicas.config;
 
 import co.edu.cue.practicas.security.CustomUserDetailsService;
 import co.edu.cue.practicas.security.jwt.JwtAuthenticationFilter;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -56,6 +57,9 @@ public class SecurityConfig {
                 // El control granular por rol lo hace el ScopeValidationAspect
                 .anyRequest().authenticated()
             )
+            .exceptionHandling(ex -> ex
+                .authenticationEntryPoint((req, res, e) ->
+                    res.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Token inválido o sesión expirada.")))
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
             .headers(headers -> headers.frameOptions(fo -> fo.disable())); // permite H2 console
 

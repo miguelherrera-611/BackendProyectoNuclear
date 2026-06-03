@@ -23,6 +23,11 @@ public class CatalogoPracticaController {
 
     private final CatalogoPracticaService service;
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<CatalogoPracticaResponse>>> listarTodos() {
+        return ResponseEntity.ok(ApiResponse.ok("Catálogos.", service.listarTodos()));
+    }
+
     @PostMapping
     public ResponseEntity<ApiResponse<CatalogoPracticaResponse>> crear(
             @Valid @RequestBody CrearCatalogoPracticaRequest req) {

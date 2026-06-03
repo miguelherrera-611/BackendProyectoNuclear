@@ -1,5 +1,5 @@
 import api from './api'
-import type { ApiResponse, CatalogoPracticaResponse, Pageable } from '../types'
+import type { ApiResponse, CatalogoPracticaResponse } from '../types'
 
 interface CrearCatalogoRequest {
   programaId: number
@@ -12,12 +12,10 @@ interface CrearCatalogoRequest {
   documentosRequeridos?: string
 }
 
-// Backend: @RequestMapping("/api/v1/catalogo-practicas")
-// Con context-path=/api el frontend debe llamar /api/v1/catalogo-practicas
 export const catalogoPracticaService = {
   async listar(): Promise<CatalogoPracticaResponse[]> {
-    const r = await api.get<ApiResponse<Pageable<CatalogoPracticaResponse>>>('/api/v1/catalogo-practicas')
-    return r.data.datos?.content ?? []
+    const r = await api.get<ApiResponse<CatalogoPracticaResponse[]>>('/api/v1/catalogo-practicas')
+    return r.data.datos ?? []
   },
 
   async crear(data: CrearCatalogoRequest): Promise<CatalogoPracticaResponse> {

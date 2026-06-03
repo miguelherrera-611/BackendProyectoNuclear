@@ -66,6 +66,15 @@ public class CatalogoPracticaService {
     @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
     @Transactional(readOnly = true)
+    public List<CatalogoPracticaResponse> listarTodos() {
+        return catalogoRepository.findAll().stream()
+                .map(mapper::toCatalogoPracticaResponse)
+                .toList();
+    }
+
+    @SoloLectura
+    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
+    @Transactional(readOnly = true)
     public List<CatalogoPracticaResponse> listarPorPrograma(Long programaId) {
         return catalogoRepository.findByPrograma_Id(programaId).stream()
                 .map(mapper::toCatalogoPracticaResponse)

@@ -18,6 +18,7 @@ import co.edu.cue.practicas.security.CustomUserDetails;
 import jakarta.transaction.Transactional;
 import org.springframework.context.ApplicationEventPublisher;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public abstract class AbstractEvaluacionFinalTemplate {
@@ -76,12 +77,14 @@ public abstract class AbstractEvaluacionFinalTemplate {
     }
 
     private List<CriterioEvaluacion> mapearCriterios(List<CriterioEvaluacionRequest> criterios) {
-        return criterios.stream()
-                .map(c -> CriterioEvaluacion.builder()
-                        .nombre(c.getNombre())
-                        .peso(c.getPeso())
-                        .puntaje(c.getPuntaje())
-                        .build())
-                .toList();
+        List<CriterioEvaluacion> resultado = new ArrayList<>(criterios.size());
+        for (CriterioEvaluacionRequest c : criterios) {
+            resultado.add(CriterioEvaluacion.builder()
+                    .nombre(c.getNombre())
+                    .peso(c.getPeso())
+                    .puntaje(c.getPuntaje())
+                    .build());
+        }
+        return resultado;
     }
 }

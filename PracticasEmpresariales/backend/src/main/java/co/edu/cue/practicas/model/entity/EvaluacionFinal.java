@@ -90,7 +90,8 @@ public class EvaluacionFinal {
             // SPRINT 4 - Proxy: la entidad protege la evaluacion ante intentos de modificacion post-cierre.
             throw new OperacionNoPermitidaException("La evaluacion es inmutable despues del cierre formal.");
         }
-        this.criterios = nuevosCriterios;
+        this.criterios.clear();
+        this.criterios.addAll(nuevosCriterios);
         this.promedioFinal = calcularPromedio(nuevosCriterios);
         this.observaciones = observaciones;
         this.estado = EstadoEvaluacionFinal.COMPLETADA;

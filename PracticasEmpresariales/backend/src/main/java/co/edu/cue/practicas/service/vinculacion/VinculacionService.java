@@ -169,6 +169,12 @@ public class VinculacionService {
                 throw new AccesoNoAutorizadoException("No tiene acceso a esta instancia de práctica.");
             return;
         }
+        if (rol == Rol.TUTOR_EMPRESARIAL) {
+            if (instancia.getTutorEmpresarial() == null
+                    || !instancia.getTutorEmpresarial().getCorreo().equals(actor.getUsername()))
+                throw new AccesoNoAutorizadoException("No tiene acceso a esta instancia de práctica.");
+            return;
+        }
         if (rol == Rol.ESTUDIANTE) {
             if (instancia.getExpediente() == null || !instancia.getExpediente().getEstudiante().getId().equals(actor.getId()))
                 throw new AccesoNoAutorizadoException("No tiene acceso a esta instancia de práctica.");

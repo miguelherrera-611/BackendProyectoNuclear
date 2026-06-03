@@ -16,17 +16,40 @@ export default function DashboardPage() {
   const navigate = useNavigate()
   const [dashboard, setDashboard] = useState<DashboardResponse | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
+  const cargar = () => {
+    setError(null)
+    setLoading(true)
     dashboardService.obtener()
       .then(setDashboard)
+      .catch(() => setError('No se pudo cargar el panel. Verifica que el servidor esté activo.'))
       .finally(() => setLoading(false))
-  }, [])
+  }
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  useEffect(() => { cargar() }, [])
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin text-4xl">⟳</div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <p className="text-red-600 font-semibold text-lg">{error}</p>
+          <button
+            onClick={cargar}
+            className="mt-4 px-4 py-2 bg-cue-primary text-white rounded hover:bg-cue-primary/90 transition-colors"
+          >
+            Reintentar
+          </button>
+        </div>
       </div>
     )
   }
@@ -54,7 +77,7 @@ export default function DashboardPage() {
 
       {/* Secciones del panel */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {dashboard?.secciones.map((seccion) => (
+        {dashboard?.secciones?.map((seccion) => (
           soloLectura ? (
             <div
               key={seccion.id}
