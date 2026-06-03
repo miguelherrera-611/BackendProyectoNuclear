@@ -21,6 +21,18 @@ public interface InstanciaPracticaRepository extends JpaRepository<InstanciaPrac
 
     long countByEstado(EstadoPractica estado);
 
+    long countByEstadoAndExpediente_Estudiante_Programa_Id(EstadoPractica estado, Long programaId);
+
+    long countByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(EstadoPractica estado, Long facultadId);
+
+    long countByEstadoAndSemestreAcademico(EstadoPractica estado, String semestreAcademico);
+
+    long countByEstadoAndExpediente_Estudiante_Programa_IdAndSemestreAcademico(
+            EstadoPractica estado, Long programaId, String semestreAcademico);
+
+    long countByEstadoAndExpediente_Estudiante_Programa_Facultad_IdAndSemestreAcademico(
+            EstadoPractica estado, Long facultadId, String semestreAcademico);
+
     long countByEstadoNotIn(List<EstadoPractica> estados);
 
     long countByExpediente_Estudiante_IdAndEstado(Long estudianteId, EstadoPractica estado);

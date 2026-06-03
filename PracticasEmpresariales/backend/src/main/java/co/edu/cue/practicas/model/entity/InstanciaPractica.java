@@ -2,6 +2,7 @@ package co.edu.cue.practicas.model.entity;
 
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.model.enums.EstadoPractica;
+import co.edu.cue.practicas.model.enums.ResultadoPractica;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -73,6 +74,9 @@ public class InstanciaPractica {
     @Column(name = "documentos_requeridos", length = 1000)
     private String documentosRequeridos;
 
+    @Column(name = "semestre_academico", length = 20)
+    private String semestreAcademico;
+
     // ── Estado — PATRÓN STATE ─────────────────────────────────────────────────
 
     @Enumerated(EnumType.STRING)
@@ -122,6 +126,13 @@ public class InstanciaPractica {
     @Column(name = "vinculacion_confirmada_en")
     private LocalDateTime vinculacionConfirmadaEn;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "resultado_cierre", length = 20)
+    private ResultadoPractica resultadoCierre;
+
+    @Column(name = "fecha_cierre")
+    private LocalDateTime fechaCierre;
+
     @Column(nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime creadoEn = LocalDateTime.now();
@@ -143,6 +154,16 @@ public class InstanciaPractica {
     public void finalizar() {
         validarEstado(EstadoPractica.EN_CURSO, "finalizar");
         this.estado = EstadoPractica.FINALIZADA;
+    }
+
+    public void finalizarConResultado(ResultadoPractica resultado) {
+        // SPRINT 4 - State: cierre formal solo avanza desde EN_CURSO hacia FINALIZADA.
+        finalizar();
+        if (resultado == null) {
+            throw new OperacionNoPermitidaException("El resultado de cierre es obligatorio.");
+        }
+        this.resultadoCierre = resultado;
+        this.fechaCierre = LocalDateTime.now();
     }
 
     public void cancelar() {
@@ -173,6 +194,7 @@ public class InstanciaPractica {
 
     /** OCL: practicaInmutableCuandoFinalizada */
     public boolean esInmutable() {
+        // SPRINT 4 - Proxy: punto unico para negar escrituras sobre expediente cerrado/cancelado.
         return this.estado == EstadoPractica.FINALIZADA
                 || this.estado == EstadoPractica.CANCELADA;
     }

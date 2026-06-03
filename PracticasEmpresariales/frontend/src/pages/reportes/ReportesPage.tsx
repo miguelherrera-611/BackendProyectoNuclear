@@ -1,47 +1,70 @@
+import { useState } from 'react'
+import { sprint4Service } from '../../services/sprint4Service'
+import type { ReporteEstadoProcesoResponse, TipoExportacionReporte } from '../../types'
+
 export default function ReportesPage() {
-  const reportes = [
-    { id: 1, titulo: 'Reporte de prácticas activas', descripcion: 'Listado completo de prácticas EN_CURSO con información de empresa, docente y estudiante.', icono: '📊', tipo: 'Excel / PDF' },
-    { id: 2, titulo: 'Reporte de asignaciones por período', descripcion: 'Historial de asignaciones realizadas en un rango de fechas específico.', icono: '📅', tipo: 'Excel' },
-    { id: 3, titulo: 'Reporte de seguimientos', descripcion: 'Estado de los seguimientos semanales de todas las prácticas activas.', icono: '📝', tipo: 'PDF' },
-    { id: 4, titulo: 'Reporte de empresas participantes', descripcion: 'Empresas registradas y aprobadas con sus vacantes y cupos.', icono: '🏢', tipo: 'Excel' },
-    { id: 5, titulo: 'Reporte de rendimiento académico', descripcion: 'Promedio de calificaciones y estados de los estudiantes por programa.', icono: '🎓', tipo: 'PDF' },
-    { id: 6, titulo: 'Bitácora de auditoría', descripcion: 'Registro completo de acciones realizadas en el sistema por todos los usuarios.', icono: '🔍', tipo: 'PDF' },
-  ]
+  const [semestreAcademico, setSemestreAcademico] = useState('')
+  const [formato, setFormato] = useState<TipoExportacionReporte>('EXCEL')
+  const [reporte, setReporte] = useState<ReporteEstadoProcesoResponse | null>(null)
+  const [mensaje, setMensaje] = useState('')
+
+  const generar = async () => {
+    setMensaje('')
+    try {
+      setReporte(await sprint4Service.reporteEstadoProceso({ semestreAcademico, formato }))
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
+      setMensaje(msg ?? 'No se pudo generar el reporte.')
+    }
+  }
+
+  const descargar = () => {
+    if (!reporte?.exportacion || !reporte.nombreArchivo) return
+    const bytes = Uint8Array.from(atob(reporte.exportacion), c => c.charCodeAt(0))
+    const blob = new Blob([bytes], { type: reporte.contentType ?? 'application/octet-stream' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = reporte.nombreArchivo
+    a.click()
+    URL.revokeObjectURL(url)
+  }
 
   return (
-    <div className="space-y-6 max-w-4xl">
+    <div className="space-y-6 max-w-5xl">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Reportes</h1>
-        <p className="text-sm text-gray-500 mt-1">Generación de reportes gerenciales del sistema de prácticas.</p>
+        <h1 className="text-2xl font-bold text-gray-900">Reporte de estado del proceso</h1>
+        <p className="text-sm text-gray-500 mt-1">Datos en tiempo real con scope del usuario autenticado.</p>
       </div>
 
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
-        <span className="text-amber-500 text-xl mt-0.5">🔔</span>
-        <div className="text-sm text-amber-800">
-          <p className="font-semibold mb-0.5">Módulo en desarrollo</p>
-          <p>La generación automática de reportes estará disponible próximamente.</p>
-        </div>
+      {mensaje && <div className="card text-sm">{mensaje}</div>}
+
+      <div className="card grid grid-cols-1 md:grid-cols-3 gap-4">
+        <input className="input-field self-end" placeholder="Semestre academico, ej. 2026-I" value={semestreAcademico} onChange={e => setSemestreAcademico(e.target.value)} />
+        <select className="input-field self-end" value={formato} onChange={e => setFormato(e.target.value as TipoExportacionReporte)}>
+          <option value="EXCEL">Excel / CSV</option>
+          <option value="PDF">PDF</option>
+        </select>
+        <button className="btn-primary" onClick={generar}>Generar reporte</button>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {reportes.map(rep => (
-          <div key={rep.id} className="card opacity-70 hover:opacity-90 transition-opacity">
-            <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-cue-light rounded-xl flex items-center justify-center text-2xl shrink-0">{rep.icono}</div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <h3 className="font-semibold text-gray-800">{rep.titulo}</h3>
-                  <span className="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">{rep.tipo}</span>
-                </div>
-                <p className="text-sm text-gray-500">{rep.descripcion}</p>
-                <button disabled className="mt-3 text-sm text-cue-primary font-medium opacity-50 cursor-not-allowed">
-                  Generar reporte →
-                </button>
-              </div>
-            </div>
+      {reporte && (
+        <div className="card space-y-4">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-semibold text-gray-900">Totales por estado</h2>
+            <button className="btn-secondary" onClick={descargar}>Descargar</button>
           </div>
-        ))}
-      </div>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            {Object.entries(reporte.estados).map(([estado, total]) => (
+              <div key={estado} className="bg-gray-50 rounded-lg p-4">
+                <p className="text-xs text-gray-500">{estado.replace(/_/g, ' ')}</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{total}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-sm text-gray-500">Total general: <strong>{reporte.total}</strong></p>
+        </div>
+      )}
     </div>
   )
 }

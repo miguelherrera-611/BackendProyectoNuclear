@@ -280,4 +280,139 @@ export interface InstanciaPracticaResponseV2 extends InstanciaPracticaResponse {
   firmaEstudiante: boolean
   vinculacionConfirmadaEn?: string
   actualizadoEn?: string
+  resultadoCierre?: ResultadoPractica
+  fechaCierre?: string
+  semestreAcademico?: string
+}
+
+// Sprint 4: evaluacion y cierre
+export type TipoEvaluacionFinal = 'DOCENTE_ASESOR' | 'TUTOR_EMPRESARIAL'
+export type EstadoEvaluacionFinal = 'PENDIENTE' | 'COMPLETADA' | 'FUERA_DE_PLAZO'
+export type ResultadoPractica = 'APROBADO' | 'NO_APROBADO'
+export type TipoEncuesta = 'PARA_TUTOR' | 'PARA_ESTUDIANTE'
+export type EstadoEncuesta = 'PENDIENTE' | 'EN_BORRADOR' | 'COMPLETADA'
+export type ResultadoSustentacion = 'APROBADO' | 'NO_APROBADO'
+export type TipoExportacionReporte = 'EXCEL' | 'PDF'
+export type TipoEventoNotificacion =
+  | 'EVALUACION_DOCENTE_COMPLETADA'
+  | 'EVALUACION_TUTOR_COMPLETADA'
+  | 'NOTA_FINAL_REGISTRADA'
+  | 'ENCUESTA_TUTOR_ENVIADA'
+  | 'ENCUESTA_ESTUDIANTE_ENVIADA'
+  | 'ENCUESTA_COMPLETADA'
+  | 'CIERRE_FORMAL_EJECUTADO'
+  | 'COORDINACION_ACADEMICA_RESULTADO'
+
+export interface CriterioEvaluacion {
+  nombre: string
+  peso: number
+  puntaje: number
+}
+
+export interface EvaluacionFinalResponse {
+  id: number
+  instanciaPracticaId: number
+  tipo: TipoEvaluacionFinal
+  evaluadorId: number
+  evaluadorNombre: string
+  criterios: CriterioEvaluacion[]
+  promedioFinal: number
+  observaciones?: string
+  estado: EstadoEvaluacionFinal
+  fecha?: string
+}
+
+export interface NotaFinalResponse {
+  id: number
+  instanciaPracticaId: number
+  notaFinal: number
+  notaMinimaAplicada: number
+  resultado: ResultadoPractica
+  observaciones?: string
+  fecha: string
+}
+
+export interface EncuestaResponse {
+  id: number
+  instanciaPracticaId: number
+  titulo: string
+  tipo: TipoEncuesta
+  actorAsignadoId: number
+  actorAsignadoCorreo: string
+  enlaceDirecto?: string
+  preguntas: string[]
+  respuestas: string[]
+  enviada: boolean
+  completada: boolean
+  estado: EstadoEncuesta
+  fechaEnvio?: string
+  fechaCompletada?: string
+}
+
+export interface SustentacionResponse {
+  id: number
+  instanciaPracticaId: number
+  fecha: string
+  jurados: string[]
+  actaUrl?: string
+  actaFirmada: boolean
+  resultado?: ResultadoSustentacion
+  completa: boolean
+}
+
+export interface ChecklistItemResponse {
+  codigo: string
+  nombre: string
+  completo: boolean
+  estadoVisual: string
+  accionRequerida?: string
+}
+
+export interface ChecklistCierreResponse {
+  instanciaPracticaId: number
+  puedeEjecutarCierre: boolean
+  items: ChecklistItemResponse[]
+}
+
+export interface CierreFormalResponse {
+  instanciaPracticaId: number
+  estado: EstadoPractica
+  resultado: ResultadoPractica
+  notaFinal: number
+  codigoPazYSalvo?: string
+  pazYSalvo?: string
+}
+
+export interface ReporteEstadoProcesoResponse {
+  estados: Record<string, number>
+  total: number
+  exportacion?: string
+  nombreArchivo?: string
+  contentType?: string
+}
+
+export interface TableroGerencialResponse {
+  practicantesEnCursoPorPrograma: Record<string, number>
+  tasaAprobacionGlobal: number
+  empresasActivas: number
+}
+
+export interface ProgramaConfiguracionResponse {
+  id?: number
+  programaId: number
+  numeroPracticas: number
+  semanasSeguimiento: number
+  notaMinimaAprobacion: number
+  requisitosCierre?: string
+  umbralInactividadDias: number
+  vigente: boolean
+}
+
+export interface PlantillaNotificacionResponse {
+  id: number
+  tipoEvento: TipoEventoNotificacion
+  asunto: string
+  cuerpo: string
+  rolesReceptores?: string
+  frecuenciaRecordatorioDias: number
 }
