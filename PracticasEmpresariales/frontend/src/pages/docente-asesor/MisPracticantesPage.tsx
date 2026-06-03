@@ -53,6 +53,9 @@ export default function MisPracticantesPage() {
                 <button className="btn-secondary text-xs flex-1" onClick={() => navigate(`/plan/${p.id}`)}>
                   Plan
                 </button>
+                <button className="btn-primary text-xs flex-1" onClick={() => navigate(`/evaluacion-final/${p.id}`)}>
+                  Evaluar
+                </button>
               </div>
             </div>
           ))}

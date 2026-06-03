@@ -13,4 +13,5 @@ public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
     boolean existsByNit(String nit);
     Optional<Empresa> findByNit(String nit);
     List<Empresa> findByEstado(EstadoEmpresa estado);
+    long countByEstado(EstadoEmpresa estado);
 }

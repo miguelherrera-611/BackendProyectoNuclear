@@ -81,6 +81,8 @@ export default function TableroSeguimientoPage() {
                   <div className="flex gap-2">
                     <button className="btn-secondary text-xs" onClick={() => navigate(`/vinculacion/${p.id}`)}>Ver</button>
                     <button className="btn-secondary text-xs" onClick={() => navigate(`/seguimiento/${p.id}`)}>Seguimientos</button>
+                    <button className="btn-secondary text-xs" onClick={() => navigate(`/nota-final/${p.id}`)}>Nota final</button>
+                    <button className="btn-primary text-xs" onClick={() => navigate(`/cierre-practica/${p.id}`)}>Cierre</button>
                   </div>
                 </td>
               </tr>

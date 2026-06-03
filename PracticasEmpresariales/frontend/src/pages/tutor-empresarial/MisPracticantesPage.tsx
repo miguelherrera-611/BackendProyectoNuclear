@@ -133,6 +133,12 @@ export default function TutorMisPracticantesPage() {
                 >
                   Seguimientos
                 </button>
+                <button
+                  className="btn-secondary text-xs flex-1"
+                  onClick={() => navigate(`/evaluacion-tutor/${p.id}`)}
+                >
+                  Evaluar
+                </button>
               </div>
             </div>
           ))}

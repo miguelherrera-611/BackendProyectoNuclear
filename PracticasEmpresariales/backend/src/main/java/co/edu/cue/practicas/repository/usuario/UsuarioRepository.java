@@ -13,6 +13,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.List;
 
 @Repository
 public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
@@ -87,4 +88,15 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     boolean existsByIdentificacion(String identificacion);
 
     Page<Usuario> findByFacultad_IdAndActivoTrue(Long facultadId, Pageable pageable);
+
+    List<Usuario> findByRolAndFacultad_IdAndActivoTrue(Rol rol, Long facultadId);
+
+    long countByRolAndEstadoEstudianteAndPrograma_IdAndActivoTrue(
+            Rol rol, EstadoEstudiante estadoEstudiante, Long programaId);
+
+    long countByRolAndEstadoEstudianteAndPrograma_Facultad_IdAndActivoTrue(
+            Rol rol, EstadoEstudiante estadoEstudiante, Long facultadId);
+
+    long countByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndPrograma_Facultad_IdAndActivoTrue(
+            Rol rol, EstadoEstudiante estadoEstudiante, Long facultadId);
 }
