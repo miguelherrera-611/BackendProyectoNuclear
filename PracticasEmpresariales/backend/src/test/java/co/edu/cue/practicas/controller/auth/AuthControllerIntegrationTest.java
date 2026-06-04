@@ -93,7 +93,7 @@ class AuthControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(post("/usuarios")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // ═══════════════════════════════════════════════════

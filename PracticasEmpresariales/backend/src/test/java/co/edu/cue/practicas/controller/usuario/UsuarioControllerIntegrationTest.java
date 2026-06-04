@@ -69,8 +69,8 @@ class UsuarioControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /usuarios — Sin token retorna 403")
-    void crearUsuario_sinToken_retorna403() throws Exception {
+    @DisplayName("POST /usuarios — Sin token retorna 401")
+    void crearUsuario_sinToken_retorna401() throws Exception {
         String body = """
             {
                 "nombre": "Test",
@@ -82,7 +82,7 @@ class UsuarioControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(post("/usuarios")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     @Test
