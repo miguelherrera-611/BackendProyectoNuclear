@@ -7,16 +7,16 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.io.Serial;
 import java.util.Collection;
 import java.util.List;
 
-/**
- * Adaptador entre la entidad Usuario y Spring Security UserDetails.
- * Expone rol, etiqueta de cargo y scope (facultad/programa) para el Proxy.
- */
 public class CustomUserDetails implements UserDetails {
 
-    private final Usuario usuario;
+    @Serial
+    private static final long serialVersionUID = 1L;
+
+    private final transient Usuario usuario;
 
     public CustomUserDetails(Usuario usuario) {
         this.usuario = usuario;

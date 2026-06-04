@@ -47,26 +47,28 @@ public class PracticaDocumentoService {
                                                     CustomUserDetails actor) {
         validarAcceso(actor);
         InstanciaPractica instancia = instanciaPracticaRepository.findById(instanciaPracticaId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Instancia de práctica no encontrada."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("Instancia de practica no encontrada."));
 
         if (instancia.esInmutable()) {
-            throw new OperacionNoPermitidaException("Los documentos de una práctica FINALIZADA o CANCELADA son inmutables.");
+            throw new OperacionNoPermitidaException("Los documentos de una practica FINALIZADA o CANCELADA son inmutables.");
         }
-
         if (archivo == null || archivo.isEmpty()) {
             throw new OperacionNoPermitidaException("El archivo es obligatorio.");
         }
-
         if (archivo.getSize() > MAX_BYTES) {
-            throw new OperacionNoPermitidaException("El archivo supera el tamaño máximo permitido de 10MB.");
+            throw new OperacionNoPermitidaException("El archivo supera el tamano maximo permitido de 10MB.");
         }
 
-        String mimeType = archivo.getContentType() != null ? archivo.getContentType().toLowerCase(Locale.ROOT) : null;
-        if (mimeType == null || !MIME_PERMITIDOS.contains(mimeType) || !tipo.admiteMimeType(mimeType)) {
+        // getContentType() puede retornar null — se valida explícitamente antes de usar
+        String rawContentType = archivo.getContentType();
+        String mimeType = rawContentType != null ? rawContentType.toLowerCase(Locale.ROOT) : "";
+        if (mimeType.isEmpty() || !MIME_PERMITIDOS.contains(mimeType) || !tipo.admiteMimeType(mimeType)) {
             throw new OperacionNoPermitidaException("Tipo de archivo no permitido. Solo PDF, JPG o PNG.");
         }
 
-        String originalFilename = archivo.getOriginalFilename() != null ? archivo.getOriginalFilename() : "archivo";
+        // getOriginalFilename() puede retornar null — se usa valor por defecto
+        String originalFilename = archivo.getOriginalFilename() != null
+                ? archivo.getOriginalFilename() : "archivo";
         String safeName = UUID.randomUUID() + "_" + Paths.get(originalFilename).getFileName();
         Path baseDir = Paths.get("uploads", "practicas", String.valueOf(instanciaPracticaId));
         Path target = baseDir.resolve(safeName);
@@ -97,19 +99,21 @@ public class PracticaDocumentoService {
                 .tipoAccion(TipoAccion.CREAR)
                 .registroAfectadoId(documento.getId())
                 .registroAfectadoTipo(PracticaDocumento.class.getSimpleName())
-                .valoresNuevos("{\"instanciaPracticaId\":" + instanciaPracticaId + ",\"tipo\":\"" + tipo + "\"}")
-                );
+                .valoresNuevos("{\"instanciaPracticaId\":" + instanciaPracticaId + ",\"tipo\":\"" + tipo + "\"}"));
 
         return PracticaDocumentoResponse.desde(documento);
     }
 
     @Transactional
-    public List<PracticaDocumentoResponse> listarDocumentos(Long instanciaPracticaId, TipoDocumento tipo, CustomUserDetails actor) {
+    public List<PracticaDocumentoResponse> listarDocumentos(Long instanciaPracticaId,
+                                                            TipoDocumento tipo,
+                                                            CustomUserDetails actor) {
         validarAcceso(actor);
         if (!instanciaPracticaRepository.existsById(instanciaPracticaId)) {
-            throw new RecursoNoEncontradoException("Instancia de práctica no encontrada.");
+            throw new RecursoNoEncontradoException("Instancia de practica no encontrada.");
         }
-        List<PracticaDocumento> docs = documentoRepository.findByInstanciaPractica_IdOrderByCreadoEnDesc(instanciaPracticaId);
+        List<PracticaDocumento> docs = documentoRepository
+                .findByInstanciaPractica_IdOrderByCreadoEnDesc(instanciaPracticaId);
         if (tipo != null) {
             docs = docs.stream().filter(d -> d.getTipo() == tipo).toList();
         }
@@ -118,12 +122,13 @@ public class PracticaDocumentoService {
 
     private void validarAcceso(CustomUserDetails actor) {
         if (actor == null) {
-            throw new AccesoNoAutorizadoException("Debe iniciar sesión para gestionar documentos.");
+            throw new AccesoNoAutorizadoException("Debe iniciar sesion para gestionar documentos.");
         }
         Rol rol = actor.getRol();
-        if (rol != Rol.ESTUDIANTE && rol != Rol.COORDINADOR_PRACTICAS && rol != Rol.DOCENTE_ASESOR && rol != Rol.TUTOR_EMPRESARIAL && rol != Rol.COORDINACION_ACADEMICA && rol != Rol.ADMIN_DTI) {
-            throw new AccesoNoAutorizadoException("No tiene permiso para gestionar documentos de práctica.");
+        if (rol != Rol.ESTUDIANTE && rol != Rol.COORDINADOR_PRACTICAS
+                && rol != Rol.DOCENTE_ASESOR && rol != Rol.TUTOR_EMPRESARIAL
+                && rol != Rol.COORDINACION_ACADEMICA && rol != Rol.ADMIN_DTI) {
+            throw new AccesoNoAutorizadoException("No tiene permiso para gestionar documentos de practica.");
         }
     }
 }
-

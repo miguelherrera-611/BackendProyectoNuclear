@@ -28,6 +28,9 @@ public class DataInitializer implements CommandLineRunner {
     @Value("${app.init.crear.coordinador.test:false}")
     private boolean crearCoordinadorTest;
 
+    @Value("${app.init.coordinador.test.correo:coord.test@cue.edu.co}")
+    private String correoCoordinadorTest;
+
     @Value("${app.init.coordinador.test.password}")
     private String passwordCoordinadorTest;
 
@@ -51,16 +54,16 @@ public class DataInitializer implements CommandLineRunner {
             log.info("=======================================================");
             log.info("  USUARIO DTI INICIAL CREADO");
             log.info("  Correo : {}", correoDti);
-            log.info("  CAMBIA app.init.admin.password EN PRODUCCIÓN");
+            log.info("  CAMBIA app.init.admin.password EN PRODUCCION");
             log.info("=======================================================");
         }
 
-        // Crear coordinador de prácticas para tests de integración
-        if (crearCoordinadorTest && !usuarioRepository.existsByCorreo("coord.test@cue.edu.co")) {
+        // Crear coordinador de practicas para tests de integracion
+        if (crearCoordinadorTest && !usuarioRepository.existsByCorreo(correoCoordinadorTest)) {
             Usuario coord = Usuario.builder()
                     .nombre("Coordinador Test")
-                    .correo("coord.test@cue.edu.co")
-                    .passwordHash(passwordEncoder.encode("CoordTest2026!"))
+                    .correo(correoCoordinadorTest)
+                    .passwordHash(passwordEncoder.encode(passwordCoordinadorTest))
                     .rol(Rol.COORDINADOR_PRACTICAS)
                     .primerIngreso(false)
                     .activo(true)
@@ -69,7 +72,7 @@ public class DataInitializer implements CommandLineRunner {
 
             usuarioRepository.save(coord);
 
-            log.info("  COORDINADOR TEST CREADO: coord.test@cue.edu.co");
+            log.info("  COORDINADOR TEST CREADO: {}", correoCoordinadorTest);
         }
     }
 }

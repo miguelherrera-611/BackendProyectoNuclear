@@ -47,16 +47,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                 .body(ApiResponse.<Map<String, String>>builder()
                         .exitoso(false)
-                        .mensaje("Errores de validación")
+                        .mensaje("Errores de validacion")
                         .datos(errores)
                         .build());
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiResponse<Void>> manejarTipoInvalido(MethodArgumentTypeMismatchException e) {
-        String mensaje = "Valor inválido '" + e.getValue() + "' para el parámetro '" + e.getName() + "'.";
-        if (e.getRequiredType() != null && e.getRequiredType().isEnum()) {
-            mensaje += " Valores permitidos: " + java.util.Arrays.toString(e.getRequiredType().getEnumConstants());
+        String valor = String.valueOf(e.getValue());
+        String mensaje = "Valor invalido '" + valor + "' para el parametro '" + e.getName() + "'.";
+        Class<?> requiredType = e.getRequiredType();
+        if (requiredType != null && requiredType.isEnum()) {
+            mensaje += " Valores permitidos: " + java.util.Arrays.toString(requiredType.getEnumConstants());
         }
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ApiResponse.error(mensaje));
     }
@@ -64,7 +66,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ApiResponse<Void>> manejarMetodoNoSoportado(HttpRequestMethodNotSupportedException e) {
         return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
-                .body(ApiResponse.error("Método HTTP no permitido: " + e.getMethod()));
+                .body(ApiResponse.error("Metodo HTTP no permitido: " + e.getMethod()));
     }
 
     @ExceptionHandler(Exception.class)

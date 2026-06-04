@@ -36,22 +36,23 @@ import java.util.List;
 @RequiredArgsConstructor
 public class VinculacionService {
 
+    private static final String MSG_INSTANCIA_NO_ENCONTRADA = "Instancia de practica no encontrada.";
+
     private final InstanciaPracticaRepository instanciaPracticaRepository;
     private final UsuarioRepository usuarioRepository;
     private final EstudianteMapper mapper;
     private final AuditoriaLogger auditoriaLogger;
     private final ApplicationEventPublisher eventPublisher;
 
-    /** GPE-164 — Confirma vinculación y activa EN_CURSO con las tres firmas. */
     @Transactional
     public InstanciaPracticaResponse confirmarVinculacion(Long instanciaId,
                                                           ConfirmarVinculacionRequest req,
                                                           CustomUserDetails actor) {
         if (actor == null || actor.getRol() != Rol.COORDINADOR_PRACTICAS)
-            throw new AccesoNoAutorizadoException("Solo el Coordinador de Prácticas puede confirmar la vinculación.");
+            throw new AccesoNoAutorizadoException("Solo el Coordinador de Practicas puede confirmar la vinculacion.");
 
         InstanciaPractica instancia = instanciaPracticaRepository.findById(instanciaId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Instancia de práctica no encontrada."));
+                .orElseThrow(() -> new RecursoNoEncontradoException(MSG_INSTANCIA_NO_ENCONTRADA));
 
         if (req.docenteAsesorId() != null && instancia.getDocenteAsesor() == null) {
             Usuario docente = usuarioRepository.findById(req.docenteAsesorId())
@@ -86,11 +87,10 @@ public class VinculacionService {
         return mapper.toInstanciaPracticaResponse(instancia);
     }
 
-    /** GPE-163 — Registra una firma individual (TUTOR / DOCENTE / ESTUDIANTE) antes de la confirmación final. */
     @Transactional
     public InstanciaPracticaResponse registrarFirma(Long instanciaId, String tipoFirma, CustomUserDetails actor) {
         InstanciaPractica instancia = instanciaPracticaRepository.findById(instanciaId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Instancia de práctica no encontrada."));
+                .orElseThrow(() -> new RecursoNoEncontradoException(MSG_INSTANCIA_NO_ENCONTRADA));
 
         switch (tipoFirma.toUpperCase()) {
             case "TUTOR" -> {
@@ -108,14 +108,13 @@ public class VinculacionService {
                     throw new AccesoNoAutorizadoException("No tiene permiso para registrar la firma del estudiante.");
                 instancia.setFirmaEstudiante(true);
             }
-            default -> throw new OperacionNoPermitidaException("Tipo de firma no válido. Use: TUTOR, DOCENTE o ESTUDIANTE.");
+            default -> throw new OperacionNoPermitidaException("Tipo de firma no valido. Use: TUTOR, DOCENTE o ESTUDIANTE.");
         }
 
         instanciaPracticaRepository.save(instancia);
         return mapper.toInstanciaPracticaResponse(instancia);
     }
 
-    /** GPE-167 — Tablero: todas las prácticas EN_CURSO del sistema. */
     @Transactional
     public List<InstanciaPracticaResponse> listarPracticasEnCurso(CustomUserDetails actor) {
         if (actor.getRol() != Rol.COORDINADOR_PRACTICAS && actor.getRol() != Rol.DOCENTE_ASESOR
@@ -126,19 +125,13 @@ public class VinculacionService {
                 .stream().map(mapper::toInstanciaPracticaResponse).toList();
     }
 
-    /** GPE-168 — Prácticas activas asignadas al actor académico o empresarial autenticado. */
     @Transactional
     public List<InstanciaPracticaResponse> listarMisPracticantes(CustomUserDetails actor) {
-        if (actor.getRol() == Rol.DOCENTE_ASESOR) {
-            return listarPracticasDeDocente(actor);
-        }
-        if (actor.getRol() == Rol.TUTOR_EMPRESARIAL) {
-            return listarPracticasDeTutor(actor);
-        }
+        if (actor.getRol() == Rol.DOCENTE_ASESOR) return listarPracticasDeDocente(actor);
+        if (actor.getRol() == Rol.TUTOR_EMPRESARIAL) return listarPracticasDeTutor(actor);
         throw new AccesoNoAutorizadoException("Solo docente asesor o tutor empresarial pueden consultar sus practicantes.");
     }
 
-    /** GPE-168 — Prácticas activas asignadas a un docente asesor. */
     @Transactional
     public List<InstanciaPracticaResponse> listarPracticasDeDocente(CustomUserDetails actor) {
         if (actor.getRol() != Rol.DOCENTE_ASESOR)
@@ -150,7 +143,6 @@ public class VinculacionService {
                 .stream().map(mapper::toInstanciaPracticaResponse).toList();
     }
 
-    /** Prácticas activas asignadas al tutor empresarial autenticado. */
     @Transactional
     public List<InstanciaPracticaResponse> listarPracticasDeTutor(CustomUserDetails actor) {
         if (actor.getRol() != Rol.TUTOR_EMPRESARIAL)
@@ -162,25 +154,23 @@ public class VinculacionService {
                 .stream().map(mapper::toInstanciaPracticaResponse).toList();
     }
 
-    /** GPE-132 — Práctica activa del estudiante autenticado. */
     @Transactional
     public InstanciaPracticaResponse obtenerMiPractica(CustomUserDetails actor) {
         if (actor.getRol() != Rol.ESTUDIANTE)
-            throw new AccesoNoAutorizadoException("Solo el estudiante puede consultar su práctica activa.");
+            throw new AccesoNoAutorizadoException("Solo el estudiante puede consultar su practica activa.");
 
         return instanciaPracticaRepository
                 .findTopByExpediente_Estudiante_IdAndEstadoOrderByCreadoEnDesc(actor.getId(), EstadoPractica.EN_CURSO)
                 .or(() -> instanciaPracticaRepository
                         .findTopByExpediente_Estudiante_IdOrderByCreadoEnDesc(actor.getId()))
                 .map(mapper::toInstanciaPracticaResponse)
-                .orElseThrow(() -> new RecursoNoEncontradoException("No tienes prácticas registradas aún."));
+                .orElseThrow(() -> new RecursoNoEncontradoException("No tienes practicas registradas aun."));
     }
 
-    /** GPE-157 — Detalle de una instancia específica (coordinador o docente con acceso). */
     @Transactional
     public InstanciaPracticaResponse obtenerInstancia(Long instanciaId, CustomUserDetails actor) {
         InstanciaPractica instancia = instanciaPracticaRepository.findById(instanciaId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Instancia de práctica no encontrada."));
+                .orElseThrow(() -> new RecursoNoEncontradoException(MSG_INSTANCIA_NO_ENCONTRADA));
         verificarAccesoInstancia(instancia, actor);
         return mapper.toInstanciaPracticaResponse(instancia);
     }
@@ -190,21 +180,20 @@ public class VinculacionService {
         if (rol == Rol.COORDINADOR_PRACTICAS || rol == Rol.ADMIN_DTI || rol == Rol.DIRECCION) return;
         if (rol == Rol.DOCENTE_ASESOR) {
             if (instancia.getDocenteAsesor() == null || !instancia.getDocenteAsesor().getId().equals(actor.getId()))
-                throw new AccesoNoAutorizadoException("No tiene acceso a esta instancia de práctica.");
+                throw new AccesoNoAutorizadoException("No tiene acceso a esta instancia de practica.");
             return;
         }
         if (rol == Rol.TUTOR_EMPRESARIAL) {
             if (instancia.getTutorEmpresarial() == null
                     || !instancia.getTutorEmpresarial().getCorreo().equalsIgnoreCase(actor.getUsername()))
-                throw new AccesoNoAutorizadoException("No tiene acceso a esta instancia de práctica.");
+                throw new AccesoNoAutorizadoException("No tiene acceso a esta instancia de practica.");
             return;
         }
         if (rol == Rol.ESTUDIANTE) {
             if (instancia.getExpediente() == null || !instancia.getExpediente().getEstudiante().getId().equals(actor.getId()))
-                throw new AccesoNoAutorizadoException("No tiene acceso a esta instancia de práctica.");
+                throw new AccesoNoAutorizadoException("No tiene acceso a esta instancia de practica.");
             return;
         }
-        throw new AccesoNoAutorizadoException("No tiene permiso para consultar esta práctica.");
+        throw new AccesoNoAutorizadoException("No tiene permiso para consultar esta practica.");
     }
 }
-

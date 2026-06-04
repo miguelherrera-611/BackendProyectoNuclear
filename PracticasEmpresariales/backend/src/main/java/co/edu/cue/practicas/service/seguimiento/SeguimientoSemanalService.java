@@ -12,7 +12,6 @@ import co.edu.cue.practicas.model.entity.InstanciaPractica;
 import co.edu.cue.practicas.model.entity.SeguimientoSemanal;
 import co.edu.cue.practicas.model.enums.EstadoPlan;
 import co.edu.cue.practicas.model.enums.EstadoPractica;
-import co.edu.cue.practicas.model.enums.EstadoSeguimiento;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.model.enums.TipoAccion;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
@@ -39,6 +38,8 @@ import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class SeguimientoSemanalService {
+
+    private static final String MSG_INSTANCIA_NO_ENCONTRADA = "Instancia de practica no encontrada.";
 
     private final SeguimientoSemanalRepository seguimientoRepository;
     private final InstanciaPracticaRepository instanciaRepository;
@@ -88,7 +89,7 @@ public class SeguimientoSemanalService {
                 .findTopByInstanciaPractica_IdOrderBySemanaDesc(seguimiento.getInstanciaPractica().getId())
                 .orElse(null);
         if (ultimo == null || !ultimo.getId().equals(seguimientoId))
-            throw new OperacionNoPermitidaException("Solo el seguimiento de la semana más reciente puede editarse.");
+            throw new OperacionNoPermitidaException("Solo el seguimiento de la semana mas reciente puede editarse.");
 
         if (!seguimiento.esEditable())
             throw new OperacionNoPermitidaException("Solo se puede editar un seguimiento en estado RECHAZADO.");
@@ -152,9 +153,9 @@ public class SeguimientoSemanalService {
 
     private InstanciaPractica buscarInstanciaEnCurso(Long instanciaId) {
         InstanciaPractica i = instanciaRepository.findById(instanciaId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Instancia de práctica no encontrada."));
+                .orElseThrow(() -> new RecursoNoEncontradoException(MSG_INSTANCIA_NO_ENCONTRADA));
         if (i.getEstado() != EstadoPractica.EN_CURSO)
-            throw new OperacionNoPermitidaException("Los seguimientos solo pueden registrarse en prácticas EN_CURSO.");
+            throw new OperacionNoPermitidaException("Los seguimientos solo pueden registrarse en practicas EN_CURSO.");
         return i;
     }
 
@@ -166,14 +167,14 @@ public class SeguimientoSemanalService {
     private void verificarPlanAprobado(Long instanciaId) {
         boolean aprobado = planRepository.existsByInstanciaPractica_IdAndEstado(instanciaId, EstadoPlan.APROBADO_DOCENTE);
         if (!aprobado)
-            throw new OperacionNoPermitidaException("El plan de práctica debe estar aprobado por el docente antes de iniciar seguimientos.");
+            throw new OperacionNoPermitidaException("El plan de practica debe estar aprobado por el docente antes de iniciar seguimientos.");
     }
 
     private void verificarPropiedadEstudiante(InstanciaPractica instancia, Long estudianteId) {
         Long ownerId = instancia.getExpediente() != null && instancia.getExpediente().getEstudiante() != null
                 ? instancia.getExpediente().getEstudiante().getId() : null;
         if (!estudianteId.equals(ownerId))
-            throw new AccesoNoAutorizadoException("Esta práctica no pertenece a tu expediente.");
+            throw new AccesoNoAutorizadoException("Esta practica no pertenece a tu expediente.");
     }
 
     private void verificarDocenteAsignado(SeguimientoSemanal seg, Long docenteId) {
@@ -194,7 +195,7 @@ public class SeguimientoSemanalService {
     private void notificarNuevoSeguimiento(InstanciaPractica instancia, int semana) {
         if (instancia.getDocenteAsesor() != null && instancia.getDocenteAsesor().getCorreo() != null) {
             String html = "<p>Se ha registrado el seguimiento de la semana <strong>" + semana
-                    + "</strong> y está pendiente de tu revisión.</p>";
+                    + "</strong> y esta pendiente de tu revision.</p>";
             emailService.notificarAsignacion(instancia.getDocenteAsesor().getCorreo(),
                     instancia.getDocenteAsesor().getNombre(), html, "Nuevo seguimiento semanal pendiente");
         }

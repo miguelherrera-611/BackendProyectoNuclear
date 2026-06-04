@@ -99,22 +99,22 @@ public class EvaluacionFinal {
         this.actualizadoEn = LocalDateTime.now();
     }
 
-    private double calcularPromedio(List<CriterioEvaluacion> criterios) {
+    private double calcularPromedio(List<CriterioEvaluacion> criteriosParam) {
         // SPRINT 4 - Regla OCL promedioCalculado: el promedio nunca llega desde el cliente, se calcula aqui.
-        if (criterios == null || criterios.isEmpty()) {
+        if (criteriosParam == null || criteriosParam.isEmpty()) {
             throw new OperacionNoPermitidaException("Debe registrar al menos un criterio de evaluacion.");
         }
-        double sumaPesos = criterios.stream().mapToDouble(CriterioEvaluacion::getPeso).sum();
+        double sumaPesos = criteriosParam.stream().mapToDouble(CriterioEvaluacion::getPeso).sum();
         if (Math.abs(sumaPesos - 1.0) > 0.01) {
             throw new OperacionNoPermitidaException("La suma de pesos debe ser 1.0.");
         }
-        double promedio = criterios.stream()
-                .peek(c -> {
+        double promedio = criteriosParam.stream()
+                .mapToDouble(c -> {
                     if (c.getPuntaje() < 0.0 || c.getPuntaje() > 5.0) {
                         throw new OperacionNoPermitidaException("Cada puntaje debe estar entre 0.0 y 5.0.");
                     }
+                    return c.getPeso() * c.getPuntaje();
                 })
-                .mapToDouble(c -> c.getPeso() * c.getPuntaje())
                 .sum();
         double redondeado = Math.round(promedio * 100.0) / 100.0;
         if (redondeado < 0.0 || redondeado > 5.0) {

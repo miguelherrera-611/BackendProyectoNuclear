@@ -56,16 +56,16 @@ public class CierreFormalFacade {
         if (!checklistService.generar(instanciaId, actor).isPuedeEjecutarCierre()) {
             throw new OperacionNoPermitidaException("No se puede ejecutar cierre: checklist incompleto.");
         }
-        NotaFinalCoordinador nota = notaRepository.findByInstanciaPractica_Id(instanciaId)
+        NotaFinalCoordinador notaFinal = notaRepository.findByInstanciaPractica_Id(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Nota final no registrada."));
         // SPRINT 4 - State: EN_CURSO -> FINALIZADA con resultado irreversible.
-        instancia.finalizarConResultado(nota.getResultado());
+        instancia.finalizarConResultado(notaFinal.getResultado());
         instanciaRepository.save(instancia);
 
         String codigoPazYSalvo = null;
         String contenidoPazYSalvo = null;
-        if (nota.getResultado() == ResultadoPractica.APROBADO) {
-            contenidoPazYSalvo = construirPazYSalvo(instancia, nota);
+        if (notaFinal.getResultado() == ResultadoPractica.APROBADO) {
+            contenidoPazYSalvo = construirPazYSalvo(instancia, notaFinal);
             String contenidoGenerado = contenidoPazYSalvo;
             PazYSalvo pazYSalvo = pazYSalvoRepository.findByInstanciaPractica_Id(instanciaId)
                     .orElseGet(() -> PazYSalvo.builder()
@@ -78,14 +78,14 @@ public class CierreFormalFacade {
         }
 
         // SPRINT 4 - Mediator: coordina notificaciones a estudiante, docente, tutor y Coordinacion Academica.
-        notificarActores(instancia, nota);
-        // SPRINT 4 - Observer: cierre formal dispara refresco de dashboard/reportes en consultas posteriores.
+        notificarActores(instancia, notaFinal);
+        // SPRINT 4 - Observer: cierre formal dispara refresco de dashboard/reportes.
         eventPublisher.publishEvent(new Sprint4DomainEvent(instanciaId, TipoEventoNotificacion.CIERRE_FORMAL_EJECUTADO));
         return CierreFormalResponse.builder()
                 .instanciaPracticaId(instanciaId)
                 .estado(instancia.getEstado())
-                .resultado(nota.getResultado())
-                .notaFinal(nota.getNotaFinal())
+                .resultado(notaFinal.getResultado())
+                .notaFinal(notaFinal.getNotaFinal())
                 .codigoPazYSalvo(codigoPazYSalvo)
                 .pazYSalvo(contenidoPazYSalvo)
                 .build();
@@ -98,29 +98,34 @@ public class CierreFormalFacade {
         }
     }
 
-    private void notificarActores(InstanciaPractica instancia, NotaFinalCoordinador nota) {
+    private void notificarActores(InstanciaPractica instancia, NotaFinalCoordinador notaFinal) {
         Map<String, String> vars = Map.of(
                 "nombre_estudiante", instancia.getExpediente().getEstudiante().getNombre(),
                 "empresa", instancia.getEmpresa() != null ? instancia.getEmpresa().getRazonSocial() : "",
                 "nombre_practica", instancia.getNombre(),
                 "enlace_encuesta", "",
-                "resultado", nota.getResultado().name(),
-                "nota_final", String.valueOf(nota.getNotaFinal())
+                "resultado", notaFinal.getResultado().name(),
+                "nota_final", String.valueOf(notaFinal.getNotaFinal())
         );
         var estudiante = instancia.getExpediente().getEstudiante();
-        notificacionService.enviar(TipoEventoNotificacion.CIERRE_FORMAL_EJECUTADO, estudiante.getId(), estudiante.getCorreo(), estudiante.getNombre(), vars);
+        notificacionService.enviar(TipoEventoNotificacion.CIERRE_FORMAL_EJECUTADO,
+                estudiante.getId(), estudiante.getCorreo(), estudiante.getNombre(), vars);
         if (instancia.getDocenteAsesor() != null) {
-            notificacionService.enviar(TipoEventoNotificacion.CIERRE_FORMAL_EJECUTADO, instancia.getDocenteAsesor().getId(),
-                    instancia.getDocenteAsesor().getCorreo(), instancia.getDocenteAsesor().getNombre(), vars);
+            notificacionService.enviar(TipoEventoNotificacion.CIERRE_FORMAL_EJECUTADO,
+                    instancia.getDocenteAsesor().getId(),
+                    instancia.getDocenteAsesor().getCorreo(),
+                    instancia.getDocenteAsesor().getNombre(), vars);
         }
         if (instancia.getTutorEmpresarial() != null) {
-            notificacionService.enviar(TipoEventoNotificacion.CIERRE_FORMAL_EJECUTADO, instancia.getTutorEmpresarial().getId(),
-                    instancia.getTutorEmpresarial().getCorreo(), instancia.getTutorEmpresarial().getNombre(), vars);
+            notificacionService.enviar(TipoEventoNotificacion.CIERRE_FORMAL_EJECUTADO,
+                    instancia.getTutorEmpresarial().getId(),
+                    instancia.getTutorEmpresarial().getCorreo(),
+                    instancia.getTutorEmpresarial().getNombre(), vars);
         }
-        notificarCoordinacionAcademica(instancia, nota, vars);
+        notificarCoordinacionAcademica(instancia, vars);
     }
 
-    private void notificarCoordinacionAcademica(InstanciaPractica instancia, NotaFinalCoordinador nota, Map<String, String> vars) {
+    private void notificarCoordinacionAcademica(InstanciaPractica instancia, Map<String, String> vars) {
         var estudiante = instancia.getExpediente().getEstudiante();
         if (estudiante.getPrograma() != null && estudiante.getPrograma().getFacultad() != null) {
             Long facultadId = estudiante.getPrograma().getFacultad().getId();
@@ -134,15 +139,16 @@ public class CierreFormalFacade {
         }
     }
 
-    private String construirPazYSalvo(InstanciaPractica instancia, NotaFinalCoordinador nota) {
-        String estudiante = instancia.getExpediente().getEstudiante().getNombre();
-        String empresa = instancia.getEmpresa() != null ? instancia.getEmpresa().getRazonSocial() : "empresa registrada";
+    private String construirPazYSalvo(InstanciaPractica instancia, NotaFinalCoordinador notaFinal) {
+        String nombreEstudiante = instancia.getExpediente().getEstudiante().getNombre();
+        String empresa = instancia.getEmpresa() != null
+                ? instancia.getEmpresa().getRazonSocial() : "empresa registrada";
         return "PAZ Y SALVO PRACTICA EMPRESARIAL\n"
-                + "Estudiante: " + estudiante + "\n"
+                + "Estudiante: " + nombreEstudiante + "\n"
                 + "Practica: " + instancia.getNombre() + "\n"
                 + "Empresa: " + empresa + "\n"
-                + "Resultado: " + nota.getResultado() + "\n"
-                + "Nota final: " + nota.getNotaFinal() + "\n"
+                + "Resultado: " + notaFinal.getResultado() + "\n"
+                + "Nota final: " + notaFinal.getNotaFinal() + "\n"
                 + "Fecha cierre: " + instancia.getFechaCierre() + "\n"
                 + "Se certifica cierre satisfactorio del expediente de practica.";
     }

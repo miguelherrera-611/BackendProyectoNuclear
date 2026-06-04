@@ -1,6 +1,5 @@
 package co.edu.cue.practicas.service.evaluacion;
 
-import co.edu.cue.practicas.event.Sprint4DomainEvent;
 import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
 import co.edu.cue.practicas.model.entity.InstanciaPractica;
 import co.edu.cue.practicas.model.enums.Rol;
