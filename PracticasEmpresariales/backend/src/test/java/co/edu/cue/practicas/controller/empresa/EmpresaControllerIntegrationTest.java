@@ -86,12 +86,12 @@ class EmpresaControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    @DisplayName("POST /empresas — Sin token retorna 403")
-    void crearEmpresa_sinToken_retorna403() throws Exception {
+    @DisplayName("POST /empresas — Sin token retorna 401")
+    void crearEmpresa_sinToken_retorna401() throws Exception {
         mockMvc.perform(post("/api/v1/empresas")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{}"))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isUnauthorized());
     }
 
     // ═══════════════════════════════════════════════════
