@@ -182,6 +182,7 @@ export interface InstanciaPracticaResponse {
   duracionSemanas: number
   documentosRequeridos?: string
   estado: EstadoPractica
+  evaluacionDocenteRegistrada?: boolean
   estudianteId?: number
   nombreEstudiante?: string
   empresaId?: number

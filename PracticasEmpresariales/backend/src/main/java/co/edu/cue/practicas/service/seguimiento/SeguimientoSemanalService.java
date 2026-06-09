@@ -14,6 +14,8 @@ import co.edu.cue.practicas.model.enums.EstadoPlan;
 import co.edu.cue.practicas.model.enums.EstadoPractica;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.model.enums.TipoAccion;
+import co.edu.cue.practicas.model.enums.TipoEvaluacionFinal;
+import co.edu.cue.practicas.repository.evaluacion.EvaluacionFinalRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.seguimiento.PlanPracticaRepository;
 import co.edu.cue.practicas.repository.seguimiento.SeguimientoSemanalRepository;
@@ -44,6 +46,7 @@ public class SeguimientoSemanalService {
     private final SeguimientoSemanalRepository seguimientoRepository;
     private final InstanciaPracticaRepository instanciaRepository;
     private final PlanPracticaRepository planRepository;
+    private final EvaluacionFinalRepository evaluacionFinalRepository;
     private final AuditoriaLogger auditoriaLogger;
     private final EmailService emailService;
 
@@ -52,6 +55,7 @@ public class SeguimientoSemanalService {
         if (actor.getRol() != Rol.ESTUDIANTE)
             throw new AccesoNoAutorizadoException("Solo el estudiante puede crear seguimientos semanales.");
 
+        verificarPracticaNoCongelada(instanciaId);
         InstanciaPractica instancia = buscarInstanciaEnCurso(instanciaId);
         verificarPropiedadEstudiante(instancia, actor.getId());
         verificarPlanAprobado(instanciaId);
@@ -82,6 +86,7 @@ public class SeguimientoSemanalService {
             throw new AccesoNoAutorizadoException("Solo el estudiante puede editar sus seguimientos.");
 
         SeguimientoSemanal seguimiento = buscarSeguimiento(seguimientoId);
+        verificarPracticaNoCongelada(seguimiento.getInstanciaPractica().getId());
         verificarPropiedadEstudiante(seguimiento.getInstanciaPractica(), actor.getId());
 
         // OCL: soloUltimoEditable
@@ -121,6 +126,7 @@ public class SeguimientoSemanalService {
             throw new AccesoNoAutorizadoException("Solo el docente asesor puede marcar seguimientos como revisados.");
 
         SeguimientoSemanal seguimiento = buscarSeguimiento(seguimientoId);
+        verificarPracticaNoCongelada(seguimiento.getInstanciaPractica().getId());
         verificarDocenteAsignado(seguimiento, actor.getId());
 
         seguimiento.revisar(actor.getId());
@@ -155,6 +161,7 @@ public class SeguimientoSemanalService {
             throw new AccesoNoAutorizadoException("Solo el docente asesor puede rechazar seguimientos.");
 
         SeguimientoSemanal seguimiento = buscarSeguimiento(seguimientoId);
+        verificarPracticaNoCongelada(seguimiento.getInstanciaPractica().getId());
         verificarDocenteAsignado(seguimiento, actor.getId());
 
         seguimiento.rechazar(req.getObservacion(), actor.getId());
@@ -227,6 +234,11 @@ public class SeguimientoSemanalService {
                     + "</strong> ha sido <strong>" + descripcion + "</strong>.</p>";
             emailService.notificarAsignacion(est.getCorreo(), est.getNombre(), html, "Estado de seguimiento semanal");
         }
+    }
+
+    private void verificarPracticaNoCongelada(Long instanciaId) {
+        if (evaluacionFinalRepository.existsByInstanciaPractica_IdAndTipo(instanciaId, TipoEvaluacionFinal.DOCENTE_ASESOR))
+            throw new OperacionNoPermitidaException("La práctica está calificada. No se pueden realizar más operaciones sobre seguimientos.");
     }
 
     private void registrarAuditoria(CustomUserDetails actor, TipoAccion accion, Long id, String tipo, String valores) {

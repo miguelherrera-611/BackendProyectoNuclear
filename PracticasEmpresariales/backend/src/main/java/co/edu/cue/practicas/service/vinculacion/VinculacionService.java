@@ -13,6 +13,8 @@ import co.edu.cue.practicas.model.entity.Usuario;
 import co.edu.cue.practicas.model.enums.EstadoPractica;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.model.enums.TipoAccion;
+import co.edu.cue.practicas.model.enums.TipoEvaluacionFinal;
+import co.edu.cue.practicas.repository.evaluacion.EvaluacionFinalRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
@@ -40,6 +42,7 @@ public class VinculacionService {
 
     private final InstanciaPracticaRepository instanciaPracticaRepository;
     private final UsuarioRepository usuarioRepository;
+    private final EvaluacionFinalRepository evaluacionFinalRepository;
     private final EstudianteMapper mapper;
     private final AuditoriaLogger auditoriaLogger;
     private final ApplicationEventPublisher eventPublisher;
@@ -84,7 +87,7 @@ public class VinculacionService {
                         + "\",\"fechaFin\":\"" + req.fechaFin() + "\"}"));
 
         eventPublisher.publishEvent(new VinculacionConfirmadaEvent(this, instancia));
-        return mapper.toInstanciaPracticaResponse(instancia);
+        return conEvaluacion(mapper.toInstanciaPracticaResponse(instancia), instancia.getId());
     }
 
     @Transactional
@@ -112,7 +115,7 @@ public class VinculacionService {
         }
 
         instanciaPracticaRepository.save(instancia);
-        return mapper.toInstanciaPracticaResponse(instancia);
+        return conEvaluacion(mapper.toInstanciaPracticaResponse(instancia), instancia.getId());
     }
 
     @Transactional
@@ -122,7 +125,7 @@ public class VinculacionService {
             throw new AccesoNoAutorizadoException("No tiene acceso al tablero de seguimiento.");
 
         return instanciaPracticaRepository.findAllByEstado(EstadoPractica.EN_CURSO)
-                .stream().map(mapper::toInstanciaPracticaResponse).toList();
+                .stream().map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId())).toList();
     }
 
     @Transactional
@@ -140,7 +143,7 @@ public class VinculacionService {
         return instanciaPracticaRepository
                 .findByDocenteAsesor_IdAndEstadoNotIn(actor.getId(),
                         List.of(EstadoPractica.FINALIZADA, EstadoPractica.CANCELADA))
-                .stream().map(mapper::toInstanciaPracticaResponse).toList();
+                .stream().map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId())).toList();
     }
 
     @Transactional
@@ -151,7 +154,7 @@ public class VinculacionService {
         return instanciaPracticaRepository
                 .findByTutorEmpresarial_CorreoIgnoreCaseAndEstadoNotIn(actor.getUsername(),
                         List.of(EstadoPractica.FINALIZADA, EstadoPractica.CANCELADA))
-                .stream().map(mapper::toInstanciaPracticaResponse).toList();
+                .stream().map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId())).toList();
     }
 
     @Transactional
@@ -163,7 +166,7 @@ public class VinculacionService {
                 .findTopByExpediente_Estudiante_IdAndEstadoOrderByCreadoEnDesc(actor.getId(), EstadoPractica.EN_CURSO)
                 .or(() -> instanciaPracticaRepository
                         .findTopByExpediente_Estudiante_IdOrderByCreadoEnDesc(actor.getId()))
-                .map(mapper::toInstanciaPracticaResponse)
+                .map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId()))
                 .orElseThrow(() -> new RecursoNoEncontradoException("No tienes practicas registradas aun."));
     }
 
@@ -172,7 +175,7 @@ public class VinculacionService {
         InstanciaPractica instancia = instanciaPracticaRepository.findById(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException(MSG_INSTANCIA_NO_ENCONTRADA));
         verificarAccesoInstancia(instancia, actor);
-        return mapper.toInstanciaPracticaResponse(instancia);
+        return conEvaluacion(mapper.toInstanciaPracticaResponse(instancia), instancia.getId());
     }
 
     private void verificarAccesoInstancia(InstanciaPractica instancia, CustomUserDetails actor) {
@@ -195,5 +198,12 @@ public class VinculacionService {
             return;
         }
         throw new AccesoNoAutorizadoException("No tiene permiso para consultar esta practica.");
+    }
+
+    /** Enriquece la respuesta indicando si el docente ya registró su evaluación final. */
+    private InstanciaPracticaResponse conEvaluacion(InstanciaPracticaResponse r, Long instanciaId) {
+        r.setEvaluacionDocenteRegistrada(
+                evaluacionFinalRepository.existsByInstanciaPractica_IdAndTipo(instanciaId, TipoEvaluacionFinal.DOCENTE_ASESOR));
+        return r;
     }
 }

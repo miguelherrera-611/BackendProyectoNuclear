@@ -31,6 +31,7 @@ export default function SeguimientoEstudiantePage() {
   const [dificultades, setDificultades] = useState('')
 
   const ultimoSeguimiento = seguimientos[seguimientos.length - 1]
+  const congelada = practica?.evaluacionDocenteRegistrada === true
 
   useEffect(() => {
     const init = async () => {
@@ -124,7 +125,13 @@ export default function SeguimientoEstudiantePage() {
       {error && <div className="card border-red-200 bg-red-50 text-red-700 text-sm">{error}</div>}
       {success && <div className="card border-green-200 bg-green-50 text-green-700 text-sm">{success}</div>}
 
-      {plan?.estado !== 'APROBADO_DOCENTE' && (
+      {congelada && (
+        <div className="card border-purple-200 bg-purple-50 text-purple-800 text-sm">
+          <strong>Práctica calificada.</strong> El docente asesor ya registró la evaluación final. Esta práctica está en modo solo lectura — no puedes enviar ni editar seguimientos.
+        </div>
+      )}
+
+      {!congelada && plan?.estado !== 'APROBADO_DOCENTE' && (
         <div className="card border-amber-200 bg-amber-50 text-amber-800 text-sm">
           {plan
             ? 'Tu plan de práctica aún no ha sido aprobado por el docente. Podrás registrar seguimientos una vez que el docente lo apruebe.'
@@ -133,7 +140,7 @@ export default function SeguimientoEstudiantePage() {
       )}
 
       {/* Formulario crear/editar */}
-      {(creando || editandoId !== null) && (
+      {!congelada && (creando || editandoId !== null) && (
         <div className="card space-y-4 border-cue-primary border-2">
           <h2 className="font-semibold text-gray-800">
             {editandoId ? `Editar seguimiento semana ${semana}` : `Nuevo seguimiento — Semana ${semana}`}
@@ -159,8 +166,8 @@ export default function SeguimientoEstudiantePage() {
         </div>
       )}
 
-      {/* Botón nuevo seguimiento */}
-      {!creando && !editandoId && (
+      {/* Botón nuevo seguimiento — oculto si la práctica está congelada */}
+      {!congelada && !creando && !editandoId && (
         <button
           className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => setCreando(true)}
@@ -187,7 +194,7 @@ export default function SeguimientoEstudiantePage() {
           <div className="card text-center text-gray-400">Aún no has registrado seguimientos.</div>
         ) : [...seguimientos].reverse().map((s, idx) => {
           const esUltimo = idx === 0
-          const puedeEditar = esUltimo && s.estado === 'RECHAZADO'
+          const puedeEditar = !congelada && esUltimo && s.estado === 'RECHAZADO'
           return (
             <div key={s.id} className="card space-y-3">
               <div className="flex items-center justify-between">

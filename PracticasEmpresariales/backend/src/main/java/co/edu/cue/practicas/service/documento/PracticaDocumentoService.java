@@ -120,6 +120,42 @@ public class PracticaDocumentoService {
         return docs.stream().map(PracticaDocumentoResponse::desde).toList();
     }
 
+    @Transactional
+    public List<PracticaDocumentoResponse> listarMisDocumentos(CustomUserDetails actor) {
+        if (actor.getRol() != Rol.ESTUDIANTE)
+            throw new AccesoNoAutorizadoException("Este endpoint es solo para estudiantes.");
+
+        return instanciaPracticaRepository
+                .findTopByExpediente_Estudiante_IdOrderByCreadoEnDesc(actor.getId())
+                .map(instancia -> documentoRepository
+                        .findByInstanciaPractica_IdOrderByCreadoEnDesc(instancia.getId())
+                        .stream().map(PracticaDocumentoResponse::desde).toList())
+                .orElse(List.of());
+    }
+
+    @Transactional
+    public void eliminarDocumento(Long documentoId, CustomUserDetails actor) {
+        PracticaDocumento doc = documentoRepository.findById(documentoId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Documento no encontrado."));
+
+        Rol rol = actor.getRol();
+        if (rol != Rol.COORDINADOR_PRACTICAS && rol != Rol.ADMIN_DTI) {
+            if (rol != Rol.ESTUDIANTE)
+                throw new AccesoNoAutorizadoException("No tiene permiso para eliminar documentos.");
+            InstanciaPractica inst = doc.getInstanciaPractica();
+            if (inst == null || inst.getExpediente() == null
+                    || !inst.getExpediente().getEstudiante().getId().equals(actor.getId()))
+                throw new AccesoNoAutorizadoException("No tiene permiso para eliminar este documento.");
+        }
+
+        documentoRepository.deleteById(documentoId);
+        try {
+            Files.deleteIfExists(Path.of(doc.getRutaArchivo()));
+        } catch (IOException e) {
+            log.warn("No se pudo eliminar el archivo fisico: {}", doc.getRutaArchivo());
+        }
+    }
+
     private void validarAcceso(CustomUserDetails actor) {
         if (actor == null) {
             throw new AccesoNoAutorizadoException("Debe iniciar sesion para gestionar documentos.");

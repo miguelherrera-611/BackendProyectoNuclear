@@ -39,6 +39,23 @@ public class PracticaDocumentoController {
 		return ResponseEntity.ok(ApiResponse.ok("Documentos de práctica.",
 				service.listarDocumentos(instanciaPracticaId, tipo, actor)));
 	}
+
+	/** Documentos de la práctica activa del estudiante autenticado. */
+	@GetMapping("/mis-documentos")
+	public ResponseEntity<ApiResponse<List<PracticaDocumentoResponse>>> misDocumentos(
+			@AuthenticationPrincipal CustomUserDetails actor) {
+		return ResponseEntity.ok(ApiResponse.ok("Mis documentos.",
+				service.listarMisDocumentos(actor)));
+	}
+
+	/** Elimina un documento por ID (coordinador o estudiante dueño). */
+	@DeleteMapping("/{documentoId}")
+	public ResponseEntity<ApiResponse<Void>> eliminar(
+			@PathVariable Long documentoId,
+			@AuthenticationPrincipal CustomUserDetails actor) {
+		service.eliminarDocumento(documentoId, actor);
+		return ResponseEntity.ok(ApiResponse.ok("Documento eliminado.", null));
+	}
 }
 
 

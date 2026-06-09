@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import type { SeguimientoSemanalResponse, EstadoSeguimiento } from '../../types'
+import type { SeguimientoSemanalResponse, EstadoSeguimiento, InstanciaPracticaResponseV2 } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 
 const BADGE: Record<EstadoSeguimiento, string> = {
@@ -14,17 +14,24 @@ const BADGE: Record<EstadoSeguimiento, string> = {
 export default function SeguimientoDetallePage() {
   const { instanciaId } = useParams<{ instanciaId: string }>()
   const navigate = useNavigate()
-  const [seguimientos, setSeguimientos] = useState<SeguimientoSemanalResponse[]>([])
-  const [loading, setLoading]           = useState(true)
-  const [error, setError]               = useState('')
-  const [procesando, setProcesando]     = useState<number | null>(null)
-  const [observacion, setObservacion]   = useState<Record<number, string>>({})
+  const [instancia, setInstancia]        = useState<InstanciaPracticaResponseV2 | null>(null)
+  const [seguimientos, setSeguimientos]  = useState<SeguimientoSemanalResponse[]>([])
+  const [loading, setLoading]            = useState(true)
+  const [error, setError]                = useState('')
+  const [procesando, setProcesando]      = useState<number | null>(null)
+  const [observacion, setObservacion]    = useState<Record<number, string>>({})
+
+  const congelada = instancia?.evaluacionDocenteRegistrada === true
 
   const cargar = async () => {
     if (!instanciaId) return
     setLoading(true)
     try {
-      const data = await seguimientoService.listar(Number(instanciaId))
+      const [inst, data] = await Promise.all([
+        seguimientoService.obtenerInstancia(Number(instanciaId)),
+        seguimientoService.listar(Number(instanciaId)),
+      ])
+      setInstancia(inst)
       setSeguimientos(data)
     } catch {
       setError('No se pudieron cargar los seguimientos.')
@@ -69,8 +76,17 @@ export default function SeguimientoDetallePage() {
           ← Volver
         </button>
         <h1 className="text-2xl font-bold text-gray-900">Seguimientos semanales</h1>
-        <p className="text-sm text-gray-500">Práctica #{instanciaId}</p>
+        <p className="text-sm text-gray-500">
+          {instancia?.nombreEstudiante ?? `Práctica #${instanciaId}`}
+          {instancia?.nombre ? ` · ${instancia.nombre}` : ''}
+        </p>
       </div>
+
+      {congelada && (
+        <div className="card border-purple-200 bg-purple-50 text-purple-800 text-sm">
+          <strong>Práctica calificada.</strong> Ya registraste la evaluación final para esta práctica. Solo puedes consultar el historial.
+        </div>
+      )}
 
       {error && <div className="card border-red-200 bg-red-50 text-red-700 text-sm">{error}</div>}
 
@@ -107,11 +123,12 @@ export default function SeguimientoDetallePage() {
 
           {s.observacionesDocente && (
             <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-              <strong>Observación anterior:</strong> {s.observacionesDocente}
+              <strong>Observación:</strong> {s.observacionesDocente}
             </div>
           )}
 
-          {s.estado === 'ENVIADO' && (
+          {/* Acciones solo disponibles mientras la práctica no esté congelada */}
+          {!congelada && s.estado === 'ENVIADO' && (
             <div className="space-y-2 border-t border-gray-100 pt-4">
               <textarea
                 className="input-field text-sm"

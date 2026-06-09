@@ -39,4 +39,6 @@ public class InstanciaPracticaResponse {
     private LocalDateTime vinculacionConfirmadaEn;
     private LocalDateTime creadoEn;
     private LocalDateTime actualizadoEn;
+    /** True cuando el docente ya registró su evaluación final — práctica congelada para escritura. */
+    private boolean evaluacionDocenteRegistrada;
 }

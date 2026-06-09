@@ -11,6 +11,7 @@ import java.util.Optional;
 @Repository
 public interface EvaluacionFinalRepository extends JpaRepository<EvaluacionFinal, Long> {
     Optional<EvaluacionFinal> findByInstanciaPractica_IdAndTipo(Long instanciaId, TipoEvaluacionFinal tipo);
+    boolean existsByInstanciaPractica_IdAndTipo(Long instanciaId, TipoEvaluacionFinal tipo);
     boolean existsByInstanciaPractica_IdAndTipoAndEstado(
             Long instanciaId, TipoEvaluacionFinal tipo, EstadoEvaluacionFinal estado);
 }
