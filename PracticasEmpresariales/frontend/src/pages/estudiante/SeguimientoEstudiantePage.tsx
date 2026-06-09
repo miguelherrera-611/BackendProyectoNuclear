@@ -1,17 +1,21 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { SeguimientoSemanalResponse, InstanciaPracticaResponse, EstadoSeguimiento } from '../../types'
+import type { SeguimientoSemanalResponse, InstanciaPracticaResponse, PlanPracticaResponse, EstadoSeguimiento } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
+import { planPracticaService } from '../../services/planPracticaService'
 
 const BADGE: Record<EstadoSeguimiento, string> = {
-  PENDIENTE: 'bg-yellow-100 text-yellow-800',
-  APROBADO: 'bg-green-100 text-green-800',
+  ENVIADO:   'bg-blue-100 text-blue-800',
+  REVISADO:  'bg-green-100 text-green-800',
   RECHAZADO: 'bg-red-100 text-red-800',
+  PENDIENTE: 'bg-yellow-100 text-yellow-800',
+  APROBADO:  'bg-green-100 text-green-800',
 }
 
 export default function SeguimientoEstudiantePage() {
   const navigate = useNavigate()
   const [practica, setPractica] = useState<InstanciaPracticaResponse | null>(null)
+  const [plan, setPlan] = useState<PlanPracticaResponse | null>(null)
   const [seguimientos, setSeguimientos] = useState<SeguimientoSemanalResponse[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -33,8 +37,12 @@ export default function SeguimientoEstudiantePage() {
       try {
         const p = await seguimientoService.miPractica()
         setPractica(p)
-        const segs = await seguimientoService.listar(p.id)
+        const [segs, planData] = await Promise.all([
+          seguimientoService.listar(p.id),
+          planPracticaService.obtenerActual(p.id),
+        ])
         setSeguimientos(segs)
+        setPlan(planData)
         setSemana(segs.length + 1)
       } catch {
         setError('No se pudieron cargar los datos de tu práctica.')
@@ -116,6 +124,14 @@ export default function SeguimientoEstudiantePage() {
       {error && <div className="card border-red-200 bg-red-50 text-red-700 text-sm">{error}</div>}
       {success && <div className="card border-green-200 bg-green-50 text-green-700 text-sm">{success}</div>}
 
+      {plan?.estado !== 'APROBADO_DOCENTE' && (
+        <div className="card border-amber-200 bg-amber-50 text-amber-800 text-sm">
+          {plan
+            ? 'Tu plan de práctica aún no ha sido aprobado por el docente. Podrás registrar seguimientos una vez que el docente lo apruebe.'
+            : 'No tienes un plan de práctica registrado. Debes crear y obtener la aprobación del docente antes de registrar seguimientos.'}
+        </div>
+      )}
+
       {/* Formulario crear/editar */}
       {(creando || editandoId !== null) && (
         <div className="card space-y-4 border-cue-primary border-2">
@@ -146,10 +162,20 @@ export default function SeguimientoEstudiantePage() {
       {/* Botón nuevo seguimiento */}
       {!creando && !editandoId && (
         <button
-          className="btn-primary w-full"
+          className="btn-primary w-full disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={() => setCreando(true)}
-          disabled={ultimoSeguimiento?.estado === 'PENDIENTE'}
-          title={ultimoSeguimiento?.estado === 'PENDIENTE' ? 'Espera a que el docente revise el seguimiento actual.' : ''}
+          disabled={
+            plan?.estado !== 'APROBADO_DOCENTE' ||
+            ultimoSeguimiento?.estado === 'ENVIADO' ||
+            ultimoSeguimiento?.estado === 'PENDIENTE'
+          }
+          title={
+            plan?.estado !== 'APROBADO_DOCENTE'
+              ? 'El plan debe estar aprobado por el docente para poder registrar seguimientos.'
+              : (ultimoSeguimiento?.estado === 'ENVIADO' || ultimoSeguimiento?.estado === 'PENDIENTE')
+                ? 'Espera a que el docente revise el seguimiento actual antes de enviar el siguiente.'
+                : ''
+          }
         >
           + Registrar seguimiento semana {semana}
         </button>

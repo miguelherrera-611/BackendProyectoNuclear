@@ -89,7 +89,7 @@ public class SeguimientoSemanalService {
                 .findTopByInstanciaPractica_IdOrderBySemanaDesc(seguimiento.getInstanciaPractica().getId())
                 .orElse(null);
         if (ultimo == null || !ultimo.getId().equals(seguimientoId))
-            throw new OperacionNoPermitidaException("Solo el seguimiento de la semana mas reciente puede editarse.");
+            throw new OperacionNoPermitidaException("Solo el seguimiento de la semana más reciente puede editarse.");
 
         if (!seguimiento.esEditable())
             throw new OperacionNoPermitidaException("Solo se puede editar un seguimiento en estado RECHAZADO.");
@@ -113,6 +113,23 @@ public class SeguimientoSemanalService {
                 .stream()
                 .map(SeguimientoSemanalResponse::desde)
                 .toList();
+    }
+
+    @Transactional
+    public SeguimientoSemanalResponse marcarRevisado(Long seguimientoId, CustomUserDetails actor) {
+        if (actor.getRol() != Rol.DOCENTE_ASESOR)
+            throw new AccesoNoAutorizadoException("Solo el docente asesor puede marcar seguimientos como revisados.");
+
+        SeguimientoSemanal seguimiento = buscarSeguimiento(seguimientoId);
+        verificarDocenteAsignado(seguimiento, actor.getId());
+
+        seguimiento.revisar(actor.getId());
+        seguimientoRepository.save(seguimiento);
+
+        registrarAuditoria(actor, TipoAccion.CAMBIO_ESTADO, seguimientoId, "SeguimientoSemanal",
+                "{\"estado\":\"REVISADO\",\"semana\":" + seguimiento.getSemana() + "}");
+        notificarEstadoSeguimiento(seguimiento, "revisado por el docente");
+        return SeguimientoSemanalResponse.desde(seguimiento);
     }
 
     @Transactional

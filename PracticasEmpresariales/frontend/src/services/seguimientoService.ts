@@ -25,6 +25,11 @@ export const seguimientoService = {
     return res.data.datos ?? []
   },
 
+  async marcarRevisado(seguimientoId: number): Promise<SeguimientoSemanalResponse> {
+    const res = await api.patch<ApiResponse<SeguimientoSemanalResponse>>(`/api/v1/seguimientos/${seguimientoId}/revisar`)
+    return res.data.datos!
+  },
+
   async aprobar(seguimientoId: number): Promise<SeguimientoSemanalResponse> {
     const res = await api.patch<ApiResponse<SeguimientoSemanalResponse>>(`/api/v1/seguimientos/${seguimientoId}/aprobar`)
     return res.data.datos!

@@ -37,13 +37,11 @@ export default function PlanPracticaPage() {
           ? await seguimientoService.obtenerInstancia(Number(instanciaId))
           : await seguimientoService.miPractica()
         setPractica(p)
-        try {
-          const planData = await planPracticaService.obtenerActual(p.id)
+        const planData = await planPracticaService.obtenerActual(p.id)
+        if (planData) {
           setPlan(planData)
           setObjetivos(planData.objetivos)
           setCronograma(planData.cronograma)
-        } catch {
-          // No hay plan aún
         }
       } catch {
         setError('No se pudo cargar la práctica activa.')
@@ -184,9 +182,9 @@ export default function PlanPracticaPage() {
                 <button className="btn-secondary flex-1 text-red-600" onClick={handleRechazar} disabled={saving}>Rechazar</button>
               </>
             )}
-            {esDocente && plan.estado === 'APROBADO_TUTOR' && (
+            {esDocente && (plan.estado === 'APROBADO_TUTOR' || plan.estado === 'BORRADOR') && (
               <>
-                <button className="btn-primary flex-1" onClick={handleAprobarDocente} disabled={saving}>Aprobar como docente</button>
+                <button className="btn-primary flex-1" onClick={handleAprobarDocente} disabled={saving}>Aprobar plan</button>
                 <button className="btn-secondary flex-1 text-red-600" onClick={handleRechazar} disabled={saving}>Rechazar</button>
               </>
             )}

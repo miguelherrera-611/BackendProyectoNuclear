@@ -2,11 +2,13 @@ package co.edu.cue.practicas.service.evaluacion;
 
 import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
 import co.edu.cue.practicas.model.entity.InstanciaPractica;
+import co.edu.cue.practicas.model.enums.EstadoSeguimiento;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.model.enums.TipoEvaluacionFinal;
 import co.edu.cue.practicas.model.enums.TipoEventoNotificacion;
 import co.edu.cue.practicas.repository.evaluacion.EvaluacionFinalRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
+import co.edu.cue.practicas.repository.seguimiento.SeguimientoSemanalRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -14,10 +16,17 @@ import org.springframework.stereotype.Service;
 @Service
 public class EvaluacionDocenteService extends AbstractEvaluacionFinalTemplate {
 
+    private final SeguimientoSemanalRepository seguimientoRepository;
+    private final ReglasNotaFinal reglasNotaFinal;
+
     public EvaluacionDocenteService(EvaluacionFinalRepository evaluacionRepository,
                                     InstanciaPracticaRepository instanciaRepository,
-                                    ApplicationEventPublisher eventPublisher) {
+                                    ApplicationEventPublisher eventPublisher,
+                                    SeguimientoSemanalRepository seguimientoRepository,
+                                    ReglasNotaFinal reglasNotaFinal) {
         super(evaluacionRepository, instanciaRepository, eventPublisher);
+        this.seguimientoRepository = seguimientoRepository;
+        this.reglasNotaFinal = reglasNotaFinal;
     }
 
     @Override
@@ -37,5 +46,11 @@ public class EvaluacionDocenteService extends AbstractEvaluacionFinalTemplate {
                 || !actor.getId().equals(instancia.getDocenteAsesor().getId())) {
             throw new AccesoNoAutorizadoException("Solo el docente asesor asignado puede evaluar esta practica.");
         }
+    }
+
+    @Override
+    protected void validarPrecondicionesAdicionales(Long instanciaId) {
+        long revisados = seguimientoRepository.countByInstanciaPractica_IdAndEstado(instanciaId, EstadoSeguimiento.REVISADO);
+        reglasNotaFinal.validarSeguimientosMinimos(revisados);
     }
 }

@@ -51,6 +51,14 @@ public class SeguimientoSemanalController {
                 service.listarPorInstancia(instanciaId, actor)));
     }
 
+    @PatchMapping("/{seguimientoId}/revisar")
+    public ResponseEntity<ApiResponse<SeguimientoSemanalResponse>> revisar(
+            @PathVariable Long seguimientoId,
+            @AuthenticationPrincipal CustomUserDetails actor) {
+        return ResponseEntity.ok(ApiResponse.ok("Seguimiento marcado como revisado.",
+                service.marcarRevisado(seguimientoId, actor)));
+    }
+
     @PatchMapping("/{seguimientoId}/aprobar")
     public ResponseEntity<ApiResponse<SeguimientoSemanalResponse>> aprobar(
             @PathVariable Long seguimientoId,

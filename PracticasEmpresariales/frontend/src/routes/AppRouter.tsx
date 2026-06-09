@@ -45,7 +45,7 @@ export default function AppRouter() {
   const { user } = useAuth()
 
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/login" element={<LoginPage />} />
         <Route path="/no-autorizado" element={<NoAutorizadoPage />} />
@@ -88,9 +88,11 @@ export default function AppRouter() {
               <Route path="/practicas" element={<PracticasPage />} />
             </Route>
 
-            <Route element={<ProtectedRoute rolesPermitidos={['COORDINADOR_PRACTICAS', 'DOCENTE_ASESOR', 'ADMIN_DTI', 'DIRECCION']} />}>
+            <Route element={<ProtectedRoute rolesPermitidos={['COORDINADOR_PRACTICAS', 'DIRECCION']} />}>
               <Route path="/tablero-seguimiento" element={<TableroSeguimientoPage />} />
-              <Route path="/seguimientos" element={<TableroSeguimientoPage />} />
+            </Route>
+
+            <Route element={<ProtectedRoute rolesPermitidos={['COORDINADOR_PRACTICAS', 'DOCENTE_ASESOR']} />}>
               <Route path="/seguimiento/:instanciaId" element={<SeguimientoDetallePage />} />
             </Route>
 

@@ -39,6 +39,9 @@ export default function MisPracticantesPage() {
           {practicas.map(p => (
             <div key={p.id} className="card hover:shadow-md transition-shadow space-y-3">
               <div>
+                <p className="text-xs font-semibold text-cue-primary uppercase tracking-wide mb-0.5">
+                  {p.nombreEstudiante ?? 'Estudiante no asignado'}
+                </p>
                 <h3 className="font-semibold text-gray-900">{p.nombre}</h3>
                 <p className="text-sm text-gray-500">{p.razonSocialEmpresa ?? 'Sin empresa'}</p>
               </div>

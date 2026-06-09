@@ -2,9 +2,12 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { InstanciaPracticaResponseV2 } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
+import { useAuth } from '../../context/AuthContext'
 
 export default function TableroSeguimientoPage() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const esCoordinador = user?.rol === 'COORDINADOR_PRACTICAS'
   const [practicas, setPracticas] = useState<InstanciaPracticaResponseV2[]>([])
   const [filtroEmpresa, setFiltroEmpresa] = useState('')
   const [filtroDocente, setFiltroDocente] = useState('')
@@ -79,10 +82,14 @@ export default function TableroSeguimientoPage() {
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
-                    <button className="btn-secondary text-xs" onClick={() => navigate(`/vinculacion/${p.id}`)}>Ver</button>
-                    <button className="btn-secondary text-xs" onClick={() => navigate(`/seguimiento/${p.id}`)}>Seguimientos</button>
-                    <button className="btn-secondary text-xs" onClick={() => navigate(`/nota-final/${p.id}`)}>Nota final</button>
-                    <button className="btn-primary text-xs" onClick={() => navigate(`/cierre-practica/${p.id}`)}>Cierre</button>
+                    {esCoordinador && (
+                      <>
+                        <button className="btn-secondary text-xs" onClick={() => navigate(`/vinculacion/${p.id}`)}>Ver</button>
+                        <button className="btn-secondary text-xs" onClick={() => navigate(`/seguimiento/${p.id}`)}>Seguimientos</button>
+                        <button className="btn-secondary text-xs" onClick={() => navigate(`/nota-final/${p.id}`)}>Nota final</button>
+                        <button className="btn-primary text-xs" onClick={() => navigate(`/cierre-practica/${p.id}`)}>Cierre</button>
+                      </>
+                    )}
                   </div>
                 </td>
               </tr>

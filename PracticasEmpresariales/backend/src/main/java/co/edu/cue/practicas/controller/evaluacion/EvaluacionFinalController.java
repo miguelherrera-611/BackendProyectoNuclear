@@ -23,7 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/v1/evaluaciones-finales")
+@RequestMapping("/api/v1/evaluaciones-finales")
 @RequiredArgsConstructor
 public class EvaluacionFinalController {
 

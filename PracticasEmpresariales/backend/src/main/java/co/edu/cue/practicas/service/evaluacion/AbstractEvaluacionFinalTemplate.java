@@ -38,8 +38,9 @@ public abstract class AbstractEvaluacionFinalTemplate {
     @Transactional
     public EvaluacionFinalResponse registrar(Long instanciaId, RegistrarEvaluacionFinalRequest req, CustomUserDetails actor) {
         // SPRINT 4 - Template Method: flujo fijo para toda evaluacion final:
-        // validar expediente editable -> validar evaluador -> calcular/guardar -> notificar.
+        // validar expediente editable -> validar pre-condiciones adicionales -> validar evaluador -> calcular/guardar -> notificar.
         InstanciaPractica instancia = buscarInstanciaEditable(instanciaId);
+        validarPrecondicionesAdicionales(instanciaId);
         validarEvaluador(instancia, actor);
         EvaluacionFinal evaluacion = evaluacionRepository.findByInstanciaPractica_IdAndTipo(instanciaId, tipo())
                 .orElseGet(() -> nuevaEvaluacion(instancia, actor));
@@ -53,6 +54,9 @@ public abstract class AbstractEvaluacionFinalTemplate {
     protected abstract TipoEvaluacionFinal tipo();
     protected abstract TipoEventoNotificacion eventoCompletado();
     protected abstract void validarEvaluador(InstanciaPractica instancia, CustomUserDetails actor);
+
+    /** Hook: subclases pueden imponer pre-condiciones adicionales antes de registrar. */
+    protected void validarPrecondicionesAdicionales(Long instanciaId) {}
 
     private InstanciaPractica buscarInstanciaEditable(Long instanciaId) {
         InstanciaPractica instancia = instanciaRepository.findById(instanciaId)

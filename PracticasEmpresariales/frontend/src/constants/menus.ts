@@ -35,8 +35,6 @@ export const MENUS_POR_ROL: Record<Rol, MenuItem[]> = {
   DOCENTE_ASESOR: [
     { id: 'dashboard', label: 'Panel Principal', ruta: '/dashboard', icono: 'Home' },
     { id: 'practicantes', label: 'Mis Practicantes', ruta: '/mis-practicantes', icono: 'Users' },
-    { id: 'seguimientos', label: 'Revisar Seguimientos', ruta: '/seguimientos', icono: 'Edit' },
-    { id: 'tablero', label: 'Tablero General', ruta: '/tablero-seguimiento', icono: 'Chart' },
     { id: 'sustentaciones', label: 'Sustentaciones', ruta: '/sustentaciones', icono: 'Graduation' },
   ],
   TUTOR_EMPRESARIAL: [

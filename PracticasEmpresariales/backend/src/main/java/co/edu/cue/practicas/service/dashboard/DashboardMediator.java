@@ -141,8 +141,8 @@ public class DashboardMediator {
                 .titulo("Panel Docente Asesor")
                 .soloLectura(false)
                 .secciones(List.of(
-                        crearSeccion("Estudiantes asignados", "mis-estudiantes", "/mis-estudiantes", indicadores.estudiantesAsignadosDocente()),
-                        crearSeccion("Seguimientos pendientes de revisión", "seguimientos", "/seguimientos?pendientes=true", indicadores.seguimientosPendientesRevision()),
+                        crearSeccion("Estudiantes asignados", "mis-practicantes", "/mis-practicantes", indicadores.estudiantesAsignadosDocente()),
+                        crearSeccion("Seguimientos pendientes de revisión", "seguimientos", "/mis-practicantes", indicadores.seguimientosPendientesRevision()),
                         crearSeccion("Sustentaciones programadas", "sustentaciones", "/sustentaciones", indicadores.sustentacionesProgramadas())
                 ))
                 .build();
@@ -180,8 +180,8 @@ public class DashboardMediator {
                 .soloLectura(false)
                 .secciones(List.of(
                         crearSeccion("Estado de mi práctica", "mi-practica", "/mi-practica", indicadores.semanaSeguimientoActual()),
-                        crearSeccion("Semana de seguimiento actual", "seguimiento", "/mi-practica/seguimiento/actual", indicadores.semanaSeguimientoActual()),
-                        crearSeccion("Documentos pendientes", "documentos", "/mi-practica/documentos", indicadores.documentosPendientes())
+                        crearSeccion("Semana de seguimiento actual", "seguimiento", "/mi-practica/seguimiento", indicadores.semanaSeguimientoActual()),
+                        crearSeccion("Documentos pendientes", "documentos", "/mis-documentos", indicadores.documentosPendientes())
                 ))
                 .build();
     }

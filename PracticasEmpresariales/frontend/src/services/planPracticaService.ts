@@ -7,9 +7,9 @@ export const planPracticaService = {
     return res.data.datos!
   },
 
-  async obtenerActual(instanciaId: number): Promise<PlanPracticaResponse> {
+  async obtenerActual(instanciaId: number): Promise<PlanPracticaResponse | null> {
     const res = await api.get<ApiResponse<PlanPracticaResponse>>(`/api/v1/planes-practica/${instanciaId}/actual`)
-    return res.data.datos!
+    return res.data.datos ?? null
   },
 
   async historial(instanciaId: number): Promise<PlanPracticaResponse[]> {

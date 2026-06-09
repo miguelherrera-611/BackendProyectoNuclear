@@ -18,13 +18,21 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
+  const fetchDashboard = async () => {
+    try {
+      const data = await dashboardService.obtener()
+      setDashboard(data)
+    } catch {
+      setError('No se pudo cargar el panel. Verifica que el servidor esté activo.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const cargar = () => {
     setError(null)
     setLoading(true)
-    dashboardService.obtener()
-      .then(setDashboard)
-      .catch(() => setError('No se pudo cargar el panel. Verifica que el servidor esté activo.'))
-      .finally(() => setLoading(false))
+    fetchDashboard()
   }
 
   // eslint-disable-next-line react-hooks/exhaustive-deps

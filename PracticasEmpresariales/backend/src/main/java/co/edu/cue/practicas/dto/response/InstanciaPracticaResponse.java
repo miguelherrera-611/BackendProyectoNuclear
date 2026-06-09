@@ -25,6 +25,8 @@ public class InstanciaPracticaResponse {
     private Long vacanteId;
     private Long empresaId;
     private String razonSocialEmpresa;
+    private Long estudianteId;
+    private String nombreEstudiante;
     private Long docenteAsesorId;
     private String nombreDocenteAsesor;
     private Long tutorEmpresarialId;

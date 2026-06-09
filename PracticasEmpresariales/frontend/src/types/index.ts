@@ -182,6 +182,8 @@ export interface InstanciaPracticaResponse {
   duracionSemanas: number
   documentosRequeridos?: string
   estado: EstadoPractica
+  estudianteId?: number
+  nombreEstudiante?: string
   empresaId?: number
   razonSocialEmpresa?: string
   docenteAsesorId?: number
@@ -251,7 +253,7 @@ export interface PlanPracticaResponse {
 }
 
 // ── Sprint 3: Seguimiento semanal ─────────────────────────────────────────────
-export type EstadoSeguimiento = 'PENDIENTE' | 'APROBADO' | 'RECHAZADO'
+export type EstadoSeguimiento = 'ENVIADO' | 'REVISADO' | 'RECHAZADO' | 'PENDIENTE' | 'APROBADO'
 
 export interface SeguimientoSemanalResponse {
   id: number

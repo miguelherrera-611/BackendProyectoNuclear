@@ -49,6 +49,10 @@ public class EstudianteMapper {
                 .documentosRequeridos(i.getDocumentosRequeridos())
                 .estado(i.getEstado())
                 .vacanteId(i.getVacanteId())
+                .estudianteId(i.getExpediente() != null && i.getExpediente().getEstudiante() != null
+                        ? i.getExpediente().getEstudiante().getId() : null)
+                .nombreEstudiante(i.getExpediente() != null && i.getExpediente().getEstudiante() != null
+                        ? i.getExpediente().getEstudiante().getNombre() : null)
                 .empresaId(i.getEmpresa() != null ? i.getEmpresa().getId() : null)
                 .razonSocialEmpresa(i.getEmpresa() != null ? i.getEmpresa().getRazonSocial() : null)
                 .docenteAsesorId(i.getDocenteAsesor() != null ? i.getDocenteAsesor().getId() : null)

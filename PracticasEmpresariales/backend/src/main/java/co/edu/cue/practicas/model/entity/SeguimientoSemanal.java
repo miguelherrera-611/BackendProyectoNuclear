@@ -66,7 +66,7 @@ public class SeguimientoSemanal {
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false, length = 15)
     @Builder.Default
-    private EstadoSeguimiento estado = EstadoSeguimiento.PENDIENTE;
+    private EstadoSeguimiento estado = EstadoSeguimiento.ENVIADO;
 
     @Column(name = "creado_por_id")
     private Long creadoPorId;
@@ -90,6 +90,26 @@ public class SeguimientoSemanal {
 
     // ── PATRON STATE ──────────────────────────────────────────────────────────
 
+    /** El docente marca el seguimiento como revisado (ENVIADO → REVISADO). Solo cambia estado, sin nota. */
+    public void revisar(Long docenteId) {
+        if (this.estado != EstadoSeguimiento.ENVIADO)
+            throw new OperacionNoPermitidaException("Solo se puede revisar un seguimiento en estado ENVIADO.");
+        this.estado = EstadoSeguimiento.REVISADO;
+        this.revisadoPorId = docenteId;
+        this.revisadoEn = LocalDateTime.now();
+    }
+
+    /** El docente rechaza el seguimiento con observaciones (ENVIADO → RECHAZADO). */
+    public void rechazar(String observaciones, Long docenteId) {
+        if (this.estado != EstadoSeguimiento.ENVIADO && this.estado != EstadoSeguimiento.PENDIENTE)
+            throw new OperacionNoPermitidaException("Solo se puede rechazar un seguimiento en estado ENVIADO.");
+        this.estado = EstadoSeguimiento.RECHAZADO;
+        this.observacionesDocente = observaciones;
+        this.revisadoPorId = docenteId;
+        this.revisadoEn = LocalDateTime.now();
+    }
+
+    /** Conservado para compatibilidad con registros anteriores (PENDIENTE → APROBADO). */
     public void aprobar(Long docenteId) {
         if (this.estado != EstadoSeguimiento.PENDIENTE)
             throw new OperacionNoPermitidaException("Solo se puede aprobar un seguimiento en estado PENDIENTE.");
@@ -98,20 +118,11 @@ public class SeguimientoSemanal {
         this.revisadoEn = LocalDateTime.now();
     }
 
-    public void rechazar(String observaciones, Long docenteId) {
-        if (this.estado != EstadoSeguimiento.PENDIENTE)
-            throw new OperacionNoPermitidaException("Solo se puede rechazar un seguimiento en estado PENDIENTE.");
-        this.estado = EstadoSeguimiento.RECHAZADO;
-        this.observacionesDocente = observaciones;
-        this.revisadoPorId = docenteId;
-        this.revisadoEn = LocalDateTime.now();
-    }
-
-    /** Vuelve a PENDIENTE para que el estudiante pueda re-editarlo */
+    /** Vuelve a ENVIADO para que el estudiante pueda re-editarlo tras un rechazo. */
     public void resubmit() {
         if (this.estado != EstadoSeguimiento.RECHAZADO)
             throw new OperacionNoPermitidaException("Solo se puede re-enviar un seguimiento RECHAZADO.");
-        this.estado = EstadoSeguimiento.PENDIENTE;
+        this.estado = EstadoSeguimiento.ENVIADO;
         this.revisadoPorId = null;
         this.revisadoEn = null;
     }

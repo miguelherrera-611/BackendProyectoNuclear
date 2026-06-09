@@ -84,8 +84,8 @@ public class PlanPractica {
     }
 
     public void aprobarPorDocente() {
-        if (this.estado != EstadoPlan.APROBADO_TUTOR)
-            throw new OperacionNoPermitidaException("El plan debe estar APROBADO_TUTOR antes de que el docente lo apruebe.");
+        if (this.estado != EstadoPlan.APROBADO_TUTOR && this.estado != EstadoPlan.BORRADOR)
+            throw new OperacionNoPermitidaException("El plan debe estar en BORRADOR o APROBADO_TUTOR para ser aprobado por el docente.");
         this.estado = EstadoPlan.APROBADO_DOCENTE;
         this.aprobadoPorDocenteEn = LocalDateTime.now();
         this.motivoRechazo = null;

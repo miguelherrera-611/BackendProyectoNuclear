@@ -12,10 +12,10 @@ import static org.assertj.core.api.Assertions.*;
 /**
  * GPE-168 / GPE-170 — Pruebas del PATRÓN STATE en SeguimientoSemanal.
  *
- * Flujo permitido:
- *   PENDIENTE → APROBADO  (docente aprueba)
- *   PENDIENTE → RECHAZADO (docente rechaza con observación)
- *   RECHAZADO → PENDIENTE (estudiante re-envía via resubmit)
+ * Flujo principal:
+ *   ENVIADO  → REVISADO  (docente marca revisado, sin nota)
+ *   ENVIADO  → RECHAZADO (docente rechaza con observación)
+ *   RECHAZADO → ENVIADO  (estudiante re-envía via resubmit)
  *
  * OCL: soloUltimoEditable — solo el seguimiento más reciente puede re-editarse si RECHAZADO.
  */
@@ -41,54 +41,54 @@ class SeguimientoSemanalTest {
     // =================================================================
 
     @Test
-    @DisplayName("Estado inicial debe ser PENDIENTE y no ser editable")
-    void estadoInicialDebeSer_PENDIENTE() {
-        assertThat(seguimiento.getEstado()).isEqualTo(EstadoSeguimiento.PENDIENTE);
+    @DisplayName("Estado inicial debe ser ENVIADO y no ser editable")
+    void estadoInicialDebeSer_ENVIADO() {
+        assertThat(seguimiento.getEstado()).isEqualTo(EstadoSeguimiento.ENVIADO);
         assertThat(seguimiento.esEditable()).isFalse();
     }
 
     // =================================================================
-    // aprobar() — PENDIENTE → APROBADO
+    // revisar() — ENVIADO → REVISADO
     // =================================================================
 
     @Test
-    @DisplayName("aprobar() desde PENDIENTE debe cambiar a APROBADO y registrar docente")
-    void aprobarDesdePendienteExitoso() {
+    @DisplayName("revisar() desde ENVIADO debe cambiar a REVISADO y registrar docente")
+    void revisarDesdeEnviadoExitoso() {
         Long docenteId = 20L;
-        seguimiento.aprobar(docenteId);
+        seguimiento.revisar(docenteId);
 
-        assertThat(seguimiento.getEstado()).isEqualTo(EstadoSeguimiento.APROBADO);
+        assertThat(seguimiento.getEstado()).isEqualTo(EstadoSeguimiento.REVISADO);
         assertThat(seguimiento.getRevisadoPorId()).isEqualTo(docenteId);
         assertThat(seguimiento.getRevisadoEn()).isNotNull();
         assertThat(seguimiento.esEditable()).isFalse();
     }
 
     @Test
-    @DisplayName("aprobar() desde APROBADO debe lanzar excepción — ya revisado")
-    void aprobarDesdeAprobadoLanzaExcepcion() {
-        seguimiento.aprobar(20L);
+    @DisplayName("revisar() desde REVISADO debe lanzar excepción — ya revisado")
+    void revisarDesdeRevisadoLanzaExcepcion() {
+        seguimiento.revisar(20L);
 
-        assertThatThrownBy(() -> seguimiento.aprobar(20L))
+        assertThatThrownBy(() -> seguimiento.revisar(20L))
                 .isInstanceOf(OperacionNoPermitidaException.class)
-                .hasMessageContaining("PENDIENTE");
+                .hasMessageContaining("ENVIADO");
     }
 
     @Test
-    @DisplayName("aprobar() desde RECHAZADO debe lanzar excepción")
-    void aprobarDesdeRechazadoLanzaExcepcion() {
+    @DisplayName("revisar() desde RECHAZADO debe lanzar excepción")
+    void revisarDesdeRechazadoLanzaExcepcion() {
         seguimiento.rechazar("Incompleto", 20L);
 
-        assertThatThrownBy(() -> seguimiento.aprobar(20L))
+        assertThatThrownBy(() -> seguimiento.revisar(20L))
                 .isInstanceOf(OperacionNoPermitidaException.class);
     }
 
     // =================================================================
-    // rechazar() — PENDIENTE → RECHAZADO
+    // rechazar() — ENVIADO → RECHAZADO
     // =================================================================
 
     @Test
-    @DisplayName("rechazar() desde PENDIENTE debe cambiar a RECHAZADO con observaciones")
-    void rechazarDesdePendienteExitoso() {
+    @DisplayName("rechazar() desde ENVIADO debe cambiar a RECHAZADO con observaciones")
+    void rechazarDesdeEnviadoExitoso() {
         Long docenteId = 20L;
         String obs = "Falta describir los logros cuantitativamente";
         seguimiento.rechazar(obs, docenteId);
@@ -101,13 +101,13 @@ class SeguimientoSemanalTest {
     }
 
     @Test
-    @DisplayName("rechazar() desde APROBADO debe lanzar excepción — ya revisado")
-    void rechazarDesdeAprobadoLanzaExcepcion() {
-        seguimiento.aprobar(20L);
+    @DisplayName("rechazar() desde REVISADO debe lanzar excepción — ya revisado")
+    void rechazarDesdeRevisadoLanzaExcepcion() {
+        seguimiento.revisar(20L);
 
         assertThatThrownBy(() -> seguimiento.rechazar("Observación", 20L))
                 .isInstanceOf(OperacionNoPermitidaException.class)
-                .hasMessageContaining("PENDIENTE");
+                .hasMessageContaining("ENVIADO");
     }
 
     @Test
@@ -120,33 +120,33 @@ class SeguimientoSemanalTest {
     }
 
     // =================================================================
-    // resubmit() — RECHAZADO → PENDIENTE
+    // resubmit() — RECHAZADO → ENVIADO
     // =================================================================
 
     @Test
-    @DisplayName("resubmit() desde RECHAZADO debe volver a PENDIENTE y limpiar revisor")
+    @DisplayName("resubmit() desde RECHAZADO debe volver a ENVIADO y limpiar revisor")
     void resubmitDesdeRechazadoExitoso() {
         seguimiento.rechazar("Falta información", 20L);
         seguimiento.resubmit();
 
-        assertThat(seguimiento.getEstado()).isEqualTo(EstadoSeguimiento.PENDIENTE);
+        assertThat(seguimiento.getEstado()).isEqualTo(EstadoSeguimiento.ENVIADO);
         assertThat(seguimiento.getRevisadoPorId()).isNull();
         assertThat(seguimiento.getRevisadoEn()).isNull();
         assertThat(seguimiento.esEditable()).isFalse();
     }
 
     @Test
-    @DisplayName("resubmit() desde PENDIENTE debe lanzar excepción — solo aplica a RECHAZADO")
-    void resubmitDesdePendienteLanzaExcepcion() {
+    @DisplayName("resubmit() desde ENVIADO debe lanzar excepción — solo aplica a RECHAZADO")
+    void resubmitDesdeEnviadoLanzaExcepcion() {
         assertThatThrownBy(seguimiento::resubmit)
                 .isInstanceOf(OperacionNoPermitidaException.class)
                 .hasMessageContaining("RECHAZADO");
     }
 
     @Test
-    @DisplayName("resubmit() desde APROBADO debe lanzar excepción — seguimiento inmutable")
-    void resubmitDesdeAprobadoLanzaExcepcion() {
-        seguimiento.aprobar(20L);
+    @DisplayName("resubmit() desde REVISADO debe lanzar excepción — seguimiento inmutable")
+    void resubmitDesdeRevisadoLanzaExcepcion() {
+        seguimiento.revisar(20L);
 
         assertThatThrownBy(seguimiento::resubmit)
                 .isInstanceOf(OperacionNoPermitidaException.class);
@@ -159,14 +159,40 @@ class SeguimientoSemanalTest {
     @Test
     @DisplayName("esEditable() solo es true cuando el seguimiento está RECHAZADO")
     void esEditableSoloCuandoRechazado() {
-        assertThat(seguimiento.esEditable()).isFalse(); // PENDIENTE
+        assertThat(seguimiento.esEditable()).isFalse(); // ENVIADO
 
-        seguimiento.aprobar(20L);
-        assertThat(seguimiento.esEditable()).isFalse(); // APROBADO
+        seguimiento.revisar(20L);
+        assertThat(seguimiento.esEditable()).isFalse(); // REVISADO
 
-        // Necesitamos un seguimiento nuevo en RECHAZADO
         SeguimientoSemanal rechazado = SeguimientoSemanal.builder().semana(2).build();
         rechazado.rechazar("Incompleto", 20L);
         assertThat(rechazado.esEditable()).isTrue(); // RECHAZADO
+    }
+
+    // =================================================================
+    // aprobar() — conservado para compatibilidad con registros anteriores
+    // =================================================================
+
+    @Test
+    @DisplayName("aprobar() desde PENDIENTE (registro antiguo) debe cambiar a APROBADO")
+    void aprobarDesdePendienteExitoso() {
+        seguimiento.setEstado(EstadoSeguimiento.PENDIENTE);
+        Long docenteId = 20L;
+        seguimiento.aprobar(docenteId);
+
+        assertThat(seguimiento.getEstado()).isEqualTo(EstadoSeguimiento.APROBADO);
+        assertThat(seguimiento.getRevisadoPorId()).isEqualTo(docenteId);
+        assertThat(seguimiento.getRevisadoEn()).isNotNull();
+    }
+
+    @Test
+    @DisplayName("aprobar() desde APROBADO debe lanzar excepción")
+    void aprobarDesdeAprobadoLanzaExcepcion() {
+        seguimiento.setEstado(EstadoSeguimiento.PENDIENTE);
+        seguimiento.aprobar(20L);
+
+        assertThatThrownBy(() -> seguimiento.aprobar(20L))
+                .isInstanceOf(OperacionNoPermitidaException.class)
+                .hasMessageContaining("PENDIENTE");
     }
 }

@@ -53,8 +53,8 @@ export default function EstudiantesValidacionPage() {
   const abrirModalApto = async (e: UsuarioResponse) => {
     setModalApto({ open: true, estudianteId: e.id, nombre: e.nombre })
     setCatalogo('')
-    const r = await api.get<ApiResponse<{ content: CatalogoPracticaResponse[] }>>('/api/v1/catalogo-practicas?size=100')
-    setCatalogos(r.data.datos?.content ?? [])
+    const r = await api.get<ApiResponse<CatalogoPracticaResponse[]>>('/api/v1/catalogo-practicas')
+    setCatalogos(r.data.datos ?? [])
   }
 
   const handleMarcarApto = async (e: React.FormEvent) => {

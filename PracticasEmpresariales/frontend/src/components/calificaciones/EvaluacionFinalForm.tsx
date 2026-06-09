@@ -34,8 +34,7 @@ export function EvaluacionFinalForm({ titulo, descripcion, onSubmit }: Props) {
     setCriterios(prev => prev.map((c, i) => i === idx ? { ...c, ...patch } : c))
   }
 
-  const submit = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const ejecutarGuardado = async () => {
     setMensaje('')
     setSaving(true)
     try {
@@ -47,6 +46,11 @@ export function EvaluacionFinalForm({ titulo, descripcion, onSubmit }: Props) {
     } finally {
       setSaving(false)
     }
+  }
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault()
+    ejecutarGuardado()
   }
 
   return (

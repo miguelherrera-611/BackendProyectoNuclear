@@ -180,7 +180,7 @@ class SeguimientoSemanalServiceTest {
 
         assertThat(resultado).isNotNull();
         assertThat(seguimientoRechazado.getActividades()).isEqualTo("Nuevas Act");
-        assertThat(seguimientoRechazado.getEstado()).isEqualTo(EstadoSeguimiento.PENDIENTE);
+        assertThat(seguimientoRechazado.getEstado()).isEqualTo(EstadoSeguimiento.ENVIADO);
         verify(seguimientoRepository).save(seguimientoRechazado);
     }
 
@@ -223,12 +223,56 @@ class SeguimientoSemanalServiceTest {
     }
 
     // =================================================================
-    // aprobar() — solo DOCENTE_ASESOR asignado a esa práctica
+    // marcarRevisado() — solo DOCENTE_ASESOR asignado a esa práctica
     // =================================================================
 
     @Test
-    @DisplayName("aprobar() exitoso por el docente asignado debe cambiar estado a APROBADO")
+    @DisplayName("marcarRevisado() exitoso por el docente asignado debe cambiar estado a REVISADO")
+    void marcarRevisadoExitoso() {
+        when(seguimientoRepository.findById(SEG_ID)).thenReturn(Optional.of(seguimientoPendiente));
+        when(seguimientoRepository.save(any())).thenReturn(seguimientoPendiente);
+
+        SeguimientoSemanalResponse resultado = service.marcarRevisado(SEG_ID, docenteDetails);
+
+        assertThat(resultado).isNotNull();
+        assertThat(seguimientoPendiente.getEstado()).isEqualTo(EstadoSeguimiento.REVISADO);
+        assertThat(seguimientoPendiente.getRevisadoPorId()).isEqualTo(DOCENTE_ID);
+    }
+
+    @Test
+    @DisplayName("marcarRevisado() debe bloquear si el actor no es DOCENTE_ASESOR")
+    void marcarRevisadoRolNoDocenteLanzaAccesoNoAutorizado() {
+        assertThatThrownBy(() -> service.marcarRevisado(SEG_ID, estudianteDetails))
+                .isInstanceOf(AccesoNoAutorizadoException.class);
+    }
+
+    @Test
+    @DisplayName("marcarRevisado() debe bloquear si el docente no está asignado — OCL soloCalificaSusEstudiantes")
+    void marcarRevisadoDocenteNoAsignadoLanzaAccesoNoAutorizado() {
+        when(seguimientoRepository.findById(SEG_ID)).thenReturn(Optional.of(seguimientoPendiente));
+
+        assertThatThrownBy(() -> service.marcarRevisado(SEG_ID, otroDocente))
+                .isInstanceOf(AccesoNoAutorizadoException.class)
+                .hasMessageContaining("docente asesor asignado");
+    }
+
+    @Test
+    @DisplayName("marcarRevisado() debe lanzar 404 si el seguimiento no existe")
+    void marcarRevisadoNoEncontradoLanza404() {
+        when(seguimientoRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.marcarRevisado(99L, docenteDetails))
+                .isInstanceOf(RecursoNoEncontradoException.class);
+    }
+
+    // =================================================================
+    // aprobar() — conservado para compatibilidad con registros anteriores
+    // =================================================================
+
+    @Test
+    @DisplayName("aprobar() exitoso desde PENDIENTE (registro antiguo) debe cambiar estado a APROBADO")
     void aprobarSeguimientoExitoso() {
+        seguimientoPendiente.setEstado(EstadoSeguimiento.PENDIENTE);
         when(seguimientoRepository.findById(SEG_ID)).thenReturn(Optional.of(seguimientoPendiente));
         when(seguimientoRepository.save(any())).thenReturn(seguimientoPendiente);
 

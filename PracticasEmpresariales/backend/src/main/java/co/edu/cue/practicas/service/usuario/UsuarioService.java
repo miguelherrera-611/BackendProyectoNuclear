@@ -146,7 +146,7 @@ public class UsuarioService {
             long dtisActivos = usuarioRepository.countByRolAndActivoTrue(Rol.ADMIN_DTI);
             if (dtisActivos <= 1) {
                 throw new OperacionNoPermitidaException(
-                        "No se puede desactivar al unico Administrador DTI activo del sistema.");
+                        "No se puede desactivar al único Administrador DTI activo del sistema.");
             }
         }
 

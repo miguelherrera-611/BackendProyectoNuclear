@@ -86,7 +86,7 @@ public class PlanPracticaService {
         verificarAccesoLectura(instanciaId, actor);
         return planRepository.findTopByInstanciaPractica_IdOrderByCreadoEnDesc(instanciaId)
                 .map(PlanPracticaResponse::desde)
-                .orElseThrow(() -> new RecursoNoEncontradoException("No existe plan de práctica para esta instancia."));
+                .orElse(null);
     }
 
     @Transactional

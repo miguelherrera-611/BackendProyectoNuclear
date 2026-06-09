@@ -272,13 +272,15 @@ class PlanPracticaServiceTest {
     }
 
     @Test
-    @DisplayName("aprobarPorDocente() desde BORRADOR (sin aprobación del tutor) debe lanzar excepción")
-    void aprobarPorDocenteSinAprobacionTutorLanzaExcepcion() {
+    @DisplayName("aprobarPorDocente() desde BORRADOR debe cambiar a APROBADO_DOCENTE directamente")
+    void aprobarPorDocenteDesdeBorradorExitoso() {
         when(planRepository.findById(PLAN_ID)).thenReturn(Optional.of(planEnBorrador));
+        when(planRepository.save(any())).thenReturn(planEnBorrador);
 
-        assertThatThrownBy(() -> service.aprobarPorDocente(PLAN_ID, docenteDetails))
-                .isInstanceOf(OperacionNoPermitidaException.class)
-                .hasMessageContaining("APROBADO_TUTOR");
+        PlanPracticaResponse resultado = service.aprobarPorDocente(PLAN_ID, docenteDetails);
+
+        assertThat(planEnBorrador.getEstado()).isEqualTo(EstadoPlan.APROBADO_DOCENTE);
+        assertThat(planEnBorrador.estaAprobadoParaSeguimiento()).isTrue();
     }
 
     // =================================================================
@@ -334,13 +336,12 @@ class PlanPracticaServiceTest {
     // =================================================================
 
     @Test
-    @DisplayName("obtenerPlanActual() debe lanzar 404 si no existe plan para la instancia")
-    void obtenerPlanActualSinPlanLanza404() {
+    @DisplayName("obtenerPlanActual() debe retornar null si no existe plan para la instancia")
+    void obtenerPlanActualSinPlanRetornaNull() {
         when(planRepository.findTopByInstanciaPractica_IdOrderByCreadoEnDesc(INSTANCIA_ID))
                 .thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> service.obtenerPlanActual(INSTANCIA_ID, docenteDetails))
-                .isInstanceOf(RecursoNoEncontradoException.class);
+        assertThat(service.obtenerPlanActual(INSTANCIA_ID, docenteDetails)).isNull();
     }
 
     // =================================================================

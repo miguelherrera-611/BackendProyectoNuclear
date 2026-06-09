@@ -4,9 +4,11 @@ import type { SeguimientoSemanalResponse, EstadoSeguimiento } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 
 const BADGE: Record<EstadoSeguimiento, string> = {
+  ENVIADO:   'bg-blue-100 text-blue-800',
+  REVISADO:  'bg-green-100 text-green-800',
+  RECHAZADO: 'bg-red-100 text-red-800',
   PENDIENTE: 'bg-yellow-100 text-yellow-800',
   APROBADO:  'bg-green-100 text-green-800',
-  RECHAZADO: 'bg-red-100 text-red-800',
 }
 
 export default function SeguimientoDetallePage() {
@@ -33,13 +35,13 @@ export default function SeguimientoDetallePage() {
 
   useEffect(() => { cargar() }, [instanciaId])
 
-  const handleAprobar = async (id: number) => {
+  const handleRevisar = async (id: number) => {
     setProcesando(id)
     try {
-      await seguimientoService.aprobar(id)
+      await seguimientoService.marcarRevisado(id)
       await cargar()
     } catch {
-      setError('Error al aprobar el seguimiento.')
+      setError('Error al marcar el seguimiento como revisado.')
     } finally {
       setProcesando(null)
     }
@@ -109,7 +111,7 @@ export default function SeguimientoDetallePage() {
             </div>
           )}
 
-          {s.estado === 'PENDIENTE' && (
+          {s.estado === 'ENVIADO' && (
             <div className="space-y-2 border-t border-gray-100 pt-4">
               <textarea
                 className="input-field text-sm"
@@ -119,8 +121,12 @@ export default function SeguimientoDetallePage() {
                 onChange={e => setObservacion(prev => ({ ...prev, [s.id]: e.target.value }))}
               />
               <div className="flex gap-2">
-                <button className="btn-primary flex-1" onClick={() => handleAprobar(s.id)} disabled={procesando === s.id}>
-                  Aprobar
+                <button
+                  className="btn-primary flex-1"
+                  onClick={() => handleRevisar(s.id)}
+                  disabled={procesando === s.id}
+                >
+                  {procesando === s.id ? 'Procesando...' : 'Marcar como revisado'}
                 </button>
                 <button
                   className="btn-secondary flex-1 text-red-600 border-red-200 hover:bg-red-50"

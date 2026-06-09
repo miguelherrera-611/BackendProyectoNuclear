@@ -101,15 +101,17 @@ class PlanPracticaTest {
     }
 
     @Test
-    @DisplayName("aprobarPorDocente() desde BORRADOR debe lanzar excepción — tutor debe aprobar primero")
-    void aprobarPorDocenteDesbordeBorradorLanzaExcepcion() {
-        assertThatThrownBy(plan::aprobarPorDocente)
-                .isInstanceOf(OperacionNoPermitidaException.class)
-                .hasMessageContaining("APROBADO_TUTOR");
+    @DisplayName("aprobarPorDocente() desde BORRADOR debe pasar a APROBADO_DOCENTE directamente")
+    void aprobarPorDocenteDesdeBorradorExitoso() {
+        plan.aprobarPorDocente();
+
+        assertThat(plan.getEstado()).isEqualTo(EstadoPlan.APROBADO_DOCENTE);
+        assertThat(plan.getAprobadoPorDocenteEn()).isNotNull();
+        assertThat(plan.estaAprobadoParaSeguimiento()).isTrue();
     }
 
     @Test
-    @DisplayName("aprobarPorDocente() desde RECHAZADO debe lanzar excepción")
+    @DisplayName("aprobarPorDocente() desde RECHAZADO debe lanzar excepción — el plan debe re-enviarse primero")
     void aprobarPorDocenteDesdeRechazadoLanzaExcepcion() {
         plan.rechazar("Motivo", 99L);
 
