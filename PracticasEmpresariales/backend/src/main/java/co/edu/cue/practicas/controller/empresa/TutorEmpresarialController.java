@@ -1,5 +1,6 @@
 package co.edu.cue.practicas.controller.empresa;
 
+import co.edu.cue.practicas.dto.request.ActualizarTelefonoTutorRequest;
 import co.edu.cue.practicas.dto.request.CrearTutorRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.TutorEmpresarialResponse;
@@ -41,5 +42,12 @@ public class TutorEmpresarialController {
     @PatchMapping("/{id}/desactivar")
     public ResponseEntity<ApiResponse<TutorEmpresarialResponse>> desactivar(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok("Tutor desactivado.", tutorService.desactivarTutor(id)));
+    }
+
+    @PatchMapping("/{id}/telefono")
+    public ResponseEntity<ApiResponse<TutorEmpresarialResponse>> actualizarTelefono(
+            @PathVariable Long id,
+            @Valid @RequestBody ActualizarTelefonoTutorRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Teléfono actualizado.", tutorService.actualizarTelefono(id, req)));
     }
 }

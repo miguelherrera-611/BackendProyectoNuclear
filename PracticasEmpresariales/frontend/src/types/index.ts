@@ -61,6 +61,8 @@ export interface FacultadResponse {
   descripcion?: string
   activa: boolean
   numeroProgramas: number
+  tieneProgramasActivos: boolean
+  programas: { id: number; nombre: string; activo: boolean; numeroTotalPracticas: number; promedioMinimoGeneral: number }[]
   creadaEn: string
 }
 

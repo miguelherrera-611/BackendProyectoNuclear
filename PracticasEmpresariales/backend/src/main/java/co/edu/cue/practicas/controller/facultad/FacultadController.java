@@ -33,9 +33,13 @@ public class FacultadController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<FacultadResponse>>> listar(
+            @RequestParam(defaultValue = "false") boolean incluirInactivas,
             @PageableDefault(sort = "nombre") Pageable pageable) {
 
-        return ResponseEntity.ok(ApiResponse.ok(facultadService.listar(pageable)));
+        Page<FacultadResponse> resultado = incluirInactivas
+                ? facultadService.listarTodas(pageable)
+                : facultadService.listar(pageable);
+        return ResponseEntity.ok(ApiResponse.ok(resultado));
     }
 
     @GetMapping("/{id}")
@@ -60,5 +64,14 @@ public class FacultadController {
 
         facultadService.desactivarFacultad(id, userDetails);
         return ResponseEntity.ok(ApiResponse.ok("Facultad desactivada", null));
+    }
+
+    @PatchMapping("/{id}/activar")
+    public ResponseEntity<ApiResponse<Void>> activar(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        facultadService.activarFacultad(id, userDetails);
+        return ResponseEntity.ok(ApiResponse.ok("Facultad activada", null));
     }
 }

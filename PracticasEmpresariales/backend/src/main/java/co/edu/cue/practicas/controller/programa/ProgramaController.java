@@ -35,9 +35,13 @@ public class ProgramaController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<ProgramaResponse>>> listar(
+            @RequestParam(defaultValue = "false") boolean incluirInactivos,
             @PageableDefault(sort = "nombre") Pageable pageable) {
 
-        return ResponseEntity.ok(ApiResponse.ok(programaService.listar(pageable)));
+        Page<ProgramaResponse> resultado = incluirInactivos
+                ? programaService.listarTodos(pageable)
+                : programaService.listar(pageable);
+        return ResponseEntity.ok(ApiResponse.ok(resultado));
     }
 
     @GetMapping("/por-facultad/{facultadId}")
@@ -57,5 +61,14 @@ public class ProgramaController {
 
         programaService.desactivarPrograma(id, userDetails);
         return ResponseEntity.ok(ApiResponse.ok("Programa desactivado", null));
+    }
+
+    @PatchMapping("/{id}/activar")
+    public ResponseEntity<ApiResponse<Void>> activar(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        programaService.activarPrograma(id, userDetails);
+        return ResponseEntity.ok(ApiResponse.ok("Programa activado", null));
     }
 }

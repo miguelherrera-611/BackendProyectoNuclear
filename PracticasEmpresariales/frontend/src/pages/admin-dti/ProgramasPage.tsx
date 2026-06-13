@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { FacultadResponse, ProgramaResponse, ApiResponse, Pageable } from '../../types'
 import api from '../../services/api'
-import { Modal } from '../../components/common/Modal/Modal'
+import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
 import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
 import { Table } from '../../components/common/Table/Table'
@@ -19,10 +19,13 @@ export default function ProgramasPage() {
     numeroTotalPracticas: 1, promedioMinimoGeneral: 3.0,
   })
   const [errorModal, setErrorModal] = useState('')
+  const [confirm, setConfirm] = useState<{ open: boolean; id: number; nombre: string; accion: 'activar' | 'desactivar' }>({
+    open: false, id: 0, nombre: '', accion: 'desactivar',
+  })
 
   const cargar = () => {
     setLoading(true)
-    api.get<ApiResponse<Pageable<ProgramaResponse>>>('/programas')
+    api.get<ApiResponse<Pageable<ProgramaResponse>>>('/programas?incluirInactivos=true')
       .then(r => setProgramas(r.data.datos?.content ?? []))
       .finally(() => setLoading(false))
   }
@@ -51,7 +54,19 @@ export default function ProgramasPage() {
     }
   }
 
-  const HEADERS = ['Programa', 'Facultad', 'N° Prácticas', 'Promedio Mín.', 'Estado']
+  const handleConfirmar = async () => {
+    try {
+      await api.patch(`/programas/${confirm.id}/${confirm.accion}`)
+      setConfirm({ open: false, id: 0, nombre: '', accion: 'desactivar' })
+      cargar()
+      showToast(confirm.accion === 'activar' ? 'Programa activado.' : 'Programa desactivado.')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
+      showToast(msg ?? `No se puede ${confirm.accion} el programa.`, 'error')
+    }
+  }
+
+  const HEADERS = ['Programa', 'Facultad', 'N° Prácticas', 'Promedio Mín.', 'Estado', 'Acciones']
 
   return (
     <div className="space-y-6">
@@ -83,9 +98,39 @@ export default function ProgramasPage() {
                 {p.activo ? 'Activo' : 'Inactivo'}
               </span>
             </td>
+            <td className="px-4 py-3 text-center">
+              {p.activo ? (
+                <button
+                  onClick={() => setConfirm({ open: true, id: p.id, nombre: p.nombre, accion: 'desactivar' })}
+                  className="text-xs text-red-500 hover:text-red-700 transition-colors"
+                >
+                  Desactivar
+                </button>
+              ) : (
+                <button
+                  onClick={() => setConfirm({ open: true, id: p.id, nombre: p.nombre, accion: 'activar' })}
+                  className="text-xs text-green-600 hover:text-green-800 transition-colors"
+                >
+                  Activar
+                </button>
+              )}
+            </td>
           </tr>
         ))}
       </Table>
+
+      <ConfirmModal
+        open={confirm.open}
+        title={confirm.accion === 'activar' ? 'Activar programa' : 'Desactivar programa'}
+        message={confirm.accion === 'activar'
+          ? `¿Activar "${confirm.nombre}"?`
+          : `¿Desactivar "${confirm.nombre}"? Los estudiantes activos en este programa podrían verse afectados.`
+        }
+        confirmLabel={confirm.accion === 'activar' ? 'Activar' : 'Desactivar'}
+        variant={confirm.accion === 'activar' ? 'primary' : 'danger'}
+        onConfirm={handleConfirmar}
+        onCancel={() => setConfirm({ open: false, id: 0, nombre: '', accion: 'desactivar' })}
+      />
 
       {/* Modal: Crear */}
       {modalCrear && (

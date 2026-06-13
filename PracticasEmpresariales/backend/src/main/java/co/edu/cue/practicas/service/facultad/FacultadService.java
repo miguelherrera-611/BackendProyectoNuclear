@@ -108,6 +108,26 @@ public class FacultadService {
     }
 
     @Transactional(readOnly = true)
+    public Page<FacultadResponse> listarTodas(Pageable pageable) {
+        return facultadRepository.findAll(pageable).map(FacultadResponse::desde);
+    }
+
+    @RequiereRol(roles = {Rol.ADMIN_DTI})
+    @Transactional
+    public void activarFacultad(Long id, CustomUserDetails ejecutor) {
+        Facultad facultad = buscarPorId(id);
+        facultad.setActiva(true);
+        facultadRepository.save(facultad);
+
+        auditoriaLogger.registrar(iniciarAuditoria(ejecutor)
+                .modulo(ModuloAuditoria.FACULTADES)
+                .tipoAccion(TipoAccion.ACTIVAR)
+                .registroAfectadoId(id)
+                .registroAfectadoTipo(TIPO_REGISTRO)
+                .exitoso(true));
+    }
+
+    @Transactional(readOnly = true)
     public FacultadResponse obtenerPorId(Long id) {
         return FacultadResponse.desde(buscarPorId(id));
     }

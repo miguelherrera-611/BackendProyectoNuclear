@@ -14,13 +14,15 @@ export default function FacultadesPage() {
   const [modalCrear, setModalCrear]   = useState(false)
   const [form, setForm]               = useState({ nombre: '', descripcion: '' })
   const [errorModal, setErrorModal]   = useState('')
-  const [confirm, setConfirm] = useState<{ open: boolean; id: number; nombre: string }>({
-    open: false, id: 0, nombre: '',
+  const [confirm, setConfirm] = useState<{ open: boolean; id: number; nombre: string; accion: 'activar' | 'desactivar' }>({
+    open: false, id: 0, nombre: '', accion: 'desactivar',
   })
+  const [alerta, setAlerta] = useState<{ open: boolean; mensaje: string }>({ open: false, mensaje: '' })
+  const [panel, setPanel] = useState<FacultadResponse | null>(null)
 
   const cargar = () => {
     setLoading(true)
-    api.get<ApiResponse<Pageable<FacultadResponse>>>('/facultades')
+    api.get<ApiResponse<Pageable<FacultadResponse>>>('/facultades?incluirInactivas=true')
       .then(r => setFacultades(r.data.datos?.content ?? []))
       .finally(() => setLoading(false))
   }
@@ -45,15 +47,16 @@ export default function FacultadesPage() {
     }
   }
 
-  const handleDesactivar = async () => {
+  const handleConfirmar = async () => {
     try {
-      await api.patch(`/facultades/${confirm.id}/desactivar`)
-      setConfirm({ open: false, id: 0, nombre: '' })
+      await api.patch(`/facultades/${confirm.id}/${confirm.accion}`)
+      setConfirm({ open: false, id: 0, nombre: '', accion: 'desactivar' })
+      if (panel?.id === confirm.id) setPanel(null)
       cargar()
-      showToast('Facultad desactivada.')
+      showToast(confirm.accion === 'activar' ? 'Facultad activada.' : 'Facultad desactivada.')
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
-      showToast(msg ?? 'No se puede desactivar.', 'error')
+      showToast(msg ?? `No se puede ${confirm.accion} la facultad.`, 'error')
     }
   }
 
@@ -81,7 +84,11 @@ export default function FacultadesPage() {
             </button>
           </div>
         ) : facultades.map(f => (
-          <div key={f.id} className="card hover:shadow-md transition-shadow">
+          <div
+            key={f.id}
+            className="card hover:shadow-md transition-shadow cursor-pointer"
+            onClick={() => setPanel(f)}
+          >
             <div className="flex items-start justify-between">
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-gray-800 truncate">{f.nombre}</h3>
@@ -95,18 +102,99 @@ export default function FacultadesPage() {
               <p className="text-sm text-gray-600">
                 <span className="font-semibold text-cue-primary">{f.numeroProgramas}</span> programas
               </p>
-              {f.activa && (
+              {f.activa ? (
                 <button
-                  onClick={() => setConfirm({ open: true, id: f.id, nombre: f.nombre })}
+                  onClick={e => {
+                    e.stopPropagation()
+                    if (f.tieneProgramasActivos) {
+                      setAlerta({ open: true, mensaje: `"${f.nombre}" no puede desactivarse porque tiene programas activos. Desactiva primero todos sus programas.` })
+                    } else {
+                      setConfirm({ open: true, id: f.id, nombre: f.nombre, accion: 'desactivar' })
+                    }
+                  }}
                   className="text-xs text-red-500 hover:text-red-700 transition-colors"
                 >
                   Desactivar
+                </button>
+              ) : (
+                <button
+                  onClick={e => {
+                    e.stopPropagation()
+                    setConfirm({ open: true, id: f.id, nombre: f.nombre, accion: 'activar' })
+                  }}
+                  className="text-xs text-green-600 hover:text-green-800 transition-colors"
+                >
+                  Activar
                 </button>
               )}
             </div>
           </div>
         ))}
       </div>
+
+      {/* Drawer lateral izquierdo */}
+      {panel && (
+        <>
+          <div
+            className="fixed inset-0 bg-black/30 z-40"
+            onClick={() => setPanel(null)}
+          />
+          <div className="fixed left-0 top-0 h-full w-80 bg-white shadow-2xl z-50 flex flex-col">
+            <div className="flex items-start justify-between px-5 py-4 border-b border-gray-100 shrink-0">
+              <div className="min-w-0 pr-3">
+                <h2 className="font-bold text-gray-800 truncate">{panel.nombre}</h2>
+                {panel.descripcion && (
+                  <p className="text-xs text-gray-500 mt-0.5">{panel.descripcion}</p>
+                )}
+                <p className="text-xs text-gray-400 mt-1">
+                  {panel.programas.length} {panel.programas.length === 1 ? 'programa' : 'programas'}
+                </p>
+              </div>
+              <button
+                onClick={() => setPanel(null)}
+                className="text-gray-400 hover:text-gray-600 text-2xl leading-none shrink-0"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 py-3">
+              {panel.programas.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="text-gray-200 text-4xl mb-2">📚</div>
+                  <p className="text-sm text-gray-400">Sin programas registrados</p>
+                </div>
+              ) : (
+                <ul className="space-y-3">
+                  {panel.programas.map(p => (
+                    <li
+                      key={p.id}
+                      className="rounded-lg border border-gray-100 p-3 hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center justify-between gap-2 mb-2">
+                        <span className="font-medium text-sm text-gray-800 leading-snug">{p.nombre}</span>
+                        <span className={`text-xs shrink-0 ${p.activo ? 'badge-apto' : 'badge-no-apto'}`}>
+                          {p.activo ? 'Activo' : 'Inactivo'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
+                        <div>
+                          <p className="text-gray-400">Prácticas</p>
+                          <p className="font-semibold text-gray-700">{p.numeroTotalPracticas}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-400">Promedio mín.</p>
+                          <p className="font-semibold text-gray-700">{p.promedioMinimoGeneral != null ? p.promedioMinimoGeneral.toFixed(1) : '—'}</p>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Modal: Crear */}
       {modalCrear && (
@@ -142,15 +230,29 @@ export default function FacultadesPage() {
         </Modal>
       )}
 
-      {/* Confirmación desactivar */}
+      {alerta.open && (
+        <Modal title="No se puede desactivar" size="sm" onClose={() => setAlerta({ open: false, mensaje: '' })}>
+          <div className="flex justify-center mb-4">
+            <div className="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center text-2xl">⚠️</div>
+          </div>
+          <p className="text-gray-600 text-sm text-center mb-6">{alerta.mensaje}</p>
+          <Button className="w-full" onClick={() => setAlerta({ open: false, mensaje: '' })}>
+            Entendido
+          </Button>
+        </Modal>
+      )}
+
       <ConfirmModal
         open={confirm.open}
-        title="Desactivar facultad"
-        message={`¿Desactivar "${confirm.nombre}"? Sus programas asociados quedarán inactivos.`}
-        confirmLabel="Desactivar"
-        variant="danger"
-        onConfirm={handleDesactivar}
-        onCancel={() => setConfirm({ open: false, id: 0, nombre: '' })}
+        title={confirm.accion === 'activar' ? 'Activar facultad' : 'Desactivar facultad'}
+        message={confirm.accion === 'activar'
+          ? `¿Activar "${confirm.nombre}"?`
+          : `¿Desactivar "${confirm.nombre}"?`
+        }
+        confirmLabel={confirm.accion === 'activar' ? 'Activar' : 'Desactivar'}
+        variant={confirm.accion === 'activar' ? 'primary' : 'danger'}
+        onConfirm={handleConfirmar}
+        onCancel={() => setConfirm({ open: false, id: 0, nombre: '', accion: 'desactivar' })}
       />
     </div>
   )

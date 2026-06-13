@@ -156,6 +156,43 @@ public class ProgramaService {
     }
 
     /**
+     * Lista todos los programas (activos e inactivos) con paginación.
+     * Destinado exclusivamente a la vista de administración del DTI.
+     */
+    @Transactional(readOnly = true)
+    public Page<ProgramaResponse> listarTodos(Pageable pageable) {
+        return programaRepository.findAll(pageable).map(ProgramaResponse::desde);
+    }
+
+    /**
+     * Reactiva un programa previamente desactivado.
+     *
+     * @param id        ID del programa a activar
+     * @param ejecutor  usuario DTI autenticado que ejecuta la acción
+     */
+    @RequiereRol(roles = {Rol.ADMIN_DTI})
+    @Transactional
+    public void activarPrograma(Long id, CustomUserDetails ejecutor) {
+        Programa programa = buscarPorId(id);
+
+        if (!programa.getFacultad().isActiva()) {
+            throw new OperacionNoPermitidaException(
+                    "No se puede activar el programa porque su facultad \"" +
+                    programa.getFacultad().getNombre() + "\" está inactiva.");
+        }
+
+        programa.setActivo(true);
+        programaRepository.save(programa);
+
+        auditoriaLogger.registrar(iniciarAuditoria(ejecutor)
+                .modulo(ModuloAuditoria.PROGRAMAS)
+                .tipoAccion(TipoAccion.ACTIVAR)
+                .registroAfectadoId(id)
+                .registroAfectadoTipo("Programa")
+                .exitoso(true));
+    }
+
+    /**
      * Lista los programas activos de una facultad específica.
      * Se usa en el frontend para cargar el selector de programas al crear un usuario.
      *
