@@ -182,6 +182,16 @@ public class UsuarioService {
         return usuarioRepository.findAll(pageable).map(UsuarioResponse::desde);
     }
 
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
+    @Transactional(readOnly = true)
+    public java.util.List<UsuarioResponse> listarDocentesActivos() {
+        return usuarioRepository.findByRolAndActivoTrue(Rol.DOCENTE_ASESOR,
+                        org.springframework.data.domain.PageRequest.of(0, 500,
+                                org.springframework.data.domain.Sort.by("nombre")))
+                .map(UsuarioResponse::desde)
+                .getContent();
+    }
+
     @RequiereRol(roles = {Rol.ADMIN_DTI})
     @Transactional(readOnly = true)
     public UsuarioResponse obtenerPorId(Long id) {

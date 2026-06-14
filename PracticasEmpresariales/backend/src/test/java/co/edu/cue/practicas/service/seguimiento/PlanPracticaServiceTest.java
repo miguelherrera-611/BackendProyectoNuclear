@@ -113,7 +113,7 @@ class PlanPracticaServiceTest {
         when(planRepository.save(any())).thenReturn(planEnBorrador);
 
         PlanPracticaResponse resultado = service.crearOActualizarPlan(
-                INSTANCIA_ID, new CrearPlanRequest("Objetivos", "Cronograma"), estudiante);
+                INSTANCIA_ID, new CrearPlanRequest("Objetivos", "Cronograma"), null, estudiante);
 
         assertThat(resultado).isNotNull();
         verify(planRepository).save(any(PlanPractica.class));
@@ -123,7 +123,7 @@ class PlanPracticaServiceTest {
     @DisplayName("crearOActualizarPlan() debe bloquear si el actor no es ESTUDIANTE")
     void crearPlanRolNoEstudianteLanzaAccesoNoAutorizado() {
         assertThatThrownBy(() -> service.crearOActualizarPlan(
-                INSTANCIA_ID, new CrearPlanRequest("Obj", "Cron"), noAutorizado))
+                INSTANCIA_ID, new CrearPlanRequest("Obj", "Cron"), null, noAutorizado))
                 .isInstanceOf(AccesoNoAutorizadoException.class);
     }
 
@@ -138,7 +138,7 @@ class PlanPracticaServiceTest {
         when(instanciaRepository.findById(INSTANCIA_ID)).thenReturn(Optional.of(instanciaAsignada));
 
         assertThatThrownBy(() -> service.crearOActualizarPlan(
-                INSTANCIA_ID, new CrearPlanRequest("Obj", "Cron"), estudiante))
+                INSTANCIA_ID, new CrearPlanRequest("Obj", "Cron"), null, estudiante))
                 .isInstanceOf(OperacionNoPermitidaException.class)
                 .hasMessageContaining("EN_CURSO");
     }
@@ -157,7 +157,7 @@ class PlanPracticaServiceTest {
                 .thenReturn(Optional.of(planFinalizado));
 
         assertThatThrownBy(() -> service.crearOActualizarPlan(
-                INSTANCIA_ID, new CrearPlanRequest("Nuevos obj", "Nuevo cron"), estudiante))
+                INSTANCIA_ID, new CrearPlanRequest("Nuevos obj", "Nuevo cron"), null, estudiante))
                 .isInstanceOf(OperacionNoPermitidaException.class)
                 .hasMessageContaining("APROBADO_DOCENTE");
 
@@ -172,7 +172,7 @@ class PlanPracticaServiceTest {
                 .thenReturn(Optional.of(planAprobadoTutor));
 
         assertThatThrownBy(() -> service.crearOActualizarPlan(
-                INSTANCIA_ID, new CrearPlanRequest("Obj", "Cron"), estudiante))
+                INSTANCIA_ID, new CrearPlanRequest("Obj", "Cron"), null, estudiante))
                 .isInstanceOf(OperacionNoPermitidaException.class);
     }
 
@@ -189,7 +189,7 @@ class PlanPracticaServiceTest {
                 .thenReturn(Optional.of(planRechazado));
         when(planRepository.save(any())).thenReturn(planRechazado);
 
-        service.crearOActualizarPlan(INSTANCIA_ID, new CrearPlanRequest("Nuevos obj", "Nuevo cron"), estudiante);
+        service.crearOActualizarPlan(INSTANCIA_ID, new CrearPlanRequest("Nuevos obj", "Nuevo cron"), null, estudiante);
 
         assertThat(planRechazado.getEstado()).isEqualTo(EstadoPlan.BORRADOR);
         assertThat(planRechazado.getObjetivos()).isEqualTo("Nuevos obj");

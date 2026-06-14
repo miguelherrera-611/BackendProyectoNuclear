@@ -56,6 +56,12 @@ public class PlanPractica {
     @Column(name = "aprobado_por_docente_en")
     private LocalDateTime aprobadoPorDocenteEn;
 
+    @Column(name = "documento_nombre", length = 255)
+    private String documentoNombre;
+
+    @Column(name = "documento_ruta", length = 512)
+    private String documentoRuta;
+
     @Column(name = "motivo_rechazo", length = 500)
     private String motivoRechazo;
 

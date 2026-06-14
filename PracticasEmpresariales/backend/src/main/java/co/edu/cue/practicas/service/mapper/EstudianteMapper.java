@@ -61,6 +61,7 @@ public class EstudianteMapper {
                 .nombreTutorEmpresarial(i.getTutorEmpresarial() != null ? i.getTutorEmpresarial().getNombre() : null)
                 .fechaInicio(i.getFechaInicio())
                 .fechaFin(i.getFechaFin())
+                .fechaSustentacion(i.getFechaSustentacion())
                 .firmaTutor(i.isFirmaTutor())
                 .firmaDocente(i.isFirmaDocente())
                 .firmaEstudiante(i.isFirmaEstudiante())

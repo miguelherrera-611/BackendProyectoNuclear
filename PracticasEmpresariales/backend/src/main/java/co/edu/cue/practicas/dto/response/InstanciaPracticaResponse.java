@@ -33,6 +33,7 @@ public class InstanciaPracticaResponse {
     private String nombreTutorEmpresarial;
     private LocalDate fechaInicio;
     private LocalDate fechaFin;
+    private LocalDate fechaSustentacion;
     private boolean firmaTutor;
     private boolean firmaDocente;
     private boolean firmaEstudiante;

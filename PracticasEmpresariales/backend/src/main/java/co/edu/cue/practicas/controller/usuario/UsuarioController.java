@@ -16,6 +16,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/usuarios")
 @RequiredArgsConstructor
@@ -38,6 +40,13 @@ public class UsuarioController {
             @PageableDefault(size = 20, sort = "nombre") Pageable pageable) {
 
         return ResponseEntity.ok(ApiResponse.ok(usuarioService.listarUsuarios(pageable)));
+    }
+
+    /** Lista todos los docentes asesores activos. Accesible por COORDINADOR_PRACTICAS y ADMIN_DTI. */
+    @GetMapping("/docentes")
+    public ResponseEntity<ApiResponse<List<UsuarioResponse>>> listarDocentes(
+            @AuthenticationPrincipal CustomUserDetails actor) {
+        return ResponseEntity.ok(ApiResponse.ok("Docentes asesores activos.", usuarioService.listarDocentesActivos()));
     }
 
     @GetMapping("/{id}")

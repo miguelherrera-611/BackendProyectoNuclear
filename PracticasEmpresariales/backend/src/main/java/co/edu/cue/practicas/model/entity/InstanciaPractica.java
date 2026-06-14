@@ -111,6 +111,10 @@ public class InstanciaPractica {
     @Column(name = "fecha_fin")
     private LocalDate fechaFin;
 
+    /** Fecha de sustentación programada por el docente asesor. */
+    @Column(name = "fecha_sustentacion")
+    private LocalDate fechaSustentacion;
+
     @Column(name = "firma_tutor")
     @Builder.Default
     private boolean firmaTutor = false;

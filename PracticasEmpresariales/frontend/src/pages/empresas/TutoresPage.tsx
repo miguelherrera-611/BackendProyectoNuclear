@@ -106,6 +106,7 @@ export default function TutoresPage() {
                 <div className="flex-1 min-w-0">
                   <h3 className="font-semibold text-gray-800 truncate">{t.nombre}</h3>
                   {t.cargo && <p className="text-xs text-gray-500 mt-0.5">{t.cargo}</p>}
+                  <p className="text-xs text-cue-primary font-medium mt-0.5 truncate">🏢 {t.razonSocialEmpresa}</p>
                 </div>
                 <span className={t.activo ? 'badge-apto ml-2 shrink-0' : 'badge-no-apto ml-2 shrink-0'}>
                   {t.activo ? 'Activo' : 'Inactivo'}

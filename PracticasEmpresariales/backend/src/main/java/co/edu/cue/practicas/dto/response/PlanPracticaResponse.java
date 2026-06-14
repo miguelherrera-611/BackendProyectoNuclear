@@ -17,6 +17,7 @@ public class PlanPracticaResponse {
     private Long instanciaPracticaId;
     private String objetivos;
     private String cronograma;
+    private String documentoNombre;
     private EstadoPlan estado;
     private Long cargadoPorId;
     private LocalDateTime aprobadoPorTutorEn;
@@ -32,6 +33,7 @@ public class PlanPracticaResponse {
                 .instanciaPracticaId(p.getInstanciaPractica() != null ? p.getInstanciaPractica().getId() : null)
                 .objetivos(p.getObjetivos())
                 .cronograma(p.getCronograma())
+                .documentoNombre(p.getDocumentoNombre())
                 .estado(p.getEstado())
                 .cargadoPorId(p.getCargadoPorId())
                 .aprobadoPorTutorEn(p.getAprobadoPorTutorEn())

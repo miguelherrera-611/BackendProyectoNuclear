@@ -39,21 +39,25 @@ export default function NuevaAsignacionPage() {
         .catch(() => setError('Error cargando estudiantes APTOS.'))
     }
     if (paso === 3 && vacanteSeleccionada) {
-      tutorService.listarPorEmpresa(vacanteSeleccionada.empresaId).then(setTutores).catch(() => {})
-      usuarioService.listar(0, 100).then(p => setDocentes(p.content.filter((u: UsuarioResponse) => u.rol === 'DOCENTE_ASESOR'))).catch(() => {})
+      tutorService.listarPorEmpresa(vacanteSeleccionada.empresaId).then(setTutores).catch(() => setError('Error cargando tutores.'))
+      usuarioService.listarDocentes().then(setDocentes).catch(() => setError('Error cargando docentes asesores.'))
     }
   }, [paso])
 
+  const estudianteSeleccionado = estudiantes.find(e => e.id === estudianteId)
+
   const handleAsignar = async () => {
     if (!vacanteId || !estudianteId) { setError('Debes seleccionar una vacante y un estudiante.'); return }
+    if (!docenteId) { setError('Debes asignar un docente asesor.'); return }
+    if (!tutorId) { setError('Debes asignar un tutor empresarial.'); return }
     setLoading(true)
     setError('')
     try {
       await asignacionService.crear({
         vacanteId,
         estudianteId,
-        tutorEmpresarialId: tutorId ?? undefined,
-        docenteAsesorId: docenteId ?? undefined,
+        tutorEmpresarialId: tutorId!,
+        docenteAsesorId: docenteId!,
       })
       navigate('/asignaciones')
     } catch (e: unknown) {
@@ -124,29 +128,37 @@ export default function NuevaAsignacionPage() {
 
       {paso === 3 && (
         <div className="card space-y-4">
-          <h2 className="font-semibold text-gray-800">3. Asignar docente y tutor (opcional)</h2>
+          <h2 className="font-semibold text-gray-800">3. Asignar docente asesor y tutor empresarial</h2>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Docente Asesor</label>
-            <select className="input-field" value={docenteId ?? ''} onChange={e => setDocenteId(e.target.value ? Number(e.target.value) : null)}>
-              <option value="">Sin asignar ahora</option>
-              {docentes.map(d => <option key={d.id} value={d.id}>{d.nombre}</option>)}
-            </select>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Docente Asesor *</label>
+            {docentes.length === 0
+              ? <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">No hay docentes asesores activos registrados en el sistema.</p>
+              : <select className="input-field" value={docenteId ?? ''} onChange={e => setDocenteId(e.target.value ? Number(e.target.value) : null)}>
+                  <option value="">-- Selecciona un docente --</option>
+                  {docentes.map(d => <option key={d.id} value={d.id}>{d.nombre}</option>)}
+                </select>
+            }
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Tutor Empresarial</label>
-            <select className="input-field" value={tutorId ?? ''} onChange={e => setTutorId(e.target.value ? Number(e.target.value) : null)}>
-              <option value="">Sin asignar ahora</option>
-              {tutores.map(t => <option key={t.id} value={t.id}>{t.nombre} — {t.cargo}</option>)}
-            </select>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Tutor Empresarial *</label>
+            {tutores.length === 0
+              ? <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">No hay tutores registrados para esta empresa.</p>
+              : <select className="input-field" value={tutorId ?? ''} onChange={e => setTutorId(e.target.value ? Number(e.target.value) : null)}>
+                  <option value="">-- Selecciona un tutor --</option>
+                  {tutores.map(t => <option key={t.id} value={t.id}>{t.nombre} — {t.cargo}</option>)}
+                </select>
+            }
           </div>
           <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 space-y-1">
-            <p><strong>Resumen:</strong></p>
+            <p className="font-semibold text-gray-700">Resumen:</p>
             <p>Vacante: <strong>{vacanteSeleccionada?.area}</strong> en {vacanteSeleccionada?.razonSocialEmpresa}</p>
-            <p>Estudiante ID: <strong>{estudianteId}</strong></p>
+            <p>Estudiante: <strong>{estudianteSeleccionado?.nombre ?? `ID ${estudianteId}`}</strong></p>
+            {docenteId && <p>Docente: <strong>{docentes.find(d => d.id === docenteId)?.nombre}</strong></p>}
+            {tutorId && <p>Tutor: <strong>{tutores.find(t => t.id === tutorId)?.nombre}</strong></p>}
           </div>
           <div className="flex gap-2">
             <button className="btn-secondary flex-1" onClick={() => setPaso(2)}>← Anterior</button>
-            <button className="btn-primary flex-1" disabled={loading} onClick={handleAsignar}>
+            <button className="btn-primary flex-1" disabled={loading || !docenteId || !tutorId} onClick={handleAsignar}>
               {loading ? 'Asignando...' : 'Confirmar asignación'}
             </button>
           </div>

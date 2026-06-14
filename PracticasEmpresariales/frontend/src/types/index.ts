@@ -245,8 +245,9 @@ export type EstadoPlan = 'BORRADOR' | 'APROBADO_TUTOR' | 'APROBADO_DOCENTE' | 'R
 export interface PlanPracticaResponse {
   id: number
   instanciaPracticaId: number
-  objetivos: string
-  cronograma: string
+  objetivos?: string
+  cronograma?: string
+  documentoNombre?: string
   estado: EstadoPlan
   cargadoPorId?: number
   aprobadoPorTutorEn?: string
@@ -282,6 +283,7 @@ export interface InstanciaPracticaResponseV2 extends InstanciaPracticaResponse {
   vacanteId?: number
   fechaInicio?: string
   fechaFin?: string
+  fechaSustentacion?: string
   firmaTutor: boolean
   firmaDocente: boolean
   firmaEstudiante: boolean

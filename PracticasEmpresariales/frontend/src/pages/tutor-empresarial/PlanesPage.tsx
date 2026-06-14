@@ -170,9 +170,11 @@ function PlanCard({
           )}
         </div>
         <p className="text-sm text-gray-500">{practica.estado.replace(/_/g, ' ')}</p>
-        {plan && (
+        {plan && (plan.documentoNombre || plan.objetivos) && (
           <p className="text-xs text-gray-400 mt-1 line-clamp-1">
-            Objetivos: {plan.objetivos}
+            {plan.documentoNombre
+              ? `Documento: ${plan.documentoNombre}`
+              : `Objetivos: ${plan.objetivos}`}
           </p>
         )}
       </div>

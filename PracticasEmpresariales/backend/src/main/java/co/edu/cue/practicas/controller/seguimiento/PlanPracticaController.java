@@ -6,11 +6,13 @@ import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.PlanPracticaResponse;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.seguimiento.PlanPracticaService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -25,13 +27,22 @@ public class PlanPracticaController {
 
     private final PlanPracticaService service;
 
-    @PutMapping("/{instanciaId}")
+    @PutMapping(value = "/{instanciaId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ApiResponse<PlanPracticaResponse>> crearOActualizar(
             @PathVariable Long instanciaId,
-            @Valid @RequestBody CrearPlanRequest request,
+            @RequestParam(value = "objetivos", required = false) String objetivos,
+            @RequestParam(value = "cronograma", required = false) String cronograma,
+            @RequestPart(value = "documento", required = false) MultipartFile documento,
             @AuthenticationPrincipal CustomUserDetails actor) {
         return ResponseEntity.ok(ApiResponse.ok("Plan de práctica guardado.",
-                service.crearOActualizarPlan(instanciaId, request, actor)));
+                service.crearOActualizarPlan(instanciaId, new CrearPlanRequest(objetivos, cronograma), documento, actor)));
+    }
+
+    @GetMapping("/{planId}/documento")
+    public ResponseEntity<Resource> descargarDocumento(
+            @PathVariable Long planId,
+            @AuthenticationPrincipal CustomUserDetails actor) {
+        return service.descargarDocumento(planId, actor);
     }
 
     @GetMapping("/{instanciaId}/actual")
