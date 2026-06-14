@@ -79,7 +79,7 @@ export default function AppRouter() {
               <Route path="/cierre-practica/:instanciaId" element={<CierrePracticaPage />} />
             </Route>
 
-            <Route element={<ProtectedRoute rolesPermitidos={['COORDINADOR_PRACTICAS', 'COORDINACION_ACADEMICA']} />}>
+            <Route element={<ProtectedRoute rolesPermitidos={['COORDINACION_ACADEMICA']} />}>
               <Route path="/estudiantes" element={<EstudiantesPage />} />
             </Route>
 
@@ -88,7 +88,7 @@ export default function AppRouter() {
               <Route path="/practicas" element={<PracticasPage />} />
             </Route>
 
-            <Route element={<ProtectedRoute rolesPermitidos={['COORDINADOR_PRACTICAS', 'DIRECCION']} />}>
+            <Route element={<ProtectedRoute rolesPermitidos={['DIRECCION']} />}>
               <Route path="/tablero-seguimiento" element={<TableroSeguimientoPage />} />
             </Route>
 

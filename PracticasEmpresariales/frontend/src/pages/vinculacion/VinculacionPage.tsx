@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import type { InstanciaPracticaResponseV2 } from '../../types'
 import api from '../../services/api'
 import type { ApiResponse } from '../../types'
+
+const TIPOS_FIRMA = ['TUTOR', 'DOCENTE', 'ESTUDIANTE'] as const
+type TipoFirma = typeof TIPOS_FIRMA[number]
 
 export default function VinculacionPage() {
   const { instanciaId } = useParams<{ instanciaId: string }>()
@@ -12,6 +15,7 @@ export default function VinculacionPage() {
   const [error, setError] = useState('')
   const [saving, setSaving] = useState(false)
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null)
+  const [uploadingFirmaType, setUploadingFirmaType] = useState<TipoFirma | null>(null)
 
   const [fechaInicio, setFechaInicio] = useState('')
   const [fechaFin, setFechaFin] = useState('')
@@ -19,6 +23,18 @@ export default function VinculacionPage() {
   const [firmaDocente, setFirmaDocente] = useState(false)
   const [firmaEstudiante, setFirmaEstudiante] = useState(false)
   const [docenteAsesorId, setDocenteAsesorId] = useState('')
+
+  const refCarta = useRef<HTMLInputElement>(null)
+  const refConvenio = useRef<HTMLInputElement>(null)
+  const refFirmaTutor = useRef<HTMLInputElement>(null)
+  const refFirmaDocente = useRef<HTMLInputElement>(null)
+  const refFirmaEstudiante = useRef<HTMLInputElement>(null)
+
+  const firmaRefs: Record<TipoFirma, React.RefObject<HTMLInputElement>> = {
+    TUTOR: refFirmaTutor,
+    DOCENTE: refFirmaDocente,
+    ESTUDIANTE: refFirmaEstudiante,
+  }
 
   const cargar = async () => {
     if (!instanciaId) return
@@ -41,39 +57,40 @@ export default function VinculacionPage() {
 
   useEffect(() => { cargar() }, [instanciaId])
 
-  const handleSubirDocumento = async (tipo: string) => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = '.pdf,.jpg,.jpeg,.png'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      setUploadingDocType(tipo)
-      const form = new FormData()
-      form.append('archivo', file)
-      try {
-        await api.post(`/api/v1/documentos-practica/${instanciaId}?tipo=${tipo}`, form, {
-          headers: { 'Content-Type': 'multipart/form-data' },
-        })
-        setError('')
-      } catch {
-        setError('Error al subir el documento.')
-      } finally {
-        setUploadingDocType(null)
-      }
+  const handleSubirDocumento = async (tipo: string, file: File) => {
+    setUploadingDocType(tipo)
+    setError('')
+    const form = new FormData()
+    form.append('archivo', file)
+    try {
+      await api.post(`/api/v1/documentos-practica/${instanciaId}?tipo=${tipo}`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+    } catch {
+      setError('Error al subir el documento. Verifica el formato e intenta de nuevo.')
+    } finally {
+      setUploadingDocType(null)
     }
-    input.click()
   }
 
-  const handleRegistrarFirma = async (tipo: string) => {
-    setSaving(true)
+  const handleSubirFirma = async (tipo: TipoFirma, file: File) => {
+    setUploadingFirmaType(tipo)
+    setError('')
+    const form = new FormData()
+    form.append('archivo', file)
     try {
+      await api.post(`/api/v1/documentos-practica/${instanciaId}?tipo=FIRMA_${tipo}`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
       const res = await api.patch<ApiResponse<InstanciaPracticaResponseV2>>(`/api/v1/vinculaciones/${instanciaId}/firmas/${tipo}`)
       setInstancia(res.data.datos!)
+      if (tipo === 'TUTOR') setFirmaTutor(true)
+      if (tipo === 'DOCENTE') setFirmaDocente(true)
+      if (tipo === 'ESTUDIANTE') setFirmaEstudiante(true)
     } catch {
-      setError('Error al registrar la firma.')
+      setError('Error al subir la firma. Verifica el formato e intenta de nuevo.')
     } finally {
-      setSaving(false)
+      setUploadingFirmaType(null)
     }
   }
 
@@ -94,6 +111,17 @@ export default function VinculacionPage() {
     }
   }
 
+  const estaDeshabilitado = instancia?.estado === 'FINALIZADA' || instancia?.estado === 'CANCELADA'
+
+  const firmaLabel: Record<TipoFirma, string> = {
+    TUTOR: 'Tutor Empresarial',
+    DOCENTE: 'Docente Asesor',
+    ESTUDIANTE: 'Estudiante',
+  }
+
+  const firmaConfirmada = (tipo: TipoFirma) =>
+    tipo === 'TUTOR' ? instancia?.firmaTutor : tipo === 'DOCENTE' ? instancia?.firmaDocente : instancia?.firmaEstudiante
+
   if (loading) return <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cue-primary" /></div>
 
   return (
@@ -113,36 +141,107 @@ export default function VinculacionPage() {
 
       {error && <div className="card border-red-200 bg-red-50 text-red-700 text-sm">{error}</div>}
 
-      <div className="card space-y-4">
+      {/* Carta de presentación */}
+      <div className="card space-y-3">
         <h2 className="font-semibold text-gray-800">Carta de presentación</h2>
-        <button className="btn-secondary"
-          onClick={() => handleSubirDocumento('CARTA_PRESENTACION')}
-          disabled={uploadingDocType !== null || instancia?.estado === 'FINALIZADA' || instancia?.estado === 'CANCELADA'}>
-          {uploadingDocType === 'CARTA_PRESENTACION' ? 'Subiendo...' : 'Subir carta (PDF / JPG / PNG)'}
+        <p className="text-xs text-gray-500">Formatos admitidos: PDF, JPG, PNG</p>
+        <input
+          ref={refCarta}
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          className="hidden"
+          onChange={e => {
+            const file = e.target.files?.[0]
+            if (file) handleSubirDocumento('CARTA_PRESENTACION', file)
+            e.target.value = ''
+          }}
+        />
+        <button
+          className="btn-secondary"
+          onClick={() => refCarta.current?.click()}
+          disabled={uploadingDocType !== null || estaDeshabilitado}
+        >
+          {uploadingDocType === 'CARTA_PRESENTACION' ? 'Subiendo...' : 'Seleccionar archivo (PDF / JPG / PNG)'}
         </button>
       </div>
 
-      <div className="card space-y-4">
+      {/* Convenio de práctica */}
+      <div className="card space-y-3">
         <h2 className="font-semibold text-gray-800">Convenio de práctica</h2>
-        <button className="btn-secondary"
-          onClick={() => handleSubirDocumento('CONVENIO')}
-          disabled={uploadingDocType !== null || instancia?.estado === 'FINALIZADA' || instancia?.estado === 'CANCELADA'}>
-          {uploadingDocType === 'CONVENIO' ? 'Subiendo...' : 'Subir convenio (PDF)'}
+        <p className="text-xs text-gray-500">Formatos admitidos: PDF, JPG, PNG</p>
+        <input
+          ref={refConvenio}
+          type="file"
+          accept=".pdf,.jpg,.jpeg,.png"
+          className="hidden"
+          onChange={e => {
+            const file = e.target.files?.[0]
+            if (file) handleSubirDocumento('CONVENIO', file)
+            e.target.value = ''
+          }}
+        />
+        <button
+          className="btn-secondary"
+          onClick={() => refConvenio.current?.click()}
+          disabled={uploadingDocType !== null || estaDeshabilitado}
+        >
+          {uploadingDocType === 'CONVENIO' ? 'Subiendo...' : 'Seleccionar archivo (PDF / JPG / PNG)'}
         </button>
       </div>
 
+      {/* Firmas del convenio */}
       <div className="card space-y-4">
-        <h2 className="font-semibold text-gray-800">Firmas del convenio</h2>
-        <div className="grid grid-cols-3 gap-3">
-          {(['TUTOR', 'DOCENTE', 'ESTUDIANTE'] as const).map(tipo => {
-            const confirmada = tipo === 'TUTOR' ? instancia?.firmaTutor : tipo === 'DOCENTE' ? instancia?.firmaDocente : instancia?.firmaEstudiante
+        <div>
+          <h2 className="font-semibold text-gray-800">Firmas del convenio</h2>
+          <p className="text-xs text-gray-500 mt-1">
+            Sube el documento con la firma de cada parte. Al subir el archivo la firma queda registrada automáticamente.
+            Formatos admitidos: PDF, JPG, PNG.
+          </p>
+        </div>
+
+        {/* Inputs ocultos, uno por firma */}
+        {TIPOS_FIRMA.map(tipo => (
+          <input
+            key={tipo}
+            ref={firmaRefs[tipo]}
+            type="file"
+            accept=".pdf,.jpg,.jpeg,.png"
+            className="hidden"
+            onChange={e => {
+              const file = e.target.files?.[0]
+              if (file) handleSubirFirma(tipo, file)
+              e.target.value = ''
+            }}
+          />
+        ))}
+
+        <div className="grid grid-cols-3 gap-4">
+          {TIPOS_FIRMA.map(tipo => {
+            const confirmada = firmaConfirmada(tipo)
+            const subiendo = uploadingFirmaType === tipo
             return (
-              <div key={tipo} className={`p-3 border rounded-lg text-center ${confirmada ? 'border-green-300 bg-green-50' : 'border-gray-200'}`}>
-                <div className="text-lg mb-1">{confirmada ? '✓' : '○'}</div>
-                <div className="text-sm font-medium text-gray-700">{tipo}</div>
+              <div
+                key={tipo}
+                className={`flex flex-col items-center gap-3 p-4 border-2 rounded-xl transition-colors ${
+                  confirmada ? 'border-green-400 bg-green-50' : 'border-dashed border-gray-300 bg-white hover:border-cue-primary hover:bg-gray-50'
+                }`}
+              >
+                <div className={`text-3xl ${confirmada ? 'text-green-500' : 'text-gray-300'}`}>
+                  {confirmada ? '✓' : '📄'}
+                </div>
+                <div className="text-center">
+                  <p className="text-sm font-semibold text-gray-800">{firmaLabel[tipo]}</p>
+                  {confirmada && (
+                    <p className="text-xs text-green-700 mt-1 font-medium">Firma registrada</p>
+                  )}
+                </div>
                 {!confirmada && (
-                  <button className="mt-2 text-xs btn-secondary" onClick={() => handleRegistrarFirma(tipo)} disabled={saving}>
-                    Registrar
+                  <button
+                    className="w-full text-xs bg-cue-primary text-white px-3 py-2 rounded-lg hover:opacity-90 transition-opacity font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                    onClick={() => firmaRefs[tipo].current?.click()}
+                    disabled={uploadingFirmaType !== null || estaDeshabilitado}
+                  >
+                    {subiendo ? 'Subiendo...' : 'Subir firma'}
                   </button>
                 )}
               </div>
@@ -151,6 +250,7 @@ export default function VinculacionPage() {
         </div>
       </div>
 
+      {/* Confirmar vinculación */}
       {instancia?.estado === 'ASIGNADA_PENDIENTE_INICIO' && (
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-800">Confirmar vinculación → EN_CURSO</h2>
@@ -171,10 +271,13 @@ export default function VinculacionPage() {
             </div>
           )}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
-            <strong>Requiere las tres firmas:</strong> tutor, docente y estudiante confirmadas para activar EN_CURSO.
+            <strong>Requiere las tres firmas:</strong> tutor, docente y estudiante registradas para activar EN_CURSO.
           </div>
-          <button className="btn-primary w-full" onClick={handleConfirmar}
-            disabled={saving || !firmaTutor || !firmaDocente || !firmaEstudiante}>
+          <button
+            className="btn-primary w-full"
+            onClick={handleConfirmar}
+            disabled={saving || !firmaTutor || !firmaDocente || !firmaEstudiante}
+          >
             {saving ? 'Confirmando...' : 'Confirmar vinculación → EN_CURSO'}
           </button>
         </div>

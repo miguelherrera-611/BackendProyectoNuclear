@@ -18,7 +18,6 @@ const FORM_INICIAL = {
   razonSocial: '', nit: '', sector: '', direccion: '',
   municipio: '', telefono: '', nombreContacto: '', correo: '', areas: '',
 }
-const CLONAR_INICIAL = { razonSocial: '', nit: '' }
 const RECHAZAR_INICIAL = { id: 0, motivo: '' }
 
 export default function EmpresasPage() {
@@ -27,10 +26,8 @@ export default function EmpresasPage() {
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
   const [modalCrear, setModalCrear] = useState(false)
-  const [modalClonar, setModalClonar] = useState<{ open: boolean; id: number }>({ open: false, id: 0 })
   const [modalRechazar, setModalRechazar] = useState(RECHAZAR_INICIAL)
   const [form, setForm]             = useState(FORM_INICIAL)
-  const [clonarForm, setClonarForm] = useState(CLONAR_INICIAL)
   const [errorModal, setErrorModal] = useState('')
   const [confirm, setConfirm] = useState<{ open: boolean; id: number; razon: string; accion: 'aprobar' | 'inactivar' }>({
     open: false, id: 0, razon: '', accion: 'aprobar',
@@ -58,23 +55,6 @@ export default function EmpresasPage() {
       showToast('Empresa creada correctamente.')
     } catch (err: unknown) {
       setErrorModal((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al crear la empresa.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  const handleClonar = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErrorModal('')
-    setSaving(true)
-    try {
-      await empresaService.clonar(modalClonar.id, clonarForm.razonSocial, clonarForm.nit)
-      setModalClonar({ open: false, id: 0 })
-      setClonarForm(CLONAR_INICIAL)
-      cargar()
-      showToast('Empresa clonada correctamente.')
-    } catch (err: unknown) {
-      setErrorModal((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al clonar.')
     } finally {
       setSaving(false)
     }
@@ -133,7 +113,7 @@ export default function EmpresasPage() {
               <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${BADGE[e.estado]}`}>{e.estado}</span>
             </td>
             <td className="px-4 py-3">
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-row items-center gap-2">
                 {e.estado === 'PENDIENTE' && (
                   <>
                     <button onClick={() => setConfirm({ open: true, id: e.id, razon: e.razonSocial, accion: 'aprobar' })}
@@ -143,12 +123,8 @@ export default function EmpresasPage() {
                   </>
                 )}
                 {e.estado === 'APROBADA' && (
-                  <>
-                    <button onClick={() => { setErrorModal(''); setModalClonar({ open: true, id: e.id }); setClonarForm(CLONAR_INICIAL) }}
-                      className="text-xs bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200 transition-colors font-medium">Clonar</button>
-                    <button onClick={() => setConfirm({ open: true, id: e.id, razon: e.razonSocial, accion: 'inactivar' })}
-                      className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors font-medium">Inactivar</button>
-                  </>
+                  <button onClick={() => setConfirm({ open: true, id: e.id, razon: e.razonSocial, accion: 'inactivar' })}
+                    className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors font-medium">Inactivar</button>
                 )}
               </div>
             </td>
@@ -193,21 +169,6 @@ export default function EmpresasPage() {
             <div className="flex gap-3">
               <Button variant="secondary" className="flex-1" type="button" onClick={() => setModalRechazar(RECHAZAR_INICIAL)}>Cancelar</Button>
               <Button variant="danger" className="flex-1" type="submit" loading={saving}>Rechazar</Button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      {modalClonar.open && (
-        <Modal title="Clonar Empresa" subtitle="Se copiarán sector, dirección, municipio y áreas."
-          onClose={() => { setModalClonar({ open: false, id: 0 }); setErrorModal('') }}>
-          {errorModal && <div className="bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{errorModal}</div>}
-          <form onSubmit={handleClonar} className="space-y-4">
-            <Input label="Nueva Razón Social" required value={clonarForm.razonSocial} onChange={e => setClonarForm({ ...clonarForm, razonSocial: e.target.value })} />
-            <Input label="Nuevo NIT" required value={clonarForm.nit} onChange={e => setClonarForm({ ...clonarForm, nit: e.target.value })} />
-            <div className="flex gap-3 pt-2">
-              <Button variant="secondary" className="flex-1" type="button" onClick={() => { setModalClonar({ open: false, id: 0 }); setErrorModal('') }}>Cancelar</Button>
-              <Button className="flex-1" type="submit" loading={saving}>Clonar</Button>
             </div>
           </form>
         </Modal>
