@@ -65,7 +65,6 @@ export default function AppRouter() {
               <Route path="/programas" element={<ProgramasPage />} />
               <Route path="/auditoria" element={<AuditoriaPage />} />
               <Route path="/usuarios" element={<UsuariosPage />} />
-              <Route path="/configuracion-sprint4" element={<ConfiguracionSprint4Page />} />
             </Route>
 
             <Route element={<ProtectedRoute rolesPermitidos={['COORDINADOR_PRACTICAS']} />}>
@@ -77,6 +76,7 @@ export default function AppRouter() {
               <Route path="/vinculacion/:instanciaId" element={<VinculacionPage />} />
               <Route path="/nota-final/:instanciaId" element={<NotaFinalCoordinadorPage />} />
               <Route path="/cierre-practica/:instanciaId" element={<CierrePracticaPage />} />
+              <Route path="/plantillas-correo" element={<ConfiguracionSprint4Page />} />
             </Route>
 
             <Route element={<ProtectedRoute rolesPermitidos={['COORDINACION_ACADEMICA']} />}>

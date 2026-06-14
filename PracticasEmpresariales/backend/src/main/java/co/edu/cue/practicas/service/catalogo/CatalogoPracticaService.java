@@ -1,5 +1,6 @@
 package co.edu.cue.practicas.service.catalogo;
 
+import co.edu.cue.practicas.dto.request.ActualizarCatalogoPracticaRequest;
 import co.edu.cue.practicas.dto.request.CrearCatalogoPracticaRequest;
 import co.edu.cue.practicas.dto.response.CatalogoPracticaResponse;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
@@ -95,6 +96,22 @@ public class CatalogoPracticaService {
     @Transactional(readOnly = true)
     public CatalogoPracticaResponse obtenerPorId(Long id) {
         return mapper.toCatalogoPracticaResponse(buscarOFallar(id));
+    }
+
+    // ── ACTUALIZAR ────────────────────────────────────────────────────────────
+
+    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.ADMIN_DTI})
+    public CatalogoPracticaResponse actualizar(Long id, ActualizarCatalogoPracticaRequest req) {
+        CatalogoPractica catalogo = buscarOFallar(id);
+        catalogo.setNombre(req.nombre());
+        catalogo.setMateriaNucleo(req.materiaNucleo());
+        catalogo.setCodigoMateria(req.codigoMateria());
+        catalogo.setNumCortes(req.numCortes());
+        catalogo.setDuracionSemanas(req.duracionSemanas());
+        catalogo.setDocumentosRequeridos(req.documentosRequeridos());
+        catalogoRepository.save(catalogo);
+        log.info("[GPE-141] Catálogo '{}' actualizado", catalogo.getNombre());
+        return mapper.toCatalogoPracticaResponse(catalogo);
     }
 
     // ── DESACTIVAR — OCL: noDesactivarConEstudiantesActivos ──────────────────

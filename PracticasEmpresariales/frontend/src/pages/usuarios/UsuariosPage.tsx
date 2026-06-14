@@ -175,7 +175,15 @@ export default function UsuariosPage() {
               {form.rol === 'ESTUDIANTE' && (
                 <>
                   <Input label="Identificación" required placeholder="Cédula o documento" value={form.identificacion} onChange={e => setForm({ ...form, identificacion: e.target.value })} />
-                  <Input label="Semestre" type="number" min={1} max={12} required value={form.semestre} onChange={e => setForm({ ...form, semestre: e.target.value })} />
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Semestre <span className="text-red-500">*</span></label>
+                    <select className="input-field" required value={form.semestre} onChange={e => setForm({ ...form, semestre: e.target.value })}>
+                      <option value="">Seleccionar...</option>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map(s => (
+                        <option key={s} value={s}>Semestre {s}</option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="col-span-2">
                     <Input label="Contacto de Emergencia" placeholder="Ana Herrera - 3001234567" value={form.contactoEmergencia} onChange={e => setForm({ ...form, contactoEmergencia: e.target.value })} />
                   </div>

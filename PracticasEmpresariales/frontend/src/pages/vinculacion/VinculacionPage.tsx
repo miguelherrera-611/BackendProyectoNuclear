@@ -1,8 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import type { InstanciaPracticaResponseV2 } from '../../types'
+import type { InstanciaPracticaResponseV2, UsuarioResponse, ApiResponse, Pageable } from '../../types'
 import api from '../../services/api'
-import type { ApiResponse } from '../../types'
 
 const TIPOS_FIRMA = ['TUTOR', 'DOCENTE', 'ESTUDIANTE'] as const
 type TipoFirma = typeof TIPOS_FIRMA[number]
@@ -23,6 +22,7 @@ export default function VinculacionPage() {
   const [firmaDocente, setFirmaDocente] = useState(false)
   const [firmaEstudiante, setFirmaEstudiante] = useState(false)
   const [docenteAsesorId, setDocenteAsesorId] = useState('')
+  const [docentes, setDocentes] = useState<UsuarioResponse[]>([])
 
   const refCarta = useRef<HTMLInputElement>(null)
   const refConvenio = useRef<HTMLInputElement>(null)
@@ -55,7 +55,11 @@ export default function VinculacionPage() {
     }
   }
 
-  useEffect(() => { cargar() }, [instanciaId])
+  useEffect(() => {
+    cargar()
+    api.get<ApiResponse<Pageable<UsuarioResponse>>>('/usuarios', { params: { size: 200 } })
+      .then(r => setDocentes((r.data.datos?.content ?? []).filter(u => u.rol === 'DOCENTE_ASESOR')))
+  }, [instanciaId])
 
   const handleSubirDocumento = async (tipo: string, file: File) => {
     setUploadingDocType(tipo)
@@ -266,8 +270,13 @@ export default function VinculacionPage() {
           </div>
           {!instancia.docenteAsesorId && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">ID Docente Asesor</label>
-              <input type="number" className="input-field" placeholder="ID del docente" value={docenteAsesorId} onChange={e => setDocenteAsesorId(e.target.value)} />
+              <label className="block text-sm font-medium text-gray-700 mb-1">Docente Asesor</label>
+              <select className="input-field" value={docenteAsesorId} onChange={e => setDocenteAsesorId(e.target.value)}>
+                <option value="">— Sin asignar —</option>
+                {docentes.map(d => (
+                  <option key={d.id} value={d.id}>{d.nombre}</option>
+                ))}
+              </select>
             </div>
           )}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">

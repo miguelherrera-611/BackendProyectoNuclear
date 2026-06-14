@@ -30,11 +30,6 @@ export default function EstudiantesValidacionPage() {
   const [catalogos, setCatalogos]           = useState<CatalogoPracticaResponse[]>([])
   const [catalogoSeleccionado, setCatalogo] = useState('')
 
-  const [modalNoApto, setModalNoApto] = useState<{ open: boolean; estudianteId: number; nombre: string }>({
-    open: false, estudianteId: 0, nombre: '',
-  })
-  const [motivoNoApto, setMotivoNoApto] = useState('')
-
   const estudiantes = useMemo(() => pageData?.content ?? [], [pageData])
 
   const cargar = async (estadoFiltro: '' | EstadoEstudiante = estado, page = pagina) => {
@@ -68,23 +63,6 @@ export default function EstudiantesValidacionPage() {
       await cargar(estado, pagina)
     } catch (err: unknown) {
       showToast((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al marcar APTO.', 'error')
-    } finally {
-      setProcessing(false)
-    }
-  }
-
-  const handleMantenerNoApto = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!motivoNoApto.trim()) return
-    setProcessing(true)
-    try {
-      await estudianteService.mantenerNoApto(modalNoApto.estudianteId, motivoNoApto.trim())
-      setModalNoApto({ open: false, estudianteId: 0, nombre: '' })
-      setMotivoNoApto('')
-      showToast('Motivo registrado correctamente.')
-      await cargar(estado, pagina)
-    } catch (err: unknown) {
-      showToast((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al registrar.', 'error')
     } finally {
       setProcessing(false)
     }
@@ -153,18 +131,14 @@ export default function EstudiantesValidacionPage() {
               </span>
             </td>
             <td className="px-4 py-3">
-              <div className="flex gap-2">
+              {e.estadoEstudiante !== 'APTO' ? (
                 <button onClick={() => abrirModalApto(e)} disabled={processing}
                   className="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-lg hover:bg-green-100 transition-colors font-medium">
                   Marcar APTO
                 </button>
-                <button
-                  onClick={() => { setModalNoApto({ open: true, estudianteId: e.id, nombre: e.nombre }); setMotivoNoApto('') }}
-                  disabled={processing}
-                  className="text-xs bg-red-50 text-red-700 px-3 py-1 rounded-lg hover:bg-red-100 transition-colors font-medium">
-                  NO_APTO
-                </button>
-              </div>
+              ) : (
+                <span className="text-xs text-gray-400 italic">Validado</span>
+              )}
             </td>
           </tr>
         ))}
@@ -178,7 +152,6 @@ export default function EstudiantesValidacionPage() {
         disabled={loading}
       />
 
-      {/* Modal: Marcar APTO */}
       {modalApto.open && (
         <Modal title="Marcar como APTO" subtitle={`Selecciona el catálogo para ${modalApto.nombre}.`}
           onClose={() => setModalApto({ open: false, estudianteId: 0, nombre: '' })}>
@@ -201,28 +174,6 @@ export default function EstudiantesValidacionPage() {
               <Button variant="secondary" className="flex-1" type="button"
                 onClick={() => setModalApto({ open: false, estudianteId: 0, nombre: '' })}>Cancelar</Button>
               <Button className="flex-1" type="submit" loading={processing}>Confirmar APTO</Button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      {/* Modal: NO_APTO */}
-      {modalNoApto.open && (
-        <Modal title="Mantener como NO_APTO" subtitle={`Registra el motivo para ${modalNoApto.nombre}.`}
-          onClose={() => setModalNoApto({ open: false, estudianteId: 0, nombre: '' })}>
-          <form onSubmit={handleMantenerNoApto} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Motivo <span className="text-red-500">*</span>
-              </label>
-              <textarea className="input-field" rows={3} required
-                placeholder="Describe por qué el estudiante no cumple los requisitos..."
-                value={motivoNoApto} onChange={e => setMotivoNoApto(e.target.value)} />
-            </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1" type="button"
-                onClick={() => setModalNoApto({ open: false, estudianteId: 0, nombre: '' })}>Cancelar</Button>
-              <Button variant="danger" className="flex-1" type="submit" loading={processing}>Registrar</Button>
             </div>
           </form>
         </Modal>

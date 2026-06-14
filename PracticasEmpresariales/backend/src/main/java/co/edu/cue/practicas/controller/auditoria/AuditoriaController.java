@@ -10,6 +10,7 @@ import co.edu.cue.practicas.security.annotation.RequiereRol;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
@@ -37,7 +38,7 @@ public class AuditoriaController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime desde,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime hasta,
             @RequestParam(required = false) String modulo,
-            @PageableDefault(size = 50, sort = "fechaHora") Pageable pageable,
+            @PageableDefault(size = 50, sort = "fechaHora", direction = Sort.Direction.DESC) Pageable pageable,
             @AuthenticationPrincipal CustomUserDetails userDetails) {
 
         Page<BitacoraResponse> resultado = bitacoraRepository

@@ -13,7 +13,6 @@ export const MENUS_POR_ROL: Record<Rol, MenuItem[]> = {
     { id: 'usuarios', label: 'Gestion de Usuarios', ruta: '/usuarios', icono: 'Users' },
     { id: 'facultades', label: 'Facultades', ruta: '/facultades', icono: 'Building' },
     { id: 'programas', label: 'Programas', ruta: '/programas', icono: 'Book' },
-    { id: 'config-s4', label: 'Config. Sprint 4', ruta: '/configuracion-sprint4', icono: 'Settings' },
     { id: 'auditoria', label: 'Bitacora de Auditoria', ruta: '/auditoria', icono: 'Clipboard' },
   ],
   COORDINACION_ACADEMICA: [
@@ -29,6 +28,7 @@ export const MENUS_POR_ROL: Record<Rol, MenuItem[]> = {
     { id: 'tutores', label: 'Tutores Empresariales', ruta: '/tutores', icono: 'UserTie' },
     { id: 'asignaciones', label: 'Asignaciones', ruta: '/asignaciones', icono: 'Link' },
     { id: 'reportes', label: 'Reportes Proceso', ruta: '/reportes-proceso', icono: 'Report' },
+    { id: 'plantillas-correo', label: 'Plantillas de Correo', ruta: '/plantillas-correo', icono: 'Mail' },
   ],
   DOCENTE_ASESOR: [
     { id: 'dashboard', label: 'Panel Principal', ruta: '/dashboard', icono: 'Home' },

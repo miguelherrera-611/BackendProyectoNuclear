@@ -23,13 +23,18 @@ public interface BitacoraAuditoriaRepository extends JpaRepository<BitacoraAudit
 
     Page<BitacoraAuditoria> findByFechaHoraBetween(LocalDateTime desde, LocalDateTime hasta, Pageable pageable);
 
-    @Query("SELECT b FROM BitacoraAuditoria b WHERE " +
-           "(:usuarioId IS NULL OR b.usuario.id = :usuarioId) AND " +
-           "(:tipoAccion IS NULL OR b.tipoAccion = :tipoAccion) AND " +
-           "(:desde IS NULL OR b.fechaHora >= :desde) AND " +
-           "(:hasta IS NULL OR b.fechaHora <= :hasta) AND " +
-           "(:modulo IS NULL OR b.modulo = :modulo) " +
-           "ORDER BY b.fechaHora DESC")
+    @Query(value = "SELECT b FROM BitacoraAuditoria b WHERE " +
+                   "(:usuarioId IS NULL OR b.usuario.id = :usuarioId) AND " +
+                   "(:tipoAccion IS NULL OR b.tipoAccion = :tipoAccion) AND " +
+                   "(:desde IS NULL OR b.fechaHora >= :desde) AND " +
+                   "(:hasta IS NULL OR b.fechaHora <= :hasta) AND " +
+                   "(:modulo IS NULL OR b.modulo = :modulo)",
+           countQuery = "SELECT count(b) FROM BitacoraAuditoria b WHERE " +
+                        "(:usuarioId IS NULL OR b.usuario.id = :usuarioId) AND " +
+                        "(:tipoAccion IS NULL OR b.tipoAccion = :tipoAccion) AND " +
+                        "(:desde IS NULL OR b.fechaHora >= :desde) AND " +
+                        "(:hasta IS NULL OR b.fechaHora <= :hasta) AND " +
+                        "(:modulo IS NULL OR b.modulo = :modulo)")
     Page<BitacoraAuditoria> filtrar(
             @Param("usuarioId") Long usuarioId,
             @Param("tipoAccion") TipoAccion tipoAccion,

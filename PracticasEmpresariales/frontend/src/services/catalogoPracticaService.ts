@@ -28,8 +28,4 @@ export const catalogoPracticaService = {
     return r.data.datos!
   },
 
-  async cambiarVersion(id: number): Promise<CatalogoPracticaResponse> {
-    const r = await api.patch<ApiResponse<CatalogoPracticaResponse>>(`/api/v1/catalogo-practicas/${id}/cambio-version`)
-    return r.data.datos!
-  },
 }

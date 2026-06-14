@@ -15,9 +15,11 @@ export type EstadoEstudiante = 'NO_APTO' | 'APTO'
 
 export type TipoAccion =
   | 'LOGIN_EXITOSO' | 'LOGIN_FALLIDO' | 'LOGOUT'
-  | 'CREAR' | 'EDITAR' | 'DESACTIVAR' | 'ACTIVAR'
-  | 'CAMBIO_ESTADO' | 'ACCESO_NO_AUTORIZADO'
-  | 'RESET_PASSWORD' | 'CAMBIO_PASSWORD' | 'EXPORTAR' | 'CONSULTAR'
+  | 'CREAR' | 'EDITAR' | 'CONFIRMAR' | 'ASIGNAR'
+  | 'DESACTIVAR' | 'ACTIVAR' | 'CAMBIO_ESTADO'
+  | 'SUBIR_DOCUMENTO' | 'FIRMAR' | 'CERRAR' | 'CALIFICAR'
+  | 'ACCESO_NO_AUTORIZADO' | 'CAMBIO_PASSWORD' | 'RESET_PASSWORD'
+  | 'EXPORTAR' | 'CONSULTAR'
 
 export interface AuthUser {
   usuarioId: number

@@ -29,14 +29,14 @@ interface BitacoraResponseExt {
 export default function AuditoriaPage() {
   const [entradas, setEntradas] = useState<BitacoraResponseExt[]>([])
   const [loading, setLoading] = useState(true)
-  const [filtros, setFiltros] = useState({ tipoAccion: '', modulo: '' })
+  const [filtroAccion, setFiltroAccion] = useState('')
+  const [filtroModulo, setFiltroModulo] = useState('')
 
   const cargar = () => {
     setLoading(true)
     const params = new URLSearchParams()
-    if (filtros.tipoAccion) params.set('tipoAccion', filtros.tipoAccion)
-    if (filtros.modulo) params.set('modulo', filtros.modulo)
-    params.set('size', '50')
+    if (filtroAccion) params.set('tipoAccion', filtroAccion)
+    params.set('size', '200')
 
     api.get<ApiResponse<Pageable<BitacoraResponseExt>>>(`/auditoria?${params}`)
       .then(r => setEntradas(r.data.datos?.content ?? []))
@@ -44,6 +44,12 @@ export default function AuditoriaPage() {
   }
 
   useEffect(() => { cargar() }, [])
+
+  const modulosDisponibles = [...new Set(entradas.map(e => e.modulo))].sort()
+
+  const entradasFiltradas = filtroModulo
+    ? entradas.filter(e => e.modulo === filtroModulo)
+    : entradas
 
   return (
     <div className="space-y-6">
@@ -55,23 +61,40 @@ export default function AuditoriaPage() {
       </div>
 
       {/* Filtros */}
-      <div className="card flex gap-4 flex-wrap">
-        <select
-          className="input-field w-auto"
-          value={filtros.tipoAccion}
-          onChange={e => setFiltros({ ...filtros, tipoAccion: e.target.value })}
-        >
-          <option value="">Todos los tipos</option>
-          {['LOGIN_EXITOSO','LOGIN_FALLIDO','CREAR','EDITAR','DESACTIVAR','ACTIVAR','ACCESO_NO_AUTORIZADO','CAMBIO_PASSWORD'].map(t => (
-            <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
-          ))}
-        </select>
-        <input
-          className="input-field w-auto"
-          placeholder="Filtrar por módulo"
-          value={filtros.modulo}
-          onChange={e => setFiltros({ ...filtros, modulo: e.target.value })}
-        />
+      <div className="card flex gap-4 flex-wrap items-end">
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Tipo de acción</label>
+          <select
+            className="input-field w-auto"
+            value={filtroAccion}
+            onChange={e => { setFiltroAccion(e.target.value); setFiltroModulo('') }}
+          >
+            <option value="">Todos los tipos</option>
+            {[
+              'LOGIN_EXITOSO','LOGIN_FALLIDO','LOGOUT',
+              'CREAR','EDITAR','CONFIRMAR','ASIGNAR',
+              'DESACTIVAR','ACTIVAR','CAMBIO_ESTADO',
+              'SUBIR_DOCUMENTO','FIRMAR','CERRAR','CALIFICAR',
+              'ACCESO_NO_AUTORIZADO','CAMBIO_PASSWORD','RESET_PASSWORD',
+              'EXPORTAR','CONSULTAR',
+            ].map(t => (
+              <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-600 mb-1">Módulo</label>
+          <select
+            className="input-field w-auto"
+            value={filtroModulo}
+            onChange={e => setFiltroModulo(e.target.value)}
+          >
+            <option value="">Todos los módulos</option>
+            {modulosDisponibles.map(m => (
+              <option key={m} value={m}>{m}</option>
+            ))}
+          </select>
+        </div>
         <button className="btn-primary" onClick={cargar}>Buscar</button>
       </div>
 
@@ -88,9 +111,9 @@ export default function AuditoriaPage() {
           <tbody>
             {loading ? (
               <tr><td colSpan={7} className="text-center py-8 text-gray-400">Cargando...</td></tr>
-            ) : entradas.length === 0 ? (
+            ) : entradasFiltradas.length === 0 ? (
               <tr><td colSpan={7} className="text-center py-8 text-gray-400">No hay registros con esos filtros.</td></tr>
-            ) : entradas.map(e => (
+            ) : entradasFiltradas.map(e => (
               <tr key={e.id} className="border-b border-gray-100 hover:bg-gray-50">
                 <td className="px-3 py-2 text-gray-500 whitespace-nowrap">
                   {new Date(e.fechaHora).toLocaleString('es-CO')}

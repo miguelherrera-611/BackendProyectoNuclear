@@ -13,5 +13,11 @@ public enum TipoAccion {
     RESET_PASSWORD,
     CAMBIO_PASSWORD,
     EXPORTAR,
-    CONSULTAR
+    CONSULTAR,
+    CONFIRMAR,
+    SUBIR_DOCUMENTO,
+    FIRMAR,
+    ASIGNAR,
+    CERRAR,
+    CALIFICAR
 }

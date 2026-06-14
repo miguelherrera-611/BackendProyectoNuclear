@@ -1,5 +1,6 @@
 package co.edu.cue.practicas.controller.catalogo;
 
+import co.edu.cue.practicas.dto.request.ActualizarCatalogoPracticaRequest;
 import co.edu.cue.practicas.dto.request.CrearCatalogoPracticaRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.CatalogoPracticaResponse;
@@ -52,6 +53,13 @@ public class CatalogoPracticaController {
             @PathVariable Long programaId) {
         return ResponseEntity.ok(ApiResponse.ok(
                 "Entradas activas del catálogo.", service.listarActivosPorPrograma(programaId)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<CatalogoPracticaResponse>> actualizar(
+            @PathVariable Long id,
+            @Valid @RequestBody ActualizarCatalogoPracticaRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Catálogo actualizado.", service.actualizar(id, req)));
     }
 
     @PatchMapping("/{id}/desactivar")
