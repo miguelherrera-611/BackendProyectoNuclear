@@ -20,6 +20,7 @@ import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.configuracion.ProgramaConfiguracionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -48,6 +49,7 @@ public class ChecklistCierreService {
     private final SustentacionPracticaRepository sustentacionRepository;
     private final ProgramaConfiguracionService configuracionService;
 
+    @Transactional(readOnly = true)
     public ChecklistCierreResponse generar(Long instanciaId, CustomUserDetails actor) {
         var instancia = instanciaRepository.findById(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Practica no encontrada."));

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { InstanciaPracticaResponse, EstadoPractica } from '../../types'
+import type { InstanciaPracticaResponse, EstadoPractica, ChecklistItemResponse } from '../../types'
 import { asignacionService } from '../../services/asignacionService'
 import { sprint4Service } from '../../services/sprint4Service'
 import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
@@ -36,7 +36,7 @@ export default function AsignacionesPage() {
   const [motivoCancelacion, setMotivoCancelacion] = useState('')
 
   // Estado para el flujo "Dar cierre"
-  const [cierreError, setCierreError] = useState<{ open: boolean; mensaje: string }>({ open: false, mensaje: '' })
+  const [cierreError, setCierreError] = useState<{ open: boolean; items: ChecklistItemResponse[] }>({ open: false, items: [] })
   const [cierreConfirm, setCierreConfirm] = useState<{ open: boolean; instancia: InstanciaPracticaResponse | null }>({
     open: false, instancia: null,
   })
@@ -78,25 +78,13 @@ export default function AsignacionesPage() {
     setCerrando(instancia.id)
     try {
       const checklist = await sprint4Service.checklist(instancia.id)
-      const tutorItem = checklist.items.find(i => i.codigo === 'encuesta_tutor')
-      const estudianteItem = checklist.items.find(i => i.codigo === 'encuesta_estudiante')
-      const tutorOk = tutorItem?.completo ?? false
-      const estudianteOk = estudianteItem?.completo ?? false
 
-      if (!tutorOk || !estudianteOk) {
-        let mensaje = ''
-        if (!tutorOk && !estudianteOk) {
-          mensaje = 'Tanto el estudiante como el tutor falta por diligenciar el formulario.'
-        } else if (!estudianteOk) {
-          mensaje = 'El estudiante no ha diligenciado el formulario.'
-        } else {
-          mensaje = 'El tutor no ha diligenciado el formulario.'
-        }
-        setCierreError({ open: true, mensaje })
+      if (!checklist.puedeEjecutarCierre) {
+        const pendientes = checklist.items.filter(i => !i.completo)
+        setCierreError({ open: true, items: pendientes })
         return
       }
 
-      // Ambas encuestas completas → pedir confirmación
       setCierreConfirm({ open: true, instancia })
     } catch {
       showToast('No se pudo verificar el estado de la práctica.', 'error')
@@ -215,18 +203,24 @@ export default function AsignacionesPage() {
         </Modal>
       )}
 
-      {/* Modal: encuestas pendientes */}
+      {/* Modal: requisitos pendientes para el cierre */}
       {cierreError.open && (
-        <Modal title="No se puede cerrar la práctica" onClose={() => setCierreError({ open: false, mensaje: '' })} size="sm">
+        <Modal title="No se puede cerrar la práctica" onClose={() => setCierreError({ open: false, items: [] })} size="sm">
           <div className="space-y-4">
-            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
-              <span className="text-amber-500 text-xl mt-0.5">⚠</span>
-              <p className="text-sm text-amber-800">{cierreError.mensaje}</p>
+            <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+              <p className="text-sm font-medium text-amber-800 mb-2">
+                Faltan los siguientes requisitos para poder dar el cierre:
+              </p>
+              <ul className="space-y-1">
+                {cierreError.items.map(item => (
+                  <li key={item.codigo} className="flex items-start gap-2 text-sm text-amber-700">
+                    <span className="text-amber-500 mt-0.5">✗</span>
+                    <span>{item.nombre}</span>
+                  </li>
+                ))}
+              </ul>
             </div>
-            <p className="text-sm text-gray-500">
-              Ve al apartado <strong>Encuestas</strong> en el menú lateral para enviarlas y esperar su diligenciamiento.
-            </p>
-            <Button className="w-full" onClick={() => setCierreError({ open: false, mensaje: '' })}>Entendido</Button>
+            <Button className="w-full" onClick={() => setCierreError({ open: false, items: [] })}>Entendido</Button>
           </div>
         </Modal>
       )}
