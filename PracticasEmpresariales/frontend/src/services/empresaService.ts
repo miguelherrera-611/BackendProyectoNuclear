@@ -19,8 +19,8 @@ export const empresaService = {
     return res.data.datos ?? []
   },
 
-  async listarAprobadas(): Promise<EmpresaResponse[]> {
-    const res = await api.get<ApiResponse<EmpresaResponse[]>>('/api/v1/empresas/aprobadas')
+  async listarActivas(): Promise<EmpresaResponse[]> {
+    const res = await api.get<ApiResponse<EmpresaResponse[]>>('/api/v1/empresas/activas')
     return res.data.datos ?? []
   },
 
@@ -36,13 +36,8 @@ export const empresaService = {
     return res.data.datos!
   },
 
-  async aprobar(id: number): Promise<EmpresaResponse> {
-    const res = await api.patch<ApiResponse<EmpresaResponse>>(`/api/v1/empresas/${id}/aprobar`)
-    return res.data.datos!
-  },
-
-  async rechazar(id: number, motivo: string): Promise<EmpresaResponse> {
-    const res = await api.patch<ApiResponse<EmpresaResponse>>(`/api/v1/empresas/${id}/rechazar`, { motivo })
+  async activar(id: number): Promise<EmpresaResponse> {
+    const res = await api.patch<ApiResponse<EmpresaResponse>>(`/api/v1/empresas/${id}/activar`)
     return res.data.datos!
   },
 

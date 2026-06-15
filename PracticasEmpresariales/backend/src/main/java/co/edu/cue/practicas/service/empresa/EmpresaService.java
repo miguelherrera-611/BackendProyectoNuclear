@@ -1,7 +1,6 @@
 package co.edu.cue.practicas.service.empresa;
 
 import co.edu.cue.practicas.dto.request.CrearEmpresaRequest;
-import co.edu.cue.practicas.dto.request.RechazarRequest;
 import co.edu.cue.practicas.dto.response.EmpresaResponse;
 import co.edu.cue.practicas.event.EmpresaObserver;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
@@ -121,29 +120,20 @@ public class EmpresaService {
     @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
-    public List<EmpresaResponse> listarAprobadas() {
-        return empresaRepository.findByEstado(EstadoEmpresa.APROBADA)
+    public List<EmpresaResponse> listarActivas() {
+        return empresaRepository.findByEstado(EstadoEmpresa.ACTIVA)
                 .stream().map(mapper::toEmpresaResponse).toList();
     }
 
     // ── CAMBIOS DE ESTADO — registra observers (DIP) ─────────────────────
 
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
-    public EmpresaResponse aprobarEmpresa(Long id) {
+    public EmpresaResponse activarEmpresa(Long id) {
         Empresa empresa = buscarOFallar(id);
         registrarObservers(empresa);
-        empresa.aprobar();
+        empresa.activar();
         empresaRepository.save(empresa);
-        log.info("[GPE-150] Empresa aprobada: {}", empresa.getRazonSocial());
-        return mapper.toEmpresaResponse(empresa);
-    }
-
-    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
-    public EmpresaResponse rechazarEmpresa(Long id, RechazarRequest req) {
-        Empresa empresa = buscarOFallar(id);
-        registrarObservers(empresa);
-        empresa.rechazar(req.motivo());
-        empresaRepository.save(empresa);
+        log.info("[GPE-150] Empresa activada: {}", empresa.getRazonSocial());
         return mapper.toEmpresaResponse(empresa);
     }
 

@@ -8,17 +8,14 @@ import { Table } from '../../components/common/Table/Table'
 import { useToast } from '../../components/common/Notifications/Toast'
 
 const BADGE: Record<EstadoEmpresa, string> = {
-  PENDIENTE: 'bg-yellow-100 text-yellow-800',
-  APROBADA:  'bg-green-100 text-green-800',
-  RECHAZADA: 'bg-red-100 text-red-800',
-  INACTIVA:  'bg-gray-100 text-gray-600',
+  ACTIVA:   'bg-green-100 text-green-800',
+  INACTIVA: 'bg-gray-100 text-gray-600',
 }
 
 const FORM_INICIAL = {
   razonSocial: '', nit: '', sector: '', direccion: '',
   municipio: '', telefono: '', nombreContacto: '', correo: '', areas: '',
 }
-const RECHAZAR_INICIAL = { id: 0, motivo: '' }
 
 export default function EmpresasPage() {
   const { showToast } = useToast()
@@ -26,12 +23,11 @@ export default function EmpresasPage() {
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
   const [modalCrear, setModalCrear] = useState(false)
-  const [modalRechazar, setModalRechazar] = useState(RECHAZAR_INICIAL)
   const [form, setForm]             = useState(FORM_INICIAL)
   const [errorModal, setErrorModal] = useState('')
-  const [confirm, setConfirm] = useState<{ open: boolean; id: number; razon: string; accion: 'aprobar' | 'inactivar' }>({
-    open: false, id: 0, razon: '', accion: 'aprobar',
-  })
+  const [confirm, setConfirm] = useState<{
+    open: boolean; id: number; razon: string; accion: 'activar' | 'inactivar'
+  }>({ open: false, id: 0, razon: '', accion: 'activar' })
 
   const cargar = () => {
     setLoading(true)
@@ -52,7 +48,7 @@ export default function EmpresasPage() {
       setModalCrear(false)
       setForm(FORM_INICIAL)
       cargar()
-      showToast('Empresa creada correctamente.')
+      showToast('Empresa creada correctamente. Estado inicial: Inactiva.')
     } catch (err: unknown) {
       setErrorModal((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al crear la empresa.')
     } finally {
@@ -62,32 +58,17 @@ export default function EmpresasPage() {
 
   const handleConfirm = async () => {
     try {
-      if (confirm.accion === 'aprobar') {
-        await empresaService.aprobar(confirm.id)
-        showToast('Empresa aprobada.')
+      if (confirm.accion === 'activar') {
+        await empresaService.activar(confirm.id)
+        showToast(`"${confirm.razon}" activada correctamente.`)
       } else {
         await empresaService.inactivar(confirm.id)
-        showToast('Empresa inactivada.')
+        showToast(`"${confirm.razon}" inactivada. Sus tutores han sido inactivados.`)
       }
-      setConfirm({ open: false, id: 0, razon: '', accion: 'aprobar' })
+      setConfirm({ open: false, id: 0, razon: '', accion: 'activar' })
       cargar()
     } catch (err: unknown) {
       showToast((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al procesar.', 'error')
-    }
-  }
-
-  const handleRechazar = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      await empresaService.rechazar(modalRechazar.id, modalRechazar.motivo)
-      setModalRechazar(RECHAZAR_INICIAL)
-      cargar()
-      showToast('Empresa rechazada.')
-    } catch (err: unknown) {
-      showToast((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al rechazar.', 'error')
-    } finally {
-      setSaving(false)
     }
   }
 
@@ -96,7 +77,10 @@ export default function EmpresasPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Empresas</h1>
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Empresas</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Las empresas nuevas quedan en estado Inactiva hasta que las actives.</p>
+        </div>
         <Button onClick={() => { setErrorModal(''); setModalCrear(true) }}>+ Nueva Empresa</Button>
       </div>
 
@@ -110,23 +94,26 @@ export default function EmpresasPage() {
             <td className="px-4 py-3 text-gray-600 text-sm">{e.municipio ?? '—'}</td>
             <td className="px-4 py-3 text-gray-600 text-sm">{e.nombreContacto}</td>
             <td className="px-4 py-3">
-              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${BADGE[e.estado]}`}>{e.estado}</span>
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${BADGE[e.estado]}`}>
+                {e.estado === 'ACTIVA' ? 'Activa' : 'Inactiva'}
+              </span>
             </td>
             <td className="px-4 py-3">
-              <div className="flex flex-row items-center gap-2">
-                {e.estado === 'PENDIENTE' && (
-                  <>
-                    <button onClick={() => setConfirm({ open: true, id: e.id, razon: e.razonSocial, accion: 'aprobar' })}
-                      className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition-colors font-medium">Aprobar</button>
-                    <button onClick={() => setModalRechazar({ id: e.id, motivo: '' })}
-                      className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition-colors font-medium">Rechazar</button>
-                  </>
-                )}
-                {e.estado === 'APROBADA' && (
-                  <button onClick={() => setConfirm({ open: true, id: e.id, razon: e.razonSocial, accion: 'inactivar' })}
-                    className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors font-medium">Inactivar</button>
-                )}
-              </div>
+              {e.estado === 'INACTIVA' ? (
+                <button
+                  onClick={() => setConfirm({ open: true, id: e.id, razon: e.razonSocial, accion: 'activar' })}
+                  className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition-colors font-medium"
+                >
+                  Activar
+                </button>
+              ) : (
+                <button
+                  onClick={() => setConfirm({ open: true, id: e.id, razon: e.razonSocial, accion: 'inactivar' })}
+                  className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                >
+                  Inactivar
+                </button>
+              )}
             </td>
           </tr>
         ))}
@@ -135,6 +122,7 @@ export default function EmpresasPage() {
       {modalCrear && (
         <Modal title="Nueva Empresa" size="lg" onClose={() => { setModalCrear(false); setErrorModal('') }}>
           {errorModal && <div className="bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{errorModal}</div>}
+          <p className="text-sm text-gray-500 mb-4">La empresa se creará en estado <strong>Inactiva</strong>. Podrás activarla desde el listado.</p>
           <form onSubmit={handleCrear} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <Input label="Razón Social" required value={form.razonSocial} onChange={e => setForm({ ...form, razonSocial: e.target.value })} />
@@ -158,29 +146,18 @@ export default function EmpresasPage() {
         </Modal>
       )}
 
-      {modalRechazar.id > 0 && (
-        <Modal title="Rechazar Empresa" onClose={() => setModalRechazar(RECHAZAR_INICIAL)}>
-          <form onSubmit={handleRechazar} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Motivo de Rechazo <span className="text-red-500">*</span></label>
-              <textarea className="input-field" rows={4} required value={modalRechazar.motivo}
-                onChange={e => setModalRechazar({ ...modalRechazar, motivo: e.target.value })} />
-            </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1" type="button" onClick={() => setModalRechazar(RECHAZAR_INICIAL)}>Cancelar</Button>
-              <Button variant="danger" className="flex-1" type="submit" loading={saving}>Rechazar</Button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      <ConfirmModal open={confirm.open}
-        title={confirm.accion === 'aprobar' ? '¿Aprobar empresa?' : '¿Inactivar empresa?'}
-        message={confirm.accion === 'aprobar' ? `Se aprobará "${confirm.razon}" y podrá recibir vacantes.` : `Se inactivará "${confirm.razon}". Sus vacantes activas serán cerradas.`}
-        confirmLabel={confirm.accion === 'aprobar' ? 'Aprobar' : 'Inactivar'}
+      <ConfirmModal
+        open={confirm.open}
+        title={confirm.accion === 'activar' ? '¿Activar empresa?' : '¿Inactivar empresa?'}
+        message={
+          confirm.accion === 'activar'
+            ? `"${confirm.razon}" quedará activa y podrá tener vacantes y tutores.`
+            : `"${confirm.razon}" se inactivará. Sus vacantes activas deben estar cerradas y sus tutores quedarán inactivos.`
+        }
+        confirmLabel={confirm.accion === 'activar' ? 'Activar' : 'Inactivar'}
         variant={confirm.accion === 'inactivar' ? 'danger' : 'primary'}
         onConfirm={handleConfirm}
-        onCancel={() => setConfirm({ open: false, id: 0, razon: '', accion: 'aprobar' })}
+        onCancel={() => setConfirm({ open: false, id: 0, razon: '', accion: 'activar' })}
       />
     </div>
   )

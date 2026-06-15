@@ -28,10 +28,30 @@ public class NotificacionConfigurableService {
     private final BitacoraCorreoRepository bitacoraRepository;
     private final EmailService emailService;
 
+    public java.util.List<PlantillaNotificacionResponse> listarPlantillas() {
+        return plantillaRepository.findAll().stream()
+                .map(PlantillaNotificacionResponse::desde)
+                .toList();
+    }
+
+    public PlantillaNotificacionResponse obtenerPlantilla(TipoEventoNotificacion tipo) {
+        return plantillaRepository.findByTipoEvento(tipo)
+                .map(PlantillaNotificacionResponse::desde)
+                .orElse(null);
+    }
+
+    @Transactional
+    public void eliminarPlantilla(TipoEventoNotificacion tipo, CustomUserDetails actor) {
+        if (actor.getRol() != Rol.COORDINADOR_PRACTICAS) {
+            throw new AccesoNoAutorizadoException("Solo el coordinador de practicas puede eliminar plantillas de correo.");
+        }
+        plantillaRepository.findByTipoEvento(tipo).ifPresent(plantillaRepository::delete);
+    }
+
     @Transactional
     public PlantillaNotificacionResponse guardarPlantilla(PlantillaNotificacionRequest req, CustomUserDetails actor) {
-        if (actor.getRol() != Rol.ADMIN_DTI) {
-            throw new AccesoNoAutorizadoException("Solo DTI puede configurar plantillas de correo.");
+        if (actor.getRol() != Rol.COORDINADOR_PRACTICAS) {
+            throw new AccesoNoAutorizadoException("Solo el coordinador de practicas puede configurar plantillas de correo.");
         }
         PlantillaNotificacion plantilla = plantillaRepository.findByTipoEvento(req.getTipoEvento())
                 .orElseGet(PlantillaNotificacion::new);
@@ -45,8 +65,8 @@ public class NotificacionConfigurableService {
     }
 
     public String previsualizar(PlantillaNotificacionRequest req, Map<String, String> variables, CustomUserDetails actor) {
-        if (actor.getRol() != Rol.ADMIN_DTI) {
-            throw new AccesoNoAutorizadoException("Solo DTI puede previsualizar plantillas.");
+        if (actor.getRol() != Rol.COORDINADOR_PRACTICAS) {
+            throw new AccesoNoAutorizadoException("Solo el coordinador de practicas puede previsualizar plantillas.");
         }
         return aplicarVariables(req.getCuerpo(), variables);
     }
@@ -71,6 +91,20 @@ public class NotificacionConfigurableService {
         LocalDate hoy = LocalDate.now();
         return !bitacoraRepository.existsByActorIdAndFechaEnvioBetween(
                 actorId, hoy.atStartOfDay(), hoy.plusDays(1).atStartOfDay().minusNanos(1));
+    }
+
+    public boolean puedeEnviarRecordatorio(Long actorId, TipoEventoNotificacion tipo, LocalDate ultimoRecordatorio) {
+        int frecuencia = plantillaRepository.findByTipoEvento(tipo)
+                .map(PlantillaNotificacion::getFrecuenciaRecordatorioDias)
+                .orElse(1);
+        if (ultimoRecordatorio == null) {
+            // Nunca se ha enviado recordatorio — verificar solo que no se haya enviado hoy
+            LocalDate hoy = LocalDate.now();
+            return !bitacoraRepository.existsByActorIdAndFechaEnvioBetween(
+                    actorId, hoy.atStartOfDay(), hoy.plusDays(1).atStartOfDay().minusNanos(1));
+        }
+        // Se enviaron recordatorios antes — respetar la frecuencia configurada
+        return !LocalDate.now().isBefore(ultimoRecordatorio.plusDays(frecuencia));
     }
 
     private String aplicarVariables(String texto, Map<String, String> variables) {

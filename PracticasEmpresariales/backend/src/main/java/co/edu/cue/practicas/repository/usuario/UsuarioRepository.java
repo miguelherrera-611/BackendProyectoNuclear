@@ -91,6 +91,8 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
 
     List<Usuario> findByRolAndFacultad_IdAndActivoTrue(Rol rol, Long facultadId);
 
+    List<Usuario> findByRolAndPrograma_IdAndActivoTrue(Rol rol, Long programaId);
+
     long countByRolAndEstadoEstudianteAndPrograma_IdAndActivoTrue(
             Rol rol, EstadoEstudiante estadoEstudiante, Long programaId);
 

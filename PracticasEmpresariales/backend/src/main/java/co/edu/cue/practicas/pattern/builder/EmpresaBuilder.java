@@ -85,7 +85,7 @@ public class EmpresaBuilder {
                 .nombreContacto(nombreContacto)
                 .correo(correo)
                 .areasDisponibles(areasDisponibles)
-                .estado(EstadoEmpresa.PENDIENTE)
+                .estado(EstadoEmpresa.INACTIVA)
                 .creadoEn(LocalDateTime.now())
                 .actualizadoEn(LocalDateTime.now())
                 .build();

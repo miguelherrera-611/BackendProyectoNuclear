@@ -2,6 +2,7 @@ package co.edu.cue.practicas.model.entity;
 
 import co.edu.cue.practicas.event.EmpresaObserver;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
+import co.edu.cue.practicas.model.converter.EstadoEmpresaConverter;
 import co.edu.cue.practicas.model.enums.EstadoEmpresa;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -72,10 +73,10 @@ public class Empresa {
     @Column(name = "correo", length = 150)
     private String correo;
 
-    @Enumerated(EnumType.STRING)
+    @Convert(converter = EstadoEmpresaConverter.class)
     @Column(name = "estado", nullable = false, length = 20)
     @Builder.Default
-    private EstadoEmpresa estado = EstadoEmpresa.PENDIENTE;
+    private EstadoEmpresa estado = EstadoEmpresa.INACTIVA;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "empresa_areas", joinColumns = @JoinColumn(name = "empresa_id"))
@@ -110,18 +111,11 @@ public class Empresa {
 
     // ── Transiciones de estado (OCL: estadoValido) ────────────────────────
 
-    public void aprobar() {
-        validarEstadoRequerido(EstadoEmpresa.PENDIENTE, "aprobar");
-        this.estado = EstadoEmpresa.APROBADA;
-        notificar("EMPRESA_APROBADA");
-    }
-
-    public void rechazar(String motivo) {
-        if (motivo == null || motivo.isBlank())
-            throw new OperacionNoPermitidaException("El motivo de rechazo es obligatorio.");
-        validarEstadoRequerido(EstadoEmpresa.PENDIENTE, "rechazar");
-        this.estado = EstadoEmpresa.RECHAZADA;
-        notificar("EMPRESA_RECHAZADA");
+    public void activar() {
+        if (this.estado == EstadoEmpresa.ACTIVA)
+            throw new OperacionNoPermitidaException("La empresa ya está activa.");
+        this.estado = EstadoEmpresa.ACTIVA;
+        notificar("EMPRESA_ACTIVADA");
     }
 
     public void inactivar() {
@@ -134,19 +128,10 @@ public class Empresa {
     // ── OCL helpers ───────────────────────────────────────────────────────
 
     public boolean puedeCrearVacantes() {
-        return this.estado == EstadoEmpresa.APROBADA;
+        return this.estado == EstadoEmpresa.ACTIVA;
     }
 
     public boolean puedeVincularPracticantes() {
-        return this.estado == EstadoEmpresa.APROBADA;
-    }
-
-    // ── Privados ──────────────────────────────────────────────────────────
-
-    private void validarEstadoRequerido(EstadoEmpresa requerido, String operacion) {
-        if (this.estado != requerido)
-            throw new OperacionNoPermitidaException(
-                    "Para " + operacion + " la empresa debe estar en "
-                    + requerido + ". Estado actual: " + this.estado);
+        return this.estado == EstadoEmpresa.ACTIVA;
     }
 }

@@ -114,7 +114,7 @@ export interface DashboardResponse {
   secciones: DashboardSeccion[]
 }
 
-export type EstadoEmpresa = 'PENDIENTE' | 'APROBADA' | 'RECHAZADA' | 'INACTIVA'
+export type EstadoEmpresa = 'ACTIVA' | 'INACTIVA'
 export type EstadoVacante = 'PENDIENTE' | 'DISPONIBLE' | 'RECHAZADA' | 'CERRADA'
 
 export interface EmpresaResponse {
@@ -356,6 +356,19 @@ export interface EncuestaResponse {
   estado: EstadoEncuesta
   fechaEnvio?: string
   fechaCompletada?: string
+}
+
+export interface EncuestaCoordinadorResumen {
+  instanciaId: number
+  nombrePractica: string
+  nombreEstudiante: string
+  tutorEmpresarialId?: number
+  nombreTutor?: string
+  evaluacionDocenteCompleta: boolean
+  encuestaTutorEnviada: boolean
+  encuestaTutorCompletada: boolean
+  encuestaEstudianteEnviada: boolean
+  encuestaEstudianteCompletada: boolean
 }
 
 export interface SustentacionResponse {

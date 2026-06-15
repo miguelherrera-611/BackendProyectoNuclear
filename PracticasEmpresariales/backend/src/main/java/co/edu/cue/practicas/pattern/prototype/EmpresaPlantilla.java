@@ -29,7 +29,7 @@ public class EmpresaPlantilla implements IPrototype<Empresa> {
 
     /**
      * Clona la configuración base de la empresa original.
-     * El clon inicia siempre en PENDIENTE con NIT/razonSocial vacíos
+     * El clon inicia siempre en INACTIVA con NIT/razonSocial vacíos
      * para que el usuario los complete — no tiene sentido clonarlos.
      */
     @Override
@@ -42,7 +42,7 @@ public class EmpresaPlantilla implements IPrototype<Empresa> {
                 .nombreContacto(original.getNombreContacto())
                 .correo(original.getCorreo())
                 .areasDisponibles(new ArrayList<>(original.getAreasDisponibles()))
-                .estado(EstadoEmpresa.PENDIENTE) // el clon siempre inicia PENDIENTE
+                .estado(EstadoEmpresa.INACTIVA)
                 .creadoEn(LocalDateTime.now())
                 .actualizadoEn(LocalDateTime.now())
                 .build();

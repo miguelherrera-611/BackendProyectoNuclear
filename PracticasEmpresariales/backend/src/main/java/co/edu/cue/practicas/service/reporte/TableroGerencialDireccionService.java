@@ -41,7 +41,7 @@ public class TableroGerencialDireccionService {
         return TableroGerencialResponse.builder()
                 .practicantesEnCursoPorPrograma(porPrograma)
                 .tasaAprobacionGlobal(tasa)
-                .empresasActivas(empresaRepository.countByEstado(EstadoEmpresa.APROBADA))
+                .empresasActivas(empresaRepository.countByEstado(EstadoEmpresa.ACTIVA))
                 .build();
     }
 }

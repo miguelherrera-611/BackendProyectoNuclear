@@ -40,6 +40,7 @@ import NotaFinalCoordinadorPage from '../pages/calificaciones/NotaFinalCoordinad
 import CierrePracticaPage from '../pages/cierre/CierrePracticaPage'
 import ConfiguracionSprint4Page from '../pages/configuracion/ConfiguracionSprint4Page'
 import EncuestaPublicaPage from '../pages/encuestas/EncuestaPublicaPage'
+import EncuestasCoordinadorPage from '../pages/encuestas/EncuestasCoordinadorPage'
 
 export default function AppRouter() {
   const { user } = useAuth()
@@ -76,6 +77,7 @@ export default function AppRouter() {
               <Route path="/vinculacion/:instanciaId" element={<VinculacionPage />} />
               <Route path="/nota-final/:instanciaId" element={<NotaFinalCoordinadorPage />} />
               <Route path="/cierre-practica/:instanciaId" element={<CierrePracticaPage />} />
+              <Route path="/encuestas-coordinador" element={<EncuestasCoordinadorPage />} />
               <Route path="/plantillas-correo" element={<ConfiguracionSprint4Page />} />
             </Route>
 

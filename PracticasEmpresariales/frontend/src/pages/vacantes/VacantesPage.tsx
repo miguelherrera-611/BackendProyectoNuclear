@@ -44,7 +44,7 @@ export default function VacantesPage() {
   }, [tab])
 
   useEffect(() => { cargar() }, [cargar])
-  useEffect(() => { empresaService.listarAprobadas().then(setEmpresas) }, [])
+  useEffect(() => { empresaService.listarActivas().then(setEmpresas) }, [])
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()

@@ -2,6 +2,7 @@ package co.edu.cue.practicas.service.encuesta;
 
 import co.edu.cue.practicas.dto.request.EnviarEncuestaRequest;
 import co.edu.cue.practicas.dto.request.ResponderEncuestaRequest;
+import co.edu.cue.practicas.dto.response.EncuestaCoordinadorResumen;
 import co.edu.cue.practicas.dto.response.EncuestaResponse;
 import co.edu.cue.practicas.event.Sprint4DomainEvent;
 import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
@@ -12,10 +13,14 @@ import co.edu.cue.practicas.model.entity.InstanciaPractica;
 import co.edu.cue.practicas.model.entity.TutorEmpresarial;
 import co.edu.cue.practicas.model.entity.Usuario;
 import co.edu.cue.practicas.model.enums.EstadoEncuesta;
+import co.edu.cue.practicas.model.enums.EstadoEvaluacionFinal;
+import co.edu.cue.practicas.model.enums.EstadoPractica;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.model.enums.TipoEncuesta;
+import co.edu.cue.practicas.model.enums.TipoEvaluacionFinal;
 import co.edu.cue.practicas.model.enums.TipoEventoNotificacion;
 import co.edu.cue.practicas.repository.encuesta.EncuestaSatisfaccionRepository;
+import co.edu.cue.practicas.repository.evaluacion.EvaluacionFinalRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
@@ -37,6 +42,7 @@ public class EncuestaSatisfaccionService {
     private final EncuestaSatisfaccionRepository encuestaRepository;
     private final InstanciaPracticaRepository instanciaRepository;
     private final TutorEmpresarialRepository tutorRepository;
+    private final EvaluacionFinalRepository evaluacionRepository;
     private final NotificacionConfigurableService notificacionService;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -47,6 +53,7 @@ public class EncuestaSatisfaccionService {
         }
         InstanciaPractica instancia = buscarInstancia(instanciaId);
         validarScope(instancia, actor);
+        validarEvaluacionDocenteCompleta(instanciaId);
         TutorEmpresarial tutor = tutorRepository.findById(req.getTutorEmpresarialId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Tutor empresarial no encontrado."));
         if (instancia.getTutorEmpresarial() == null || !instancia.getTutorEmpresarial().getId().equals(tutor.getId())) {
@@ -76,6 +83,7 @@ public class EncuestaSatisfaccionService {
         }
         InstanciaPractica instancia = buscarInstancia(instanciaId);
         validarScope(instancia, actor);
+        validarEvaluacionDocenteCompleta(instanciaId);
         Usuario estudiante = instancia.getExpediente().getEstudiante();
         EncuestaSatisfaccion encuesta = encuestaRepository.findByInstanciaPractica_IdAndTipo(instanciaId, TipoEncuesta.PARA_ESTUDIANTE)
                 .orElseGet(() -> EncuestaSatisfaccion.builder().instanciaPractica(instancia).tipo(TipoEncuesta.PARA_ESTUDIANTE).build());
@@ -154,11 +162,16 @@ public class EncuestaSatisfaccionService {
     @Transactional
     public void enviarRecordatorios() {
         encuestaRepository.findByEstadoNotAndEnviadaTrue(EstadoEncuesta.COMPLETADA).forEach(encuesta -> {
-            if (notificacionService.puedeEnviarRecordatorio(encuesta.getActorAsignadoId())) {
-                // SPRINT 4 - Decorator: recordatorio automatico sobre la notificacion base, maximo una vez por dia.
-                notificacionService.enviar(TipoEventoNotificacion.ENCUESTA_COMPLETADA, encuesta.getActorAsignadoId(),
+            // Usar el tipo de evento correcto para que el sistema use la plantilla configurada para esa encuesta
+            TipoEventoNotificacion tipoEvento = encuesta.getTipo() == TipoEncuesta.PARA_TUTOR
+                    ? TipoEventoNotificacion.ENCUESTA_TUTOR_ENVIADA
+                    : TipoEventoNotificacion.ENCUESTA_ESTUDIANTE_ENVIADA;
+            // SPRINT 4 - Decorator: recordatorio automatico respetando la frecuenciaRecordatorioDias de la plantilla.
+            if (notificacionService.puedeEnviarRecordatorio(encuesta.getActorAsignadoId(), tipoEvento, encuesta.getUltimoRecordatorio())) {
+                notificacionService.enviar(tipoEvento, encuesta.getActorAsignadoId(),
                         encuesta.getActorAsignadoCorreo(), encuesta.getActorAsignadoCorreo(),
-                        variables(encuesta.getInstanciaPractica(), "/encuestas/" + encuesta.getId()));
+                        variables(encuesta.getInstanciaPractica(),
+                                "/api/v1/encuestas-satisfaccion/publica/" + encuesta.getTokenAcceso()));
                 encuesta.setUltimoRecordatorio(LocalDate.now());
             }
         });
@@ -192,6 +205,51 @@ public class EncuestaSatisfaccionService {
         if (actor.getProgramaId() != null && !actor.getProgramaId().equals(programaId)) {
             throw new AccesoNoAutorizadoException("No puedes gestionar encuestas de otro programa.");
         }
+    }
+
+    private void validarEvaluacionDocenteCompleta(Long instanciaId) {
+        boolean completa = evaluacionRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
+                instanciaId, TipoEvaluacionFinal.DOCENTE_ASESOR, EstadoEvaluacionFinal.COMPLETADA);
+        if (!completa) {
+            throw new OperacionNoPermitidaException(
+                    "El docente asesor aun no ha registrado su evaluacion final. Las encuestas solo pueden enviarse luego de esa evaluacion.");
+        }
+    }
+
+    @Transactional
+    public java.util.List<EncuestaCoordinadorResumen> listarParaCoordinador(CustomUserDetails actor) {
+        if (actor.getRol() != Rol.COORDINADOR_PRACTICAS) {
+            throw new AccesoNoAutorizadoException("Solo el coordinador puede ver este resumen.");
+        }
+        java.util.List<InstanciaPractica> instancias = actor.getProgramaId() != null
+                ? instanciaRepository.findAllByEstadoAndExpediente_Estudiante_Programa_Id(
+                        EstadoPractica.EN_CURSO, actor.getProgramaId())
+                : instanciaRepository.findAllByEstado(EstadoPractica.EN_CURSO);
+
+        return instancias.stream().map(i -> {
+            boolean evalDocente = evaluacionRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
+                    i.getId(), TipoEvaluacionFinal.DOCENTE_ASESOR, EstadoEvaluacionFinal.COMPLETADA);
+            boolean tutorEnviada = encuestaRepository.findByInstanciaPractica_IdAndTipo(
+                    i.getId(), TipoEncuesta.PARA_TUTOR).isPresent();
+            boolean tutorCompletada = encuestaRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
+                    i.getId(), TipoEncuesta.PARA_TUTOR, EstadoEncuesta.COMPLETADA);
+            boolean estudianteEnviada = encuestaRepository.findByInstanciaPractica_IdAndTipo(
+                    i.getId(), TipoEncuesta.PARA_ESTUDIANTE).isPresent();
+            boolean estudianteCompletada = encuestaRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
+                    i.getId(), TipoEncuesta.PARA_ESTUDIANTE, EstadoEncuesta.COMPLETADA);
+            return EncuestaCoordinadorResumen.builder()
+                    .instanciaId(i.getId())
+                    .nombrePractica(i.getNombre())
+                    .nombreEstudiante(i.getExpediente().getEstudiante().getNombre())
+                    .tutorEmpresarialId(i.getTutorEmpresarial() != null ? i.getTutorEmpresarial().getId() : null)
+                    .nombreTutor(i.getTutorEmpresarial() != null ? i.getTutorEmpresarial().getNombre() : null)
+                    .evaluacionDocenteCompleta(evalDocente)
+                    .encuestaTutorEnviada(tutorEnviada)
+                    .encuestaTutorCompletada(tutorCompletada)
+                    .encuestaEstudianteEnviada(estudianteEnviada)
+                    .encuestaEstudianteCompletada(estudianteCompletada)
+                    .build();
+        }).toList();
     }
 
     private Map<String, String> variables(InstanciaPractica instancia, String enlace) {

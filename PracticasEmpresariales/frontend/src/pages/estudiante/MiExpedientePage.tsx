@@ -1,6 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { expedienteService } from '../../services/expedienteService'
+import api from '../../services/api'
+import { Modal } from '../../components/common/Modal/Modal'
+import { useToast } from '../../components/common/Notifications/Toast'
 import type { ExpedienteResponse, EstadoPractica } from '../../types'
 
 const ESTADO_PRACTICA_BADGE: Record<EstadoPractica, string> = {
@@ -16,20 +19,67 @@ const ESTADO_HV_BADGE: Record<string, string> = {
   RECHAZADA: 'bg-red-100 text-red-800',
 }
 
+function abrirArchivoHv(hvId: number, urlArchivo: string) {
+  if (urlArchivo.startsWith('http://') || urlArchivo.startsWith('https://')) {
+    window.open(urlArchivo, '_blank', 'noopener,noreferrer')
+    return
+  }
+  api.get<Blob>(`/api/v1/expedientes/hoja-de-vida/${hvId}/archivo`, { responseType: 'blob' })
+    .then(res => {
+      const blobUrl = URL.createObjectURL(res.data)
+      window.open(blobUrl, '_blank')
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 30_000)
+    })
+    .catch(() => alert('No se pudo abrir el archivo. El archivo puede no estar disponible en el servidor.'))
+}
+
 export default function MiExpedientePage() {
   const { user } = useAuth()
+  const { showToast } = useToast()
   const [expediente, setExpediente] = useState<ExpedienteResponse | null>(null)
   const [loading, setLoading]       = useState(true)
   const [error, setError]           = useState('')
   const [tabActiva, setTabActiva]   = useState<'general' | 'hv' | 'practicas'>('general')
 
-  useEffect(() => {
+  const [modalHv, setModalHv]       = useState(false)
+  const [urlHv, setUrlHv]           = useState('')
+  const [subiendoHv, setSubiendoHv] = useState(false)
+  const [errorHv, setErrorHv]       = useState('')
+
+  const cargar = () => {
     if (!user?.usuarioId) return
     expedienteService.obtener(user.usuarioId)
       .then(setExpediente)
       .catch(() => setError('No se pudo cargar tu expediente. Contacta al coordinador.'))
       .finally(() => setLoading(false))
-  }, [user])
+  }
+
+  useEffect(() => { cargar() }, [user])
+
+  const abrirModalHv = () => {
+    setUrlHv('')
+    setErrorHv('')
+    setModalHv(true)
+  }
+
+  const handleSubirHv = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!urlHv.trim() || !user?.usuarioId) return
+    setSubiendoHv(true)
+    setErrorHv('')
+    try {
+      await expedienteService.subirHojaDeVida(user.usuarioId, urlHv.trim())
+      setModalHv(false)
+      showToast('Hoja de vida enviada correctamente. Queda pendiente de validación.')
+      setLoading(true)
+      cargar()
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
+      setErrorHv(msg ?? 'No se pudo enviar la hoja de vida.')
+    } finally {
+      setSubiendoHv(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -54,13 +104,81 @@ export default function MiExpedientePage() {
   if (!expediente) return null
 
   const hvActual = expediente.hvActual
+  const tieneEnCurso = expediente.practicas.some(p => p.estado === 'EN_CURSO')
 
   return (
     <div className="space-y-6 max-w-4xl">
+      {/* Modal subir HV */}
+      {modalHv && (
+        <Modal
+          title="Actualizar Hoja de Vida"
+          subtitle="Pega el enlace público de tu CV (Google Drive, OneDrive, Dropbox, etc.)."
+          onClose={() => setModalHv(false)}
+        >
+          <form onSubmit={handleSubirHv} className="space-y-4">
+            {tieneEnCurso && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-amber-800 text-sm">
+                Tienes una práctica EN_CURSO. El sistema no permite reemplazar la hoja de vida durante una práctica activa.
+              </div>
+            )}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Enlace del archivo <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="url"
+                className="input-field"
+                placeholder="https://drive.google.com/file/d/..."
+                value={urlHv}
+                onChange={e => setUrlHv(e.target.value)}
+                required
+                disabled={tieneEnCurso || subiendoHv}
+              />
+              <p className="text-xs text-gray-400 mt-1">
+                El enlace debe ser público o accesible con el enlace para que el coordinador pueda revisarlo.
+              </p>
+            </div>
+
+            {errorHv && (
+              <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                {errorHv}
+              </p>
+            )}
+
+            <div className="flex gap-3 pt-1">
+              <button
+                type="button"
+                className="btn-secondary flex-1"
+                onClick={() => setModalHv(false)}
+                disabled={subiendoHv}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                className="btn-primary flex-1"
+                disabled={subiendoHv || tieneEnCurso || !urlHv.trim()}
+              >
+                {subiendoHv ? 'Enviando…' : 'Enviar'}
+              </button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
       {/* Header */}
-      <div>
-        <h1 className="text-2xl font-bold text-gray-900">Mi Expediente</h1>
-        <p className="text-sm text-gray-500 mt-1">Historial académico y registro de tus prácticas.</p>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Mi Expediente</h1>
+          <p className="text-sm text-gray-500 mt-1">Historial académico y registro de tus prácticas.</p>
+        </div>
+        <button
+          type="button"
+          onClick={abrirModalHv}
+          className="btn-primary text-sm"
+        >
+          Actualizar Hoja de Vida
+        </button>
       </div>
 
       {/* Resumen general */}
@@ -122,7 +240,16 @@ export default function MiExpedientePage() {
           {/* HV actual */}
           {hvActual ? (
             <div className="border-t pt-4 mt-2">
-              <h3 className="font-medium text-gray-700 mb-3">Hoja de Vida Actual</h3>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="font-medium text-gray-700">Hoja de Vida Actual</h3>
+                <button
+                  type="button"
+                  onClick={abrirModalHv}
+                  className="text-xs text-cue-primary font-medium hover:underline"
+                >
+                  Actualizar
+                </button>
+              </div>
               <div className="bg-gray-50 rounded-lg p-4 flex items-center justify-between">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
@@ -138,21 +265,27 @@ export default function MiExpedientePage() {
                   </p>
                 </div>
                 {hvActual.urlArchivo && (
-                  <a
-                    href={hvActual.urlArchivo}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <button
+                    type="button"
+                    onClick={() => abrirArchivoHv(hvActual.id, hvActual.urlArchivo)}
                     className="btn-secondary text-sm"
                   >
                     Ver archivo
-                  </a>
+                  </button>
                 )}
               </div>
             </div>
           ) : (
             <div className="border-t pt-4 mt-2">
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-800 text-sm">
-                No tienes una hoja de vida cargada. Contacta al coordinador para cargar tu CV.
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-800 text-sm flex items-center justify-between gap-4">
+                <p>No tienes una hoja de vida registrada.</p>
+                <button
+                  type="button"
+                  onClick={abrirModalHv}
+                  className="shrink-0 text-xs font-semibold bg-amber-200 hover:bg-amber-300 text-amber-900 px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Subir ahora
+                </button>
               </div>
             </div>
           )}
@@ -162,10 +295,19 @@ export default function MiExpedientePage() {
       {/* Tab: Hoja de Vida */}
       {tabActiva === 'hv' && (
         <div className="space-y-3">
+          <p className="text-sm text-gray-500">Historial de versiones de tu hoja de vida.</p>
+
           {expediente.historialHv.length === 0 ? (
             <div className="card text-center py-12">
               <div className="text-gray-300 text-4xl mb-3">📄</div>
-              <p className="text-gray-400 text-sm">No hay historial de hojas de vida.</p>
+              <p className="text-gray-500 text-sm font-medium mb-3">No has subido ninguna hoja de vida aún.</p>
+              <button
+                type="button"
+                onClick={abrirModalHv}
+                className="btn-primary text-sm"
+              >
+                Subir hoja de vida
+              </button>
             </div>
           ) : expediente.historialHv.map((hv, idx) => (
             <div key={hv.id} className="card flex items-center justify-between">
@@ -193,10 +335,13 @@ export default function MiExpedientePage() {
                 </div>
               </div>
               {hv.urlArchivo && (
-                <a href={hv.urlArchivo} target="_blank" rel="noopener noreferrer"
-                  className="text-sm text-cue-primary font-medium hover:underline">
+                <button
+                  type="button"
+                  onClick={() => abrirArchivoHv(hv.id, hv.urlArchivo)}
+                  className="text-sm text-cue-primary font-medium hover:underline"
+                >
                   Ver →
-                </a>
+                </button>
               )}
             </div>
           ))}

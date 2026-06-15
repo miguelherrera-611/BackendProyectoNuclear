@@ -3,6 +3,7 @@ package co.edu.cue.practicas.controller.encuesta;
 import co.edu.cue.practicas.dto.request.EnviarEncuestaRequest;
 import co.edu.cue.practicas.dto.request.ResponderEncuestaRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
+import co.edu.cue.practicas.dto.response.EncuestaCoordinadorResumen;
 import co.edu.cue.practicas.dto.response.EncuestaResponse;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.encuesta.EncuestaSatisfaccionService;
@@ -30,6 +31,13 @@ public class EncuestaSatisfaccionController {
             @AuthenticationPrincipal CustomUserDetails actor) {
         return ResponseEntity.ok(ApiResponse.ok("Encuestas asignadas.",
                 service.misEncuestas(actor)));
+    }
+
+    @GetMapping("/coordinador/practicas")
+    public ResponseEntity<ApiResponse<java.util.List<EncuestaCoordinadorResumen>>> listarParaCoordinador(
+            @AuthenticationPrincipal CustomUserDetails actor) {
+        return ResponseEntity.ok(ApiResponse.ok("Resumen de encuestas por practica.",
+                service.listarParaCoordinador(actor)));
     }
 
     @GetMapping("/publica/{token}")

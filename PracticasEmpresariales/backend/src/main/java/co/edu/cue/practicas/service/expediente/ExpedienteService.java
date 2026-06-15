@@ -23,9 +23,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 
 /**
@@ -137,6 +143,25 @@ public class ExpedienteService {
         return hvRepository.findByEstudiante_IdOrderByVersionDesc(estudianteId).stream()
                 .map(mapper::toHojaDeVidaResponse)
                 .toList();
+    }
+
+    // ── ARCHIVO HV ───────────────────────────────────────────────────────────
+
+    @Transactional(readOnly = true)
+    public Resource obtenerArchivoHv(Long hvId) throws IOException {
+        HojaDeVida hv = buscarHvOFallar(hvId);
+        String url = hv.getUrlArchivo();
+        if (url == null || url.isBlank()) {
+            throw new RecursoNoEncontradoException("El archivo de esta HV no tiene ruta configurada.");
+        }
+        if (url.startsWith("http://") || url.startsWith("https://")) {
+            throw new OperacionNoPermitidaException("La HV usa una URL externa; ábrela directamente en el navegador.");
+        }
+        Path path = Paths.get(url);
+        if (!Files.exists(path) || !Files.isRegularFile(path)) {
+            throw new RecursoNoEncontradoException("Archivo no disponible en el servidor: " + path.getFileName());
+        }
+        return new FileSystemResource(path);
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────

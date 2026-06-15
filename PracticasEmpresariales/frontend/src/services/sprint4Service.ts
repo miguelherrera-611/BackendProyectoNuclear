@@ -4,6 +4,7 @@ import type {
   ChecklistCierreResponse,
   CierreFormalResponse,
   CriterioEvaluacion,
+  EncuestaCoordinadorResumen,
   EncuestaResponse,
   EvaluacionFinalResponse,
   NotaFinalResponse,
@@ -101,6 +102,11 @@ export const sprint4Service = {
     return res.data.datos ?? []
   },
 
+  async listarEncuestasCoordinador() {
+    const res = await api.get<ApiResponse<EncuestaCoordinadorResumen[]>>('/api/v1/encuestas-satisfaccion/coordinador/practicas')
+    return res.data.datos ?? []
+  },
+
   async programarSustentacion(instanciaId: number, fecha: string, jurados: string[]) {
     const res = await api.post<ApiResponse<SustentacionResponse>>(`/api/v1/cierre-practicas/${instanciaId}/sustentacion`, { fecha, jurados })
     return res.data.datos!
@@ -139,6 +145,20 @@ export const sprint4Service = {
   async obtenerConfiguracionPrograma(programaId: number) {
     const res = await api.get<ApiResponse<ProgramaConfiguracionResponse>>(`/api/v1/configuracion-sprint4/programas/${programaId}`)
     return res.data.datos!
+  },
+
+  async listarPlantillas() {
+    const res = await api.get<ApiResponse<PlantillaNotificacionResponse[]>>('/api/v1/configuracion-sprint4/notificaciones')
+    return res.data.datos ?? []
+  },
+
+  async obtenerPlantilla(tipoEvento: TipoEventoNotificacion) {
+    const res = await api.get<ApiResponse<PlantillaNotificacionResponse | null>>(`/api/v1/configuracion-sprint4/notificaciones/${tipoEvento}`)
+    return res.data.datos ?? null
+  },
+
+  async eliminarPlantilla(tipoEvento: TipoEventoNotificacion) {
+    await api.delete(`/api/v1/configuracion-sprint4/notificaciones/${tipoEvento}`)
   },
 
   async guardarPlantilla(data: PlantillaNotificacionRequest) {

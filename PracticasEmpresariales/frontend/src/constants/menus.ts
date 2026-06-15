@@ -27,6 +27,7 @@ export const MENUS_POR_ROL: Record<Rol, MenuItem[]> = {
     { id: 'vacantes', label: 'Vacantes', ruta: '/vacantes', icono: 'Briefcase' },
     { id: 'tutores', label: 'Tutores Empresariales', ruta: '/tutores', icono: 'UserTie' },
     { id: 'asignaciones', label: 'Asignaciones', ruta: '/asignaciones', icono: 'Link' },
+    { id: 'encuestas-coord', label: 'Encuestas', ruta: '/encuestas-coordinador', icono: 'Chart' },
     { id: 'reportes', label: 'Reportes Proceso', ruta: '/reportes-proceso', icono: 'Report' },
     { id: 'plantillas-correo', label: 'Plantillas de Correo', ruta: '/plantillas-correo', icono: 'Mail' },
   ],

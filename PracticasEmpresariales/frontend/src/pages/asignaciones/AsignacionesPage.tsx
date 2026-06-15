@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { InstanciaPracticaResponse, EstadoPractica } from '../../types'
 import { asignacionService } from '../../services/asignacionService'
-import { Modal } from '../../components/common/Modal/Modal'
+import { sprint4Service } from '../../services/sprint4Service'
+import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
 import { Button } from '../../components/common/Button/Button'
 import { Table } from '../../components/common/Table/Table'
 import { useToast } from '../../components/common/Notifications/Toast'
@@ -34,6 +35,14 @@ export default function AsignacionesPage() {
   })
   const [motivoCancelacion, setMotivoCancelacion] = useState('')
 
+  // Estado para el flujo "Dar cierre"
+  const [cierreError, setCierreError] = useState<{ open: boolean; mensaje: string }>({ open: false, mensaje: '' })
+  const [cierreConfirm, setCierreConfirm] = useState<{ open: boolean; instancia: InstanciaPracticaResponse | null }>({
+    open: false, instancia: null,
+  })
+  const [cierreExito, setCierreExito] = useState<{ open: boolean; nombre: string }>({ open: false, nombre: '' })
+  const [cerrando, setCerrando] = useState<number | null>(null)
+
   const cargar = async (filtroEstado = estado) => {
     setLoading(true)
     try {
@@ -62,6 +71,55 @@ export default function AsignacionesPage() {
       showToast('No se pudo cancelar la asignación.', 'error')
     } finally {
       setCanceladoId(null)
+    }
+  }
+
+  const handleDarCierreClick = async (instancia: InstanciaPracticaResponse) => {
+    setCerrando(instancia.id)
+    try {
+      const checklist = await sprint4Service.checklist(instancia.id)
+      const tutorItem = checklist.items.find(i => i.codigo === 'encuesta_tutor')
+      const estudianteItem = checklist.items.find(i => i.codigo === 'encuesta_estudiante')
+      const tutorOk = tutorItem?.completo ?? false
+      const estudianteOk = estudianteItem?.completo ?? false
+
+      if (!tutorOk || !estudianteOk) {
+        let mensaje = ''
+        if (!tutorOk && !estudianteOk) {
+          mensaje = 'Tanto el estudiante como el tutor falta por diligenciar el formulario.'
+        } else if (!estudianteOk) {
+          mensaje = 'El estudiante no ha diligenciado el formulario.'
+        } else {
+          mensaje = 'El tutor no ha diligenciado el formulario.'
+        }
+        setCierreError({ open: true, mensaje })
+        return
+      }
+
+      // Ambas encuestas completas → pedir confirmación
+      setCierreConfirm({ open: true, instancia })
+    } catch {
+      showToast('No se pudo verificar el estado de la práctica.', 'error')
+    } finally {
+      setCerrando(null)
+    }
+  }
+
+  const handleConfirmarCierre = async () => {
+    if (!cierreConfirm.instancia) return
+    const instancia = cierreConfirm.instancia
+    setCierreConfirm({ open: false, instancia: null })
+    setCerrando(instancia.id)
+    try {
+      await sprint4Service.ejecutarCierre(instancia.id)
+      setCierreExito({ open: true, nombre: instancia.nombre })
+      await cargar(estado)
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
+        ?? 'No se pudo cerrar la práctica.'
+      showToast(msg, 'error')
+    } finally {
+      setCerrando(null)
     }
   }
 
@@ -118,6 +176,15 @@ export default function AsignacionesPage() {
                     Cancelar
                   </button>
                 )}
+                {i.estado === 'EN_CURSO' && (
+                  <button
+                    className="text-xs bg-blue-50 text-blue-700 border border-blue-200 px-3 py-1 rounded-lg hover:bg-blue-100 transition-colors font-medium disabled:opacity-50"
+                    onClick={() => handleDarCierreClick(i)}
+                    disabled={cerrando === i.id}
+                  >
+                    {cerrando === i.id ? 'Verificando...' : 'Dar cierre'}
+                  </button>
+                )}
               </div>
             </td>
           </tr>
@@ -145,6 +212,47 @@ export default function AsignacionesPage() {
               </Button>
             </div>
           </form>
+        </Modal>
+      )}
+
+      {/* Modal: encuestas pendientes */}
+      {cierreError.open && (
+        <Modal title="No se puede cerrar la práctica" onClose={() => setCierreError({ open: false, mensaje: '' })} size="sm">
+          <div className="space-y-4">
+            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3">
+              <span className="text-amber-500 text-xl mt-0.5">⚠</span>
+              <p className="text-sm text-amber-800">{cierreError.mensaje}</p>
+            </div>
+            <p className="text-sm text-gray-500">
+              Ve al apartado <strong>Encuestas</strong> en el menú lateral para enviarlas y esperar su diligenciamiento.
+            </p>
+            <Button className="w-full" onClick={() => setCierreError({ open: false, mensaje: '' })}>Entendido</Button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal: confirmar cierre */}
+      <ConfirmModal
+        open={cierreConfirm.open}
+        title="¿Dar cierre a esta práctica?"
+        message={`La práctica "${cierreConfirm.instancia?.nombre}" pasará a estado FINALIZADA de forma irreversible. Esta acción no se puede deshacer.`}
+        confirmLabel="Confirmar cierre"
+        variant="primary"
+        onConfirm={handleConfirmarCierre}
+        onCancel={() => setCierreConfirm({ open: false, instancia: null })}
+      />
+
+      {/* Modal: cierre exitoso */}
+      {cierreExito.open && (
+        <Modal title="Práctica cerrada" onClose={() => setCierreExito({ open: false, nombre: '' })} size="sm">
+          <div className="space-y-4 text-center">
+            <div className="text-5xl">✅</div>
+            <p className="text-gray-800 font-medium">{cierreExito.nombre}</p>
+            <p className="text-sm text-gray-500">
+              La práctica ha sido cerrada exitosamente. Todos los actores (estudiante, docente asesor, tutor y coordinación académica) han sido notificados y la práctica aparece como <strong>FINALIZADA</strong>.
+            </p>
+            <Button className="w-full" onClick={() => setCierreExito({ open: false, nombre: '' })}>Aceptar</Button>
+          </div>
         </Modal>
       )}
     </div>

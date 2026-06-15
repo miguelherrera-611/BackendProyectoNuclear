@@ -45,7 +45,7 @@ public class EmpresaValidator {
     public void validarEmpresaAprobadaParaVacantes(Empresa empresa) {
         if (!empresa.puedeCrearVacantes())
             throw new OperacionNoPermitidaException(
-                    "Solo se pueden crear vacantes para empresas APROBADAS. " +
+                    "Solo se pueden crear vacantes para empresas ACTIVAS. " +
                     "Estado actual: " + empresa.getEstado());
     }
 
@@ -53,7 +53,7 @@ public class EmpresaValidator {
     public void validarEmpresaAprobadaParaTutores(Empresa empresa) {
         if (!empresa.puedeVincularPracticantes())
             throw new OperacionNoPermitidaException(
-                    "Solo se pueden registrar tutores en empresas APROBADAS. " +
+                    "Solo se pueden registrar tutores en empresas ACTIVAS. " +
                     "Estado actual: " + empresa.getEstado());
     }
 }

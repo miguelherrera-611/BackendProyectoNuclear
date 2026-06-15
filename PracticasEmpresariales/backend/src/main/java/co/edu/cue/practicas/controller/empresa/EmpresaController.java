@@ -1,7 +1,6 @@
 package co.edu.cue.practicas.controller.empresa;
 
 import co.edu.cue.practicas.dto.request.CrearEmpresaRequest;
-import co.edu.cue.practicas.dto.request.RechazarRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.EmpresaResponse;
 import co.edu.cue.practicas.service.empresa.EmpresaService;
@@ -15,9 +14,7 @@ import java.util.List;
 
 /**
  * GPE-150 — EmpresaController
- *
  * SOLID — SRP: solo recibe peticiones HTTP y delega al servicio.
- *              No tiene lógica de negocio.
  */
 @RestController
 @RequestMapping("/api/v1/empresas")
@@ -53,20 +50,14 @@ public class EmpresaController {
         return ResponseEntity.ok(ApiResponse.ok("Listado de empresas.", empresaService.listarTodas()));
     }
 
-    @GetMapping("/aprobadas")
-    public ResponseEntity<ApiResponse<List<EmpresaResponse>>> listarAprobadas() {
-        return ResponseEntity.ok(ApiResponse.ok("Empresas aprobadas.", empresaService.listarAprobadas()));
+    @GetMapping("/activas")
+    public ResponseEntity<ApiResponse<List<EmpresaResponse>>> listarActivas() {
+        return ResponseEntity.ok(ApiResponse.ok("Empresas activas.", empresaService.listarActivas()));
     }
 
-    @PatchMapping("/{id}/aprobar")
-    public ResponseEntity<ApiResponse<EmpresaResponse>> aprobar(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.ok("Empresa aprobada.", empresaService.aprobarEmpresa(id)));
-    }
-
-    @PatchMapping("/{id}/rechazar")
-    public ResponseEntity<ApiResponse<EmpresaResponse>> rechazar(
-            @PathVariable Long id, @Valid @RequestBody RechazarRequest req) {
-        return ResponseEntity.ok(ApiResponse.ok("Empresa rechazada.", empresaService.rechazarEmpresa(id, req)));
+    @PatchMapping("/{id}/activar")
+    public ResponseEntity<ApiResponse<EmpresaResponse>> activar(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("Empresa activada.", empresaService.activarEmpresa(id)));
     }
 
     @PatchMapping("/{id}/inactivar")

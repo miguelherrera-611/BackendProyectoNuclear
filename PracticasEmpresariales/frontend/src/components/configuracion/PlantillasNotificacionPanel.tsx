@@ -2,7 +2,7 @@ import { useRef, useState } from 'react'
 import { Input } from '../common/Input/Input'
 import { Button } from '../common/Button/Button'
 import type { PlantillaNotificacionRequest } from '../../services/sprint4Service'
-import type { TipoEventoNotificacion } from '../../types'
+import type { PlantillaNotificacionResponse, TipoEventoNotificacion } from '../../types'
 import {
   ETIQUETAS_EVENTO,
   EVENTOS_NOTIFICACION,
@@ -54,6 +54,7 @@ type CampoActivo = 'asunto' | 'cuerpo'
 interface Props {
   plantilla: PlantillaNotificacionRequest
   guardando: boolean
+  guardadas: Map<TipoEventoNotificacion, PlantillaNotificacionResponse>
   onCambiarEvento: (evento: TipoEventoNotificacion) => void
   onCambiarPlantilla: (plantilla: PlantillaNotificacionRequest) => void
   onGuardar: () => void
@@ -64,6 +65,7 @@ interface Props {
 export function PlantillasNotificacionPanel({
   plantilla,
   guardando,
+  guardadas,
   onCambiarEvento,
   onCambiarPlantilla,
   onGuardar,
@@ -123,8 +125,27 @@ export function PlantillasNotificacionPanel({
     .map(r => r.etiqueta)
     .join(', ') || 'Nadie seleccionado'
 
+  const eventoGuardado = guardadas.has(plantilla.tipoEvento)
+  const totalGuardadas = guardadas.size
+
   return (
     <div className="space-y-6">
+
+      {/* Resumen de estado */}
+      <div className="flex items-center justify-between bg-gray-50 border border-gray-200 rounded-lg px-4 py-2.5">
+        <span className="text-sm text-gray-600">
+          <span className="font-semibold text-gray-800">{totalGuardadas}</span> de {EVENTOS_NOTIFICACION.length} eventos configurados
+        </span>
+        {eventoGuardado ? (
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-green-100 text-green-700">
+            ✓ Plantilla guardada
+          </span>
+        ) : (
+          <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-100 text-amber-700">
+            Sin configurar
+          </span>
+        )}
+      </div>
 
       {/* Evento */}
       <div>
@@ -137,7 +158,9 @@ export function PlantillasNotificacionPanel({
           onChange={e => onCambiarEvento(e.target.value as TipoEventoNotificacion)}
         >
           {EVENTOS_NOTIFICACION.map(ev => (
-            <option key={ev} value={ev}>{ETIQUETAS_EVENTO[ev]}</option>
+            <option key={ev} value={ev}>
+              {guardadas.has(ev) ? '✓ ' : '○ '}{ETIQUETAS_EVENTO[ev]}
+            </option>
           ))}
         </select>
         <p className="text-xs text-gray-400 mt-1">

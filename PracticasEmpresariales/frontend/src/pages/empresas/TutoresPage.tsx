@@ -20,7 +20,7 @@ export default function TutoresPage() {
   const [telefono, setTelefono]         = useState('')
   const [errorModal, setErrorModal]     = useState('')
 
-  useEffect(() => { empresaService.listarAprobadas().then(setEmpresas) }, [])
+  useEffect(() => { empresaService.listarActivas().then(setEmpresas) }, [])
 
   const cargar = (empresaId: number) => {
     if (!empresaId) { setTutores([]); return }
