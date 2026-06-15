@@ -4,6 +4,7 @@ import co.edu.cue.practicas.dto.response.ApiResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -76,10 +77,22 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.error("Endpoint no encontrado: " + e.getResourcePath()));
     }
 
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<Void>> manejarCuerpoInvalido(HttpMessageNotReadableException e) {
+        log.warn("[REQUEST] Cuerpo de solicitud invalido: {}", e.getMessage());
+        String detalle = e.getMostSpecificCause().getMessage();
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(ApiResponse.error("Solicitud invalida: " + detalle));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> manejarGeneral(Exception e) {
         log.error("[ERROR] Error interno: {}", e.getMessage(), e);
+        // Desenvuelve la cadena de causas para obtener el mensaje raíz (útil en desarrollo)
+        Throwable causa = e;
+        while (causa.getCause() != null) causa = causa.getCause();
+        String detalle = causa.getMessage() != null ? causa.getMessage() : e.getClass().getSimpleName();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(ApiResponse.error("Error interno del servidor. Contacta al Administrador DTI."));
+                .body(ApiResponse.error("Error interno del servidor: " + detalle));
     }
 }

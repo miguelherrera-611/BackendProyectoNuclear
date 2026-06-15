@@ -3,9 +3,12 @@ package co.edu.cue.practicas.model.enums;
 import java.util.Set;
 
 public enum TipoDocumento {
-    CARTA_PRESENTACION("Carta de presentación", Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG)),
-    CONVENIO("Convenio",                        Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG)),
-    OTRO("Otro",                                Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG));
+    CARTA_PRESENTACION("Carta de presentación",    Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG)),
+    CONVENIO("Convenio",                           Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG)),
+    FIRMA_TUTOR("Firma del Tutor Empresarial",     Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG)),
+    FIRMA_DOCENTE("Firma del Docente Asesor",      Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG)),
+    FIRMA_ESTUDIANTE("Firma del Estudiante",       Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG)),
+    OTRO("Otro",                                   Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG));
 
     private static final class MimeType {
         private static final String PDF  = "application/pdf";

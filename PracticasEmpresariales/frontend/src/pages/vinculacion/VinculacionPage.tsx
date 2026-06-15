@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
-import type { InstanciaPracticaResponseV2, UsuarioResponse, ApiResponse, Pageable } from '../../types'
+import type { InstanciaPracticaResponseV2, UsuarioResponse, ApiResponse } from '../../types'
 import api from '../../services/api'
 
 const TIPOS_FIRMA = ['TUTOR', 'DOCENTE', 'ESTUDIANTE'] as const
@@ -15,6 +15,7 @@ export default function VinculacionPage() {
   const [saving, setSaving] = useState(false)
   const [uploadingDocType, setUploadingDocType] = useState<string | null>(null)
   const [uploadingFirmaType, setUploadingFirmaType] = useState<TipoFirma | null>(null)
+  const [uploadedDocs, setUploadedDocs] = useState<Set<string>>(new Set())
 
   const [fechaInicio, setFechaInicio] = useState('')
   const [fechaFin, setFechaFin] = useState('')
@@ -57,8 +58,9 @@ export default function VinculacionPage() {
 
   useEffect(() => {
     cargar()
-    api.get<ApiResponse<Pageable<UsuarioResponse>>>('/usuarios', { params: { size: 200 } })
-      .then(r => setDocentes((r.data.datos?.content ?? []).filter(u => u.rol === 'DOCENTE_ASESOR')))
+    api.get<ApiResponse<UsuarioResponse[]>>('/usuarios/docentes')
+      .then(r => setDocentes(r.data.datos ?? []))
+      .catch(() => {/* lista de docentes es opcional aquí */})
   }, [instanciaId])
 
   const handleSubirDocumento = async (tipo: string, file: File) => {
@@ -70,8 +72,10 @@ export default function VinculacionPage() {
       await api.post(`/api/v1/documentos-practica/${instanciaId}?tipo=${tipo}`, form, {
         headers: { 'Content-Type': 'multipart/form-data' },
       })
-    } catch {
-      setError('Error al subir el documento. Verifica el formato e intenta de nuevo.')
+      setUploadedDocs(prev => new Set(prev).add(tipo))
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
+      setError(msg ?? 'Error al subir el documento. Verifica el formato (PDF, JPG, PNG, máx. 10MB) e intenta de nuevo.')
     } finally {
       setUploadingDocType(null)
     }
@@ -91,8 +95,9 @@ export default function VinculacionPage() {
       if (tipo === 'TUTOR') setFirmaTutor(true)
       if (tipo === 'DOCENTE') setFirmaDocente(true)
       if (tipo === 'ESTUDIANTE') setFirmaEstudiante(true)
-    } catch {
-      setError('Error al subir la firma. Verifica el formato e intenta de nuevo.')
+    } catch (e: unknown) {
+      const msg = (e as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
+      setError(msg ?? 'Error al subir la firma. Verifica el formato (PDF, JPG, PNG, máx. 10MB) e intenta de nuevo.')
     } finally {
       setUploadingFirmaType(null)
     }
@@ -143,12 +148,22 @@ export default function VinculacionPage() {
         )}
       </div>
 
-      {error && <div className="card border-red-200 bg-red-50 text-red-700 text-sm">{error}</div>}
+      {error && (
+        <div className="card border-red-200 bg-red-50 text-red-700 text-sm flex items-start gap-2">
+          <span className="mt-0.5">⚠</span>
+          <span>{error}</span>
+        </div>
+      )}
 
       {/* Carta de presentación */}
       <div className="card space-y-3">
         <h2 className="font-semibold text-gray-800">Carta de presentación</h2>
-        <p className="text-xs text-gray-500">Formatos admitidos: PDF, JPG, PNG</p>
+        <p className="text-xs text-gray-500">Formatos admitidos: PDF, JPG, PNG · Máx. 10 MB</p>
+        {uploadedDocs.has('CARTA_PRESENTACION') && (
+          <p className="text-xs text-green-700 font-medium flex items-center gap-1">
+            <span>✓</span> Archivo subido correctamente
+          </p>
+        )}
         <input
           ref={refCarta}
           type="file"
@@ -165,14 +180,23 @@ export default function VinculacionPage() {
           onClick={() => refCarta.current?.click()}
           disabled={uploadingDocType !== null || estaDeshabilitado}
         >
-          {uploadingDocType === 'CARTA_PRESENTACION' ? 'Subiendo...' : 'Seleccionar archivo (PDF / JPG / PNG)'}
+          {uploadingDocType === 'CARTA_PRESENTACION'
+            ? '⏳ Subiendo...'
+            : uploadedDocs.has('CARTA_PRESENTACION')
+              ? '↑ Reemplazar archivo'
+              : 'Seleccionar archivo (PDF / JPG / PNG)'}
         </button>
       </div>
 
       {/* Convenio de práctica */}
       <div className="card space-y-3">
         <h2 className="font-semibold text-gray-800">Convenio de práctica</h2>
-        <p className="text-xs text-gray-500">Formatos admitidos: PDF, JPG, PNG</p>
+        <p className="text-xs text-gray-500">Formatos admitidos: PDF, JPG, PNG · Máx. 10 MB</p>
+        {uploadedDocs.has('CONVENIO') && (
+          <p className="text-xs text-green-700 font-medium flex items-center gap-1">
+            <span>✓</span> Archivo subido correctamente
+          </p>
+        )}
         <input
           ref={refConvenio}
           type="file"
@@ -189,7 +213,11 @@ export default function VinculacionPage() {
           onClick={() => refConvenio.current?.click()}
           disabled={uploadingDocType !== null || estaDeshabilitado}
         >
-          {uploadingDocType === 'CONVENIO' ? 'Subiendo...' : 'Seleccionar archivo (PDF / JPG / PNG)'}
+          {uploadingDocType === 'CONVENIO'
+            ? '⏳ Subiendo...'
+            : uploadedDocs.has('CONVENIO')
+              ? '↑ Reemplazar archivo'
+              : 'Seleccionar archivo (PDF / JPG / PNG)'}
         </button>
       </div>
 
@@ -199,11 +227,10 @@ export default function VinculacionPage() {
           <h2 className="font-semibold text-gray-800">Firmas del convenio</h2>
           <p className="text-xs text-gray-500 mt-1">
             Sube el documento con la firma de cada parte. Al subir el archivo la firma queda registrada automáticamente.
-            Formatos admitidos: PDF, JPG, PNG.
+            Formatos admitidos: PDF, JPG, PNG · Máx. 10 MB.
           </p>
         </div>
 
-        {/* Inputs ocultos, uno por firma */}
         {TIPOS_FIRMA.map(tipo => (
           <input
             key={tipo}
@@ -230,13 +257,16 @@ export default function VinculacionPage() {
                   confirmada ? 'border-green-400 bg-green-50' : 'border-dashed border-gray-300 bg-white hover:border-cue-primary hover:bg-gray-50'
                 }`}
               >
-                <div className={`text-3xl ${confirmada ? 'text-green-500' : 'text-gray-300'}`}>
-                  {confirmada ? '✓' : '📄'}
+                <div className={`text-3xl ${confirmada ? 'text-green-500' : subiendo ? 'text-cue-primary' : 'text-gray-300'}`}>
+                  {confirmada ? '✓' : subiendo ? '⏳' : '📄'}
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-semibold text-gray-800">{firmaLabel[tipo]}</p>
                   {confirmada && (
                     <p className="text-xs text-green-700 mt-1 font-medium">Firma registrada</p>
+                  )}
+                  {subiendo && (
+                    <p className="text-xs text-cue-primary mt-1">Subiendo...</p>
                   )}
                 </div>
                 {!confirmada && (

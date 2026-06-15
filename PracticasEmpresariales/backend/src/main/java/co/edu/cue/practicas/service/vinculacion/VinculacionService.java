@@ -19,6 +19,8 @@ import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.mapper.EstudianteMapper;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -39,6 +41,9 @@ import java.util.List;
 public class VinculacionService {
 
     private static final String MSG_INSTANCIA_NO_ENCONTRADA = "Instancia de practica no encontrada.";
+
+    @PersistenceContext
+    private EntityManager em;
 
     private final InstanciaPracticaRepository instanciaPracticaRepository;
     private final UsuarioRepository usuarioRepository;
@@ -73,7 +78,14 @@ public class VinculacionService {
                 Boolean.TRUE.equals(req.firmaEstudiante())
         );
 
-        instanciaPracticaRepository.save(instancia);
+        // em.flush() directo evita el bug Hibernate 6 donde em.merge() sobre una entidad
+        // ya gestionada deja estado interno que corrompe el stack JDBC al hacer flush inmediato.
+        em.flush();
+
+        // conEvaluacion() va ANTES del audit logger: así el JPQL de conEvaluacion no
+        // encuentra INSERTs pendientes de bitácora que causen conflictos en el estado JDBC.
+        InstanciaPracticaResponse respuesta = conEvaluacion(
+                mapper.toInstanciaPracticaResponse(instancia), instancia.getId());
 
         auditoriaLogger.registrar(BitacoraAuditoria.builder()
                 .usuario(actor.getUsuario())
@@ -87,7 +99,7 @@ public class VinculacionService {
                         + "\",\"fechaFin\":\"" + req.fechaFin() + "\"}"));
 
         eventPublisher.publishEvent(new VinculacionConfirmadaEvent(this, instancia));
-        return conEvaluacion(mapper.toInstanciaPracticaResponse(instancia), instancia.getId());
+        return respuesta;
     }
 
     @Transactional
