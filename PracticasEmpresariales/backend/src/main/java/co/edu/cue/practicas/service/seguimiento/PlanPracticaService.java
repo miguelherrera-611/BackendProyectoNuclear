@@ -10,14 +10,14 @@ import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
 import co.edu.cue.practicas.model.entity.BitacoraAuditoria;
 import co.edu.cue.practicas.model.entity.InstanciaPractica;
 import co.edu.cue.practicas.model.entity.PlanPractica;
-import co.edu.cue.practicas.model.entity.TutorEmpresarial;
+import co.edu.cue.practicas.model.entity.Usuario;
 import co.edu.cue.practicas.model.enums.EstadoPlan;
 import co.edu.cue.practicas.model.enums.EstadoPractica;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.model.enums.TipoAccion;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.seguimiento.PlanPracticaRepository;
-import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
+import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.notificacion.EmailService;
 import jakarta.transaction.Transactional;
@@ -64,7 +64,7 @@ public class PlanPracticaService {
 
     private final PlanPracticaRepository planRepository;
     private final InstanciaPracticaRepository instanciaRepository;
-    private final TutorEmpresarialRepository tutorRepository;
+    private final UsuarioRepository usuarioRepository;
     private final AuditoriaLogger auditoriaLogger;
     private final EmailService emailService;
 
@@ -228,7 +228,7 @@ public class PlanPracticaService {
     }
 
     private void verificarTutorDePlan(PlanPractica plan, CustomUserDetails actor) {
-        TutorEmpresarial tutor = tutorRepository.findByCorreoAndActivoTrue(actor.getUsername()).orElse(null);
+        Usuario tutor = usuarioRepository.findByCorreoAndActivoTrue(actor.getUsername()).orElse(null);
         if (tutor == null) throw new AccesoNoAutorizadoException("No se encontró tu perfil de tutor empresarial.");
         InstanciaPractica instancia = plan.getInstanciaPractica();
         if (instancia.getTutorEmpresarial() == null || !instancia.getTutorEmpresarial().getId().equals(tutor.getId()))

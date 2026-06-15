@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { VacanteResponse, UsuarioResponse, TutorEmpresarialResponse } from '../../types'
+import type { VacanteResponse, UsuarioResponse } from '../../types'
 import { vacanteService } from '../../services/vacanteService'
 import { estudianteService } from '../../services/estudianteService'
-import { tutorService } from '../../services/tutorService'
 import { usuarioService } from '../../services/usuarioService'
 import { asignacionService } from '../../services/asignacionService'
 
@@ -15,7 +14,7 @@ export default function NuevaAsignacionPage() {
   const [paso, setPaso]           = useState<Paso>(1)
   const [vacantes, setVacantes]   = useState<VacanteResponse[]>([])
   const [estudiantes, setEstudiantes] = useState<UsuarioResponse[]>([])
-  const [tutores, setTutores]     = useState<TutorEmpresarialResponse[]>([])
+  const [tutores, setTutores]     = useState<UsuarioResponse[]>([])
   const [docentes, setDocentes]   = useState<UsuarioResponse[]>([])
 
   const [vacanteId, setVacanteId]     = useState<number | null>(null)
@@ -54,7 +53,7 @@ export default function NuevaAsignacionPage() {
         .catch(() => setError('Error cargando estudiantes APTOS.'))
     }
     if (paso === 3) {
-      tutorService.listarTodos().then(setTutores).catch(() => setError('Error cargando tutores.'))
+      usuarioService.listarTutores().then(setTutores).catch(() => setError('Error cargando tutores.'))
       usuarioService.listarDocentes().then(setDocentes).catch(() => setError('Error cargando docentes asesores.'))
     }
   }, [paso])
@@ -198,7 +197,7 @@ export default function NuevaAsignacionPage() {
               ? <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">No hay tutores empresariales registrados en el sistema.</p>
               : <select className="input-field" value={tutorId ?? ''} onChange={e => setTutorId(e.target.value ? Number(e.target.value) : null)}>
                   <option value="">-- Selecciona un tutor --</option>
-                  {tutores.map(t => <option key={t.id} value={t.id}>{t.nombre} — {t.cargo}</option>)}
+                  {tutores.map(t => <option key={t.id} value={t.id}>{t.nombre} — {t.correo}</option>)}
                 </select>
             }
           </div>

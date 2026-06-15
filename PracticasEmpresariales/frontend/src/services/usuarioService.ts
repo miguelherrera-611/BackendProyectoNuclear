@@ -31,6 +31,11 @@ export const usuarioService = {
     return res.data.datos ?? []
   },
 
+  async listarTutores(): Promise<UsuarioResponse[]> {
+    const res = await api.get<ApiResponse<UsuarioResponse[]>>('/usuarios/tutores')
+    return res.data.datos ?? []
+  },
+
   async obtener(id: number): Promise<UsuarioResponse> {
     const res = await api.get<ApiResponse<UsuarioResponse>>(`/usuarios/${id}`)
     return res.data.datos!

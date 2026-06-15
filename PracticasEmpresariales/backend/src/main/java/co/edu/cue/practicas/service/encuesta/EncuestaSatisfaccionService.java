@@ -10,7 +10,6 @@ import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
 import co.edu.cue.practicas.model.entity.EncuestaSatisfaccion;
 import co.edu.cue.practicas.model.entity.InstanciaPractica;
-import co.edu.cue.practicas.model.entity.TutorEmpresarial;
 import co.edu.cue.practicas.model.entity.Usuario;
 import co.edu.cue.practicas.model.enums.EstadoEncuesta;
 import co.edu.cue.practicas.model.enums.EstadoEvaluacionFinal;
@@ -22,7 +21,7 @@ import co.edu.cue.practicas.model.enums.TipoEventoNotificacion;
 import co.edu.cue.practicas.repository.encuesta.EncuestaSatisfaccionRepository;
 import co.edu.cue.practicas.repository.evaluacion.EvaluacionFinalRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
-import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
+import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.notificacion.NotificacionConfigurableService;
 import jakarta.transaction.Transactional;
@@ -41,7 +40,7 @@ public class EncuestaSatisfaccionService {
 
     private final EncuestaSatisfaccionRepository encuestaRepository;
     private final InstanciaPracticaRepository instanciaRepository;
-    private final TutorEmpresarialRepository tutorRepository;
+    private final UsuarioRepository usuarioRepository;
     private final EvaluacionFinalRepository evaluacionRepository;
     private final NotificacionConfigurableService notificacionService;
     private final ApplicationEventPublisher eventPublisher;
@@ -54,7 +53,7 @@ public class EncuestaSatisfaccionService {
         InstanciaPractica instancia = buscarInstancia(instanciaId);
         validarScope(instancia, actor);
         validarEvaluacionDocenteCompleta(instanciaId);
-        TutorEmpresarial tutor = tutorRepository.findById(req.getTutorEmpresarialId())
+        Usuario tutor = usuarioRepository.findById(req.getTutorEmpresarialId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Tutor empresarial no encontrado."));
         if (instancia.getTutorEmpresarial() == null || !instancia.getTutorEmpresarial().getId().equals(tutor.getId())) {
             throw new OperacionNoPermitidaException("La encuesta solo puede asignarse al tutor de esta practica.");

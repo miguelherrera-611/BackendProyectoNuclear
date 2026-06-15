@@ -49,6 +49,13 @@ public class UsuarioController {
         return ResponseEntity.ok(ApiResponse.ok("Docentes asesores activos.", usuarioService.listarDocentesActivos()));
     }
 
+    /** Lista todos los tutores empresariales activos (usuarios con rol TUTOR_EMPRESARIAL). */
+    @GetMapping("/tutores")
+    public ResponseEntity<ApiResponse<List<UsuarioResponse>>> listarTutores(
+            @AuthenticationPrincipal CustomUserDetails actor) {
+        return ResponseEntity.ok(ApiResponse.ok("Tutores empresariales activos.", usuarioService.listarTutoresActivos()));
+    }
+
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<UsuarioResponse>> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(usuarioService.obtenerPorId(id)));

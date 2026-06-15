@@ -192,6 +192,16 @@ public class UsuarioService {
                 .getContent();
     }
 
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
+    @Transactional(readOnly = true)
+    public java.util.List<UsuarioResponse> listarTutoresActivos() {
+        return usuarioRepository.findByRolAndActivoTrue(Rol.TUTOR_EMPRESARIAL,
+                        org.springframework.data.domain.PageRequest.of(0, 500,
+                                org.springframework.data.domain.Sort.by("nombre")))
+                .map(UsuarioResponse::desde)
+                .getContent();
+    }
+
     @RequiereRol(roles = {Rol.ADMIN_DTI})
     @Transactional(readOnly = true)
     public UsuarioResponse obtenerPorId(Long id) {

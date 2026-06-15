@@ -10,7 +10,6 @@ import co.edu.cue.practicas.model.entity.BitacoraAuditoria;
 import co.edu.cue.practicas.model.entity.CatalogoPractica;
 import co.edu.cue.practicas.model.entity.ExpedienteEstudiante;
 import co.edu.cue.practicas.model.entity.InstanciaPractica;
-import co.edu.cue.practicas.model.entity.TutorEmpresarial;
 import co.edu.cue.practicas.model.entity.Usuario;
 import co.edu.cue.practicas.model.entity.Vacante;
 import co.edu.cue.practicas.model.enums.EstadoPractica;
@@ -19,7 +18,6 @@ import co.edu.cue.practicas.model.enums.TipoAccion;
 import co.edu.cue.practicas.repository.catalogo.CatalogoPracticaRepository;
 import co.edu.cue.practicas.repository.expediente.ExpedienteEstudianteRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
-import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.repository.vacante.VacanteRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
@@ -40,7 +38,6 @@ public class AsignacionService {
     private final ExpedienteEstudianteRepository expedienteRepository;
     private final CatalogoPracticaRepository catalogoRepository;
     private final InstanciaPracticaRepository instanciaRepository;
-    private final TutorEmpresarialRepository tutorRepository;
     private final EstudianteMapper estudianteMapper;
     private final AuditoriaLogger auditoriaLogger;
     private final EmailService emailService;
@@ -86,11 +83,13 @@ public class AsignacionService {
         if (practicasActivas > 0)
             throw new OperacionNoPermitidaException("El estudiante ya tiene una práctica EN_CURSO activa.");
 
-        // Resolver tutor empresarial si se especificó
-        TutorEmpresarial tutor = null;
+        // Resolver tutor empresarial si se especificó (debe ser usuario con rol TUTOR_EMPRESARIAL)
+        Usuario tutor = null;
         if (req.getTutorEmpresarialId() != null) {
-            tutor = tutorRepository.findById(req.getTutorEmpresarialId())
+            tutor = usuarioRepository.findById(req.getTutorEmpresarialId())
                     .orElseThrow(() -> new RecursoNoEncontradoException("Tutor empresarial no encontrado."));
+            if (tutor.getRol() != Rol.TUTOR_EMPRESARIAL)
+                throw new OperacionNoPermitidaException("El usuario indicado no tiene rol TUTOR_EMPRESARIAL.");
         }
 
         // Resolver docente asesor si se especificó

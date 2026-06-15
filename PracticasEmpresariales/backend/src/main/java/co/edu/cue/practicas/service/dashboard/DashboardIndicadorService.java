@@ -1,6 +1,6 @@
 package co.edu.cue.practicas.service.dashboard;
 
-import co.edu.cue.practicas.model.entity.TutorEmpresarial;
+import co.edu.cue.practicas.model.entity.Usuario;
 import co.edu.cue.practicas.model.enums.EstadoEstudiante;
 import co.edu.cue.practicas.model.enums.EstadoPlan;
 import co.edu.cue.practicas.model.enums.EstadoPractica;
@@ -10,7 +10,6 @@ import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.seguimiento.PlanPracticaRepository;
 import co.edu.cue.practicas.repository.seguimiento.SeguimientoSemanalRepository;
-import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import jakarta.persistence.EntityManager;
@@ -36,7 +35,6 @@ public class DashboardIndicadorService {
 
     private final UsuarioRepository usuarioRepository;
     private final InstanciaPracticaRepository instanciaPracticaRepository;
-    private final TutorEmpresarialRepository tutorEmpresarialRepository;
     private final PlanPracticaRepository planPracticaRepository;
     private final SeguimientoSemanalRepository seguimientoSemanalRepository;
 
@@ -118,7 +116,7 @@ public class DashboardIndicadorService {
     }
 
     private DashboardIndicadores indicadoresTutor(CustomUserDetails userDetails) {
-        TutorEmpresarial tutor = tutorEmpresarialRepository
+        Usuario tutor = usuarioRepository
                 .findByCorreoAndActivoTrue(userDetails.getUsername())
                 .orElse(null);
 

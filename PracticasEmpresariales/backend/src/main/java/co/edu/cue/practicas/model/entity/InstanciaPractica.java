@@ -96,10 +96,10 @@ public class InstanciaPractica {
     @JoinColumn(name = "docente_asesor_id")
     private Usuario docenteAsesor;
 
-    /** Tutor empresarial asignado — se asigna en Sprint 3 */
+    /** Tutor empresarial asignado — referencia a usuario con rol TUTOR_EMPRESARIAL */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "tutor_empresarial_id")
-    private TutorEmpresarial tutorEmpresarial;
+    private Usuario tutorEmpresarial;
 
     /** Vacante origen (se almacena para poder liberar cupo si la asignación se cancela) */
     @Column(name = "vacante_id")
