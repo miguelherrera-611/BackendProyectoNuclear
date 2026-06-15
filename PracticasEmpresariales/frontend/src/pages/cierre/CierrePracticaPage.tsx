@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { ChecklistCierrePanel } from '../../components/cierre/ChecklistCierrePanel'
 import { sprint4Service } from '../../services/sprint4Service'
-import type { ChecklistCierreResponse, CierreFormalResponse, ResultadoSustentacion } from '../../types'
+import { usuarioService } from '../../services/usuarioService'
+import type { ChecklistCierreResponse, CierreFormalResponse, ResultadoSustentacion, UsuarioResponse } from '../../types'
 
 export default function CierrePracticaPage() {
   // SPRINT 4 - Facade UI: una pantalla coordina sustentacion, encuestas, checklist y cierre formal.
@@ -11,7 +12,8 @@ export default function CierrePracticaPage() {
   const [fecha, setFecha] = useState('')
   const [jurados, setJurados] = useState('')
   const [actaUrl, setActaUrl] = useState('')
-  const [tutorEmpresarialId, setTutorEmpresarialId] = useState('')
+  const [tutores, setTutores] = useState<UsuarioResponse[]>([])
+  const [tutorEmpresarialId, setTutorEmpresarialId] = useState<number | null>(null)
   const [tituloEncuesta, setTituloEncuesta] = useState('Evaluacion Satisfaccion 2026-I')
   const [preguntasEncuesta, setPreguntasEncuesta] = useState('Como evalua el proceso?\nQue aspectos recomienda mejorar?')
   const [resultadoSust, setResultadoSust] = useState<ResultadoSustentacion>('APROBADO')
@@ -24,7 +26,10 @@ export default function CierrePracticaPage() {
     sprint4Service.checklist(id).then(setChecklist).catch(() => setMensaje('No se pudo cargar el checklist.'))
   }
 
-  useEffect(() => { cargarChecklist() }, [id])
+  useEffect(() => {
+    cargarChecklist()
+    usuarioService.listarTutores().then(setTutores)
+  }, [id])
 
   const programar = async () => {
     setSaving(true)
@@ -62,7 +67,7 @@ export default function CierrePracticaPage() {
     try {
       await sprint4Service.enviarEncuestaTutor(id, {
         titulo: tituloEncuesta,
-        tutorEmpresarialId: Number(tutorEmpresarialId),
+        tutorEmpresarialId: tutorEmpresarialId!,
         preguntas: preguntasEncuesta.split('\n').map(p => p.trim()).filter(Boolean),
       })
       setMensaje('Encuesta enviada al tutor.')
@@ -141,7 +146,16 @@ export default function CierrePracticaPage() {
         <h2 className="font-semibold text-gray-900">Encuestas obligatorias</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <input className="input-field" placeholder="Titulo de encuesta" value={tituloEncuesta} onChange={e => setTituloEncuesta(e.target.value)} />
-          <input className="input-field" placeholder="ID tutor empresarial asignado" value={tutorEmpresarialId} onChange={e => setTutorEmpresarialId(e.target.value)} />
+          <select
+            className="input-field"
+            value={tutorEmpresarialId ?? ''}
+            onChange={e => setTutorEmpresarialId(e.target.value ? Number(e.target.value) : null)}
+          >
+            <option value="">-- Selecciona el tutor empresarial --</option>
+            {tutores.map(t => (
+              <option key={t.id} value={t.id}>{t.nombre} — {t.correo}</option>
+            ))}
+          </select>
         </div>
         <textarea className="input-field" rows={3} value={preguntasEncuesta} onChange={e => setPreguntasEncuesta(e.target.value)} />
         <div className="flex flex-col sm:flex-row gap-3">

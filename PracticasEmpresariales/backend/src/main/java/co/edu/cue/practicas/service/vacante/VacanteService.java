@@ -104,36 +104,43 @@ public class VacanteService {
                 .stream().map(mapper::toVacanteResponse).toList();
     }
 
-    // ── APROBAR — PATRÓN STATE ────────────────────────────────────────────
+    // ── ACTIVAR — PATRÓN STATE ────────────────────────────────────────────
+
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
+    public VacanteResponse activarVacante(Long id) {
+        Vacante vacante = buscarOFallar(id);
+        vacante.activar();
+        vacanteRepository.save(vacante);
+        log.info("[GPE-153] Vacante {} activada", id);
+        return mapper.toVacanteResponse(vacante);
+    }
+
+    // ── DESACTIVAR — PATRÓN STATE ─────────────────────────────────────────
+
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
+    public VacanteResponse desactivarVacante(Long id) {
+        Vacante vacante = buscarOFallar(id);
+        vacante.desactivar();
+        vacanteRepository.save(vacante);
+        log.info("[GPE-153] Vacante {} desactivada", id);
+        return mapper.toVacanteResponse(vacante);
+    }
+
+    // ── Métodos heredados — mantienen compatibilidad con flujos internos ──
 
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
     public VacanteResponse aprobarVacante(Long id) {
-        Vacante vacante = buscarOFallar(id);
-        vacante.aprobar(); // STATE: PENDIENTE → DISPONIBLE
-        vacanteRepository.save(vacante);
-        log.info("[GPE-153] Vacante {} aprobada", id);
-        return mapper.toVacanteResponse(vacante);
+        return activarVacante(id);
     }
-
-    // ── RECHAZAR — PATRÓN STATE ───────────────────────────────────────────
 
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
     public VacanteResponse rechazarVacante(Long id, RechazarRequest req) {
-        Vacante vacante = buscarOFallar(id);
-        vacante.rechazar(req.motivo()); // STATE: PENDIENTE → RECHAZADA
-        vacanteRepository.save(vacante);
-        log.info("[GPE-153] Vacante {} rechazada: {}", id, req.motivo());
-        return mapper.toVacanteResponse(vacante);
+        return desactivarVacante(id);
     }
-
-    // ── CERRAR — PATRÓN STATE ─────────────────────────────────────────────
 
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
     public VacanteResponse cerrarVacante(Long id) {
-        Vacante vacante = buscarOFallar(id);
-        vacante.cerrar(); // STATE: DISPONIBLE → CERRADA
-        vacanteRepository.save(vacante);
-        return mapper.toVacanteResponse(vacante);
+        return desactivarVacante(id);
     }
 
     public Vacante buscarOFallar(Long id) {

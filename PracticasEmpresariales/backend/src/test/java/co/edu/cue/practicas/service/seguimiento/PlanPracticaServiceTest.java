@@ -11,7 +11,7 @@ import co.edu.cue.practicas.model.entity.*;
 import co.edu.cue.practicas.model.enums.*;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.seguimiento.PlanPracticaRepository;
-import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
+import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.notificacion.EmailService;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +36,7 @@ class PlanPracticaServiceTest {
 
     @Mock private PlanPracticaRepository planRepository;
     @Mock private InstanciaPracticaRepository instanciaRepository;
-    @Mock private TutorEmpresarialRepository tutorRepository;
+    @Mock private UsuarioRepository usuarioRepository;
     @Mock private AuditoriaLogger auditoriaLogger;
     @Mock private EmailService emailService;
 
@@ -51,7 +51,7 @@ class PlanPracticaServiceTest {
     private InstanciaPractica instanciaEnCurso;
     private PlanPractica planEnBorrador;
     private PlanPractica planAprobadoTutor;
-    private TutorEmpresarial tutor;
+    private Usuario tutor;
 
     private static final Long INSTANCIA_ID = 1L;
     private static final Long ESTUDIANTE_ID = 10L;
@@ -74,8 +74,9 @@ class PlanPracticaServiceTest {
                 .id(DOCENTE_ID).nombre("Dr. López").correo("lopez@cue.edu.co")
                 .passwordHash("h").rol(Rol.DOCENTE_ASESOR).activo(true).build();
 
-        tutor = TutorEmpresarial.builder()
-                .id(TUTOR_ID).nombre("Tutor Test").correo("tutor@corp.com").activo(true).build();
+        tutor = Usuario.builder()
+                .id(TUTOR_ID).nombre("Tutor Test").correo("tutor@corp.com")
+                .passwordHash("h").rol(Rol.TUTOR_EMPRESARIAL).activo(true).build();
 
         ExpedienteEstudiante expediente = ExpedienteEstudiante.builder()
                 .id(1L).estudiante(estudianteUsuario).build();
@@ -204,7 +205,7 @@ class PlanPracticaServiceTest {
     @DisplayName("aprobarPorTutor() exitoso debe cambiar estado a APROBADO_TUTOR")
     void aprobarPorTutorExitoso() {
         when(planRepository.findById(PLAN_ID)).thenReturn(Optional.of(planEnBorrador));
-        when(tutorRepository.findByCorreoAndActivoTrue(tutorDetails.getUsername()))
+        when(usuarioRepository.findByCorreoAndActivoTrue(tutorDetails.getUsername()))
                 .thenReturn(Optional.of(tutor));
         when(planRepository.save(any())).thenReturn(planEnBorrador);
 
@@ -224,11 +225,12 @@ class PlanPracticaServiceTest {
     @Test
     @DisplayName("aprobarPorTutor() debe bloquear si el tutor no está asignado a esa práctica")
     void aprobarPorTutorNoAsignadoLanzaAccesoNoAutorizado() {
-        TutorEmpresarial otroTutor = TutorEmpresarial.builder()
-                .id(99L).nombre("Otro Tutor").correo("otro@corp.com").activo(true).build();
+        Usuario otroTutor = Usuario.builder()
+                .id(99L).nombre("Otro Tutor").correo("otro@corp.com")
+                .passwordHash("h").rol(Rol.TUTOR_EMPRESARIAL).activo(true).build();
 
         when(planRepository.findById(PLAN_ID)).thenReturn(Optional.of(planEnBorrador));
-        when(tutorRepository.findByCorreoAndActivoTrue(tutorDetails.getUsername()))
+        when(usuarioRepository.findByCorreoAndActivoTrue(tutorDetails.getUsername()))
                 .thenReturn(Optional.of(otroTutor)); // tutor diferente al asignado
 
         assertThatThrownBy(() -> service.aprobarPorTutor(PLAN_ID, tutorDetails))

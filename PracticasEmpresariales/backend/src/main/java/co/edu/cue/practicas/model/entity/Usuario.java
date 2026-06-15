@@ -83,6 +83,11 @@ public class Usuario {
     @JoinColumn(name = "programa_id")
     private Programa programa;
 
+    /** Empresa a la que pertenece el tutor empresarial. Solo aplica a rol TUTOR_EMPRESARIAL. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "empresa_id")
+    private Empresa empresa;
+
     // ===== Atributos exclusivos de ESTUDIANTE =====
 
     /** OCL: identificacionUnica — único en todo el sistema para estudiantes */

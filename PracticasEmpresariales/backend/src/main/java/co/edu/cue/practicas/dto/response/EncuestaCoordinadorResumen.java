@@ -9,6 +9,9 @@ public class EncuestaCoordinadorResumen {
     private Long instanciaId;
     private String nombrePractica;
     private String nombreEstudiante;
+    private String programaNombre;
+    private String nombreEmpresa;
+    private String nombreDocenteAsesor;
     private Long tutorEmpresarialId;
     private String nombreTutor;
     private boolean evaluacionDocenteCompleta;

@@ -11,7 +11,6 @@ import co.edu.cue.practicas.model.enums.*;
 import co.edu.cue.practicas.repository.catalogo.CatalogoPracticaRepository;
 import co.edu.cue.practicas.repository.expediente.ExpedienteEstudianteRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
-import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.repository.vacante.VacanteRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
@@ -43,7 +42,6 @@ class AsignacionServiceTest {
     @Mock private ExpedienteEstudianteRepository expedienteRepository;
     @Mock private CatalogoPracticaRepository catalogoRepository;
     @Mock private InstanciaPracticaRepository instanciaRepository;
-    @Mock private TutorEmpresarialRepository tutorRepository;
     @Mock private EstudianteMapper estudianteMapper;
     @Mock private AuditoriaLogger auditoriaLogger;
     @Mock private EmailService emailService;
@@ -207,12 +205,12 @@ class AsignacionServiceTest {
     void asignarConDocenteYTutorOpcionalesExitoso() {
         Usuario docente = Usuario.builder().id(50L).rol(Rol.DOCENTE_ASESOR)
                 .nombre("Dr. Pérez").correo("perez@cue.edu.co").passwordHash("h").activo(true).build();
-        TutorEmpresarial tutor = TutorEmpresarial.builder().id(60L)
-                .nombre("Carlos Tutor").correo("ctutor@tech.com").activo(true).build();
+        Usuario tutor = Usuario.builder().id(60L).rol(Rol.TUTOR_EMPRESARIAL)
+                .nombre("Carlos Tutor").correo("ctutor@tech.com").passwordHash("h").activo(true).build();
 
         stubsParaAsignarExitoso();
         when(usuarioRepository.findById(50L)).thenReturn(Optional.of(docente));
-        when(tutorRepository.findById(60L)).thenReturn(Optional.of(tutor));
+        when(usuarioRepository.findById(60L)).thenReturn(Optional.of(tutor));
 
         CrearAsignacionRequest req = CrearAsignacionRequest.builder()
                 .estudianteId(ESTUDIANTE_ID).vacanteId(VACANTE_ID)

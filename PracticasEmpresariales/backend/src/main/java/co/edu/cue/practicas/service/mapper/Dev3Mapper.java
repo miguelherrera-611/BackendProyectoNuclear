@@ -1,10 +1,8 @@
 package co.edu.cue.practicas.service.mapper;
 
 import co.edu.cue.practicas.dto.response.EmpresaResponse;
-import co.edu.cue.practicas.dto.response.TutorEmpresarialResponse;
 import co.edu.cue.practicas.dto.response.VacanteResponse;
 import co.edu.cue.practicas.model.entity.Empresa;
-import co.edu.cue.practicas.model.entity.TutorEmpresarial;
 import co.edu.cue.practicas.model.entity.Vacante;
 import org.springframework.stereotype.Component;
 
@@ -34,21 +32,6 @@ public class Dev3Mapper {
                 e.getEstado(),
                 e.getAreasDisponibles(),
                 e.getCreadoEn()
-        );
-    }
-
-    public TutorEmpresarialResponse toTutorResponse(TutorEmpresarial t) {
-        return new TutorEmpresarialResponse(
-                t.getId(),
-                t.getNombre(),
-                t.getCargo(),
-                t.getCorreo(),
-                t.getTelefono(),
-                t.getEmpresa().getId(),
-                t.getEmpresa().getRazonSocial(),
-                t.isDisponible(),
-                t.isActivo(),
-                t.getCreadoEn()
         );
     }
 

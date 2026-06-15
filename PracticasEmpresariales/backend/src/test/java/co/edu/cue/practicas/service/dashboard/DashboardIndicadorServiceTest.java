@@ -5,7 +5,6 @@ import co.edu.cue.practicas.model.enums.*;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.seguimiento.PlanPracticaRepository;
 import co.edu.cue.practicas.repository.seguimiento.SeguimientoSemanalRepository;
-import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import jakarta.persistence.EntityManager;
@@ -39,7 +38,6 @@ class DashboardIndicadorServiceTest {
 
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private InstanciaPracticaRepository instanciaPracticaRepository;
-    @Mock private TutorEmpresarialRepository tutorEmpresarialRepository;
     @Mock private PlanPracticaRepository planPracticaRepository;
     @Mock private SeguimientoSemanalRepository seguimientoSemanalRepository;
     @Mock private EntityManager entityManager;
@@ -166,10 +164,11 @@ class DashboardIndicadorServiceTest {
     @Test
     @DisplayName("Tutor Empresarial recibe sus practicantes a cargo y planes pendientes")
     void indicadoresTutorDevuelvePracticantesYPlanes() {
-        TutorEmpresarial tutor = TutorEmpresarial.builder()
-                .id(30L).nombre("Tutor Test").correo("tutor@corp.com").activo(true).build();
+        Usuario tutor = Usuario.builder()
+                .id(30L).nombre("Tutor Test").correo("tutor@corp.com")
+                .passwordHash("h").rol(Rol.TUTOR_EMPRESARIAL).activo(true).build();
 
-        when(tutorEmpresarialRepository.findByCorreoAndActivoTrue("tutor@corp.com"))
+        when(usuarioRepository.findByCorreoAndActivoTrue("tutor@corp.com"))
                 .thenReturn(Optional.of(tutor));
         when(instanciaPracticaRepository.countByTutorEmpresarial_IdAndEstadoNotIn(eq(30L), anyList()))
                 .thenReturn(3L);
@@ -190,7 +189,7 @@ class DashboardIndicadorServiceTest {
     @Test
     @DisplayName("Tutor sin perfil en BD retorna indicadores en cero")
     void indicadoresTutorSinPerfilRetornaCero() {
-        when(tutorEmpresarialRepository.findByCorreoAndActivoTrue(anyString()))
+        when(usuarioRepository.findByCorreoAndActivoTrue(anyString()))
                 .thenReturn(Optional.empty());
 
         DashboardIndicadores indicadores = service.obtenerIndicadores(udConRol(Rol.TUTOR_EMPRESARIAL, 99L));

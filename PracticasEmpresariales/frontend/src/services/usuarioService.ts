@@ -53,4 +53,9 @@ export const usuarioService = {
   async activar(id: number): Promise<void> {
     await api.patch(`/usuarios/${id}/activar`)
   },
+
+  async vincularEmpresa(tutorId: number, empresaId: number | null): Promise<UsuarioResponse> {
+    const res = await api.patch<ApiResponse<UsuarioResponse>>(`/usuarios/${tutorId}/empresa`, { empresaId })
+    return res.data.datos!
+  },
 }

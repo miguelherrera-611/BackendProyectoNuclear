@@ -2,6 +2,7 @@ package co.edu.cue.practicas.controller.usuario;
 
 import co.edu.cue.practicas.dto.request.CrearUsuarioRequest;
 import co.edu.cue.practicas.dto.request.EditarUsuarioRequest;
+import co.edu.cue.practicas.dto.request.VincularEmpresaRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.UsuarioResponse;
 import co.edu.cue.practicas.security.CustomUserDetails;
@@ -87,5 +88,16 @@ public class UsuarioController {
 
         usuarioService.activarUsuario(id, userDetails);
         return ResponseEntity.ok(ApiResponse.ok("Usuario activado", null));
+    }
+
+    /** Vincula o desvincula una empresa a un tutor empresarial. Solo COORDINADOR_PRACTICAS. */
+    @PatchMapping("/{id}/empresa")
+    public ResponseEntity<ApiResponse<UsuarioResponse>> vincularEmpresa(
+            @PathVariable Long id,
+            @RequestBody VincularEmpresaRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        return ResponseEntity.ok(ApiResponse.ok("Empresa vinculada correctamente.",
+                usuarioService.vincularEmpresa(id, request.getEmpresaId(), userDetails)));
     }
 }

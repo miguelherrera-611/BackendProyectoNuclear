@@ -29,6 +29,8 @@ public class UsuarioResponse {
     private String facultadNombre;
     private Long programaId;
     private String programaNombre;
+    private Long empresaId;
+    private String razonSocialEmpresa;
     private EstadoEstudiante estadoEstudiante;
     private EstadoCuenta estadoCuenta;
     private String identificacion;
@@ -53,6 +55,8 @@ public class UsuarioResponse {
                 .facultadNombre(u.getFacultad() != null ? u.getFacultad().getNombre() : null)
                 .programaId(u.getPrograma() != null ? u.getPrograma().getId() : null)
                 .programaNombre(u.getPrograma() != null ? u.getPrograma().getNombre() : null)
+                .empresaId(u.getEmpresa() != null ? u.getEmpresa().getId() : null)
+                .razonSocialEmpresa(u.getEmpresa() != null ? u.getEmpresa().getRazonSocial() : null)
                 .estadoEstudiante(u.getEstadoEstudiante())
                 .estadoCuenta(u.getEstadoCuenta())
                 .identificacion(u.getIdentificacion())

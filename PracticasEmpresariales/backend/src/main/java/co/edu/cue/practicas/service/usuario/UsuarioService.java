@@ -9,6 +9,7 @@ import co.edu.cue.practicas.event.UsuarioCreadoEvent;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
 import co.edu.cue.practicas.model.entity.BitacoraAuditoria;
+import co.edu.cue.practicas.model.entity.Empresa;
 import co.edu.cue.practicas.model.entity.Facultad;
 import co.edu.cue.practicas.model.entity.Programa;
 import co.edu.cue.practicas.model.entity.Usuario;
@@ -16,6 +17,7 @@ import co.edu.cue.practicas.model.enums.EstadoCuenta;
 import co.edu.cue.practicas.model.enums.EstadoEstudiante;
 import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.model.enums.TipoAccion;
+import co.edu.cue.practicas.repository.empresa.EmpresaRepository;
 import co.edu.cue.practicas.repository.facultad.FacultadRepository;
 import co.edu.cue.practicas.repository.programa.ProgramaRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
@@ -52,6 +54,7 @@ public class UsuarioService {
     private static final String TIPO_REGISTRO = "Usuario";
 
     private final UsuarioRepository usuarioRepository;
+    private final EmpresaRepository empresaRepository;
     private final FacultadRepository facultadRepository;
     private final ProgramaRepository programaRepository;
     private final PasswordEncoder passwordEncoder;
@@ -206,6 +209,25 @@ public class UsuarioService {
     @Transactional(readOnly = true)
     public UsuarioResponse obtenerPorId(Long id) {
         return UsuarioResponse.desde(buscarPorId(id));
+    }
+
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
+    @Transactional
+    public UsuarioResponse vincularEmpresa(Long tutorId, Long empresaId, CustomUserDetails actor) {
+        Usuario tutor = usuarioRepository.findById(tutorId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Tutor no encontrado."));
+        if (tutor.getRol() != Rol.TUTOR_EMPRESARIAL)
+            throw new OperacionNoPermitidaException("Solo se puede vincular empresa a un usuario con rol TUTOR_EMPRESARIAL.");
+
+        if (empresaId == null) {
+            tutor.setEmpresa(null);
+        } else {
+            Empresa empresa = empresaRepository.findById(empresaId)
+                    .orElseThrow(() -> new RecursoNoEncontradoException("Empresa no encontrada."));
+            tutor.setEmpresa(empresa);
+        }
+
+        return UsuarioResponse.desde(usuarioRepository.save(tutor));
     }
 
     // ── helpers privados ──────────────────────────────────────────────────────

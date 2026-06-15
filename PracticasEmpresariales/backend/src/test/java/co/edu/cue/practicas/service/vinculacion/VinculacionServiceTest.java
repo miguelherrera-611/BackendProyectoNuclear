@@ -64,8 +64,8 @@ class VinculacionServiceTest {
         Empresa empresa = Empresa.builder().id(1L).razonSocial("TechCorp")
                 .correo("tech@corp.com").nombreContacto("Juan").estado(EstadoEmpresa.APROBADA).build();
 
-        TutorEmpresarial tutor = TutorEmpresarial.builder().id(3L)
-                .nombre("Tutor Test").correo("tutor@corp.com").activo(true).build();
+        Usuario tutor = Usuario.builder().id(3L).rol(Rol.TUTOR_EMPRESARIAL)
+                .nombre("Tutor Test").correo("tutor@corp.com").passwordHash("h").activo(true).build();
 
         Usuario estudianteUsuario = Usuario.builder()
                 .id(10L).nombre("Est Test").correo("est@cue.edu.co")

@@ -16,7 +16,6 @@ import co.edu.cue.practicas.repository.evaluacion.NotaFinalCoordinadorRepository
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.programa.ProgramaConfiguracionRepository;
 import co.edu.cue.practicas.repository.programa.ProgramaRepository;
-import co.edu.cue.practicas.repository.tutor.TutorEmpresarialRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.repository.empresa.EmpresaRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
@@ -195,7 +194,7 @@ class Sprint4Tests {
         void tutor_noAsignado_lanzaAccesoNoAutorizado() {
             InstanciaPractica instancia = instanciaEnCurso(1L, 10L);
             instancia.setTutorEmpresarial(
-                    TutorEmpresarial.builder().id(1L).correo("tutor@empresa.com").build());
+                    Usuario.builder().id(1L).correo("tutor@empresa.com").passwordHash("h").rol(Rol.TUTOR_EMPRESARIAL).build());
             when(instanciaRepo.findById(1L)).thenReturn(Optional.of(instancia));
 
             CustomUserDetails actor = actor(Rol.TUTOR_EMPRESARIAL, null);
@@ -427,7 +426,7 @@ class Sprint4Tests {
 
         @Mock private EncuestaSatisfaccionRepository encuestaRepo;
         @Mock private InstanciaPracticaRepository instanciaRepo;
-        @Mock private TutorEmpresarialRepository tutorRepo;
+        @Mock private UsuarioRepository usuarioRepo;
         @Mock private NotificacionConfigurableService notificacionService;
         @Mock private ApplicationEventPublisher eventPublisher;
         @InjectMocks private EncuestaSatisfaccionService service;
@@ -467,10 +466,10 @@ class Sprint4Tests {
         void enviarATutor_tutorNoAsignadoAInstancia_lanzaExcepcion() {
             InstanciaPractica instancia = instanciaEnCurso(1L, 10L);
             instancia.setTutorEmpresarial(
-                    TutorEmpresarial.builder().id(1L).correo("t@e.com").build());
+                    Usuario.builder().id(1L).correo("t@e.com").passwordHash("h").rol(Rol.TUTOR_EMPRESARIAL).build());
             when(instanciaRepo.findById(1L)).thenReturn(Optional.of(instancia));
-            when(tutorRepo.findById(99L)).thenReturn(
-                    Optional.of(TutorEmpresarial.builder().id(99L).correo("otro@e.com").build()));
+            when(usuarioRepo.findById(99L)).thenReturn(
+                    Optional.of(Usuario.builder().id(99L).correo("otro@e.com").passwordHash("h").rol(Rol.TUTOR_EMPRESARIAL).build()));
 
             CustomUserDetails actor = actor(Rol.COORDINADOR_PRACTICAS, 10L);
             EnviarEncuestaRequest req = new EnviarEncuestaRequest();

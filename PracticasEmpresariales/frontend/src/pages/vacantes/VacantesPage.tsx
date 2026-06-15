@@ -8,17 +8,26 @@ import { Input } from '../../components/common/Input/Input'
 import { Table } from '../../components/common/Table/Table'
 import { useToast } from '../../components/common/Notifications/Toast'
 
-type Tab = 'todas' | 'pendientes' | 'disponibles'
+type Tab = 'todas' | 'activas' | 'inactivas'
 
 const BADGE: Record<EstadoVacante, string> = {
-  PENDIENTE:  'bg-yellow-100 text-yellow-800',
   DISPONIBLE: 'bg-green-100 text-green-800',
-  RECHAZADA:  'bg-red-100 text-red-800',
+  PENDIENTE:  'bg-yellow-100 text-yellow-800',
+  RECHAZADA:  'bg-gray-100 text-gray-600',
   CERRADA:    'bg-gray-100 text-gray-600',
 }
 
+const LABEL: Record<EstadoVacante, string> = {
+  DISPONIBLE: 'Activa',
+  PENDIENTE:  'Sin activar',
+  RECHAZADA:  'Inactiva',
+  CERRADA:    'Inactiva',
+}
+
+const esActiva = (v: VacanteResponse) => v.estado === 'DISPONIBLE'
+const esInactiva = (v: VacanteResponse) => v.estado === 'CERRADA' || v.estado === 'RECHAZADA' || v.estado === 'PENDIENTE'
+
 const FORM_INICIAL = { empresaId: 0, area: '', cuposTotales: 1 }
-const RECHAZAR_INICIAL = { id: 0, motivo: '' }
 
 export default function VacantesPage() {
   const { showToast } = useToast()
@@ -28,23 +37,25 @@ export default function VacantesPage() {
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
   const [modalCrear, setModalCrear] = useState(false)
-  const [modalRechazar, setModalRechazar] = useState(RECHAZAR_INICIAL)
   const [form, setForm]             = useState(FORM_INICIAL)
   const [errorModal, setErrorModal] = useState('')
-  const [confirm, setConfirm] = useState<{ open: boolean; id: number; accion: 'aprobar' | 'cerrar' }>({
-    open: false, id: 0, accion: 'aprobar',
+  const [confirm, setConfirm] = useState<{ open: boolean; id: number; accion: 'activar' | 'desactivar' }>({
+    open: false, id: 0, accion: 'activar',
   })
 
   const cargar = useCallback(() => {
     setLoading(true)
-    const fetch = tab === 'pendientes' ? vacanteService.listarPendientes()
-      : tab === 'disponibles' ? vacanteService.listarDisponibles()
-      : vacanteService.listar()
-    fetch.then(setVacantes).finally(() => setLoading(false))
-  }, [tab])
+    vacanteService.listar()
+      .then(setVacantes)
+      .finally(() => setLoading(false))
+  }, [])
 
   useEffect(() => { cargar() }, [cargar])
   useEffect(() => { empresaService.listarActivas().then(setEmpresas) }, [])
+
+  const vacantesTab = vacantes.filter(v =>
+    tab === 'activas' ? esActiva(v) : tab === 'inactivas' ? esInactiva(v) : true
+  )
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -55,7 +66,7 @@ export default function VacantesPage() {
       setModalCrear(false)
       setForm(FORM_INICIAL)
       cargar()
-      showToast('Vacante creada correctamente.')
+      showToast('Vacante creada y activada correctamente.')
     } catch (err: unknown) {
       setErrorModal((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al crear la vacante.')
     } finally {
@@ -65,27 +76,20 @@ export default function VacantesPage() {
 
   const handleConfirm = async () => {
     try {
-      if (confirm.accion === 'aprobar') { await vacanteService.aprobar(confirm.id); showToast('Vacante aprobada.') }
-      else { await vacanteService.cerrar(confirm.id); showToast('Vacante cerrada.') }
-      setConfirm({ open: false, id: 0, accion: 'aprobar' })
+      if (confirm.accion === 'activar') {
+        await vacanteService.activar(confirm.id)
+        showToast('Vacante activada.')
+      } else {
+        await vacanteService.desactivar(confirm.id)
+        showToast('Vacante desactivada.')
+      }
+      setConfirm({ open: false, id: 0, accion: 'activar' })
       cargar()
     } catch (err: unknown) {
-      showToast((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error.', 'error')
-    }
-  }
-
-  const handleRechazar = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      await vacanteService.rechazar(modalRechazar.id, modalRechazar.motivo)
-      setModalRechazar(RECHAZAR_INICIAL)
-      cargar()
-      showToast('Vacante rechazada.')
-    } catch (err: unknown) {
-      showToast((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error.', 'error')
-    } finally {
-      setSaving(false)
+      showToast(
+        (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al cambiar el estado.',
+        'error'
+      )
     }
   }
 
@@ -102,37 +106,42 @@ export default function VacantesPage() {
       </div>
 
       <div className="flex gap-2">
-        <button className={tabClass('todas')} onClick={() => setTab('todas')}>Todas</button>
-        <button className={tabClass('pendientes')} onClick={() => setTab('pendientes')}>Pendientes</button>
-        <button className={tabClass('disponibles')} onClick={() => setTab('disponibles')}>Disponibles</button>
+        <button className={tabClass('todas')}    onClick={() => setTab('todas')}>Todas</button>
+        <button className={tabClass('activas')}  onClick={() => setTab('activas')}>Activas</button>
+        <button className={tabClass('inactivas')} onClick={() => setTab('inactivas')}>Inactivas</button>
       </div>
 
-      <Table headers={HEADERS} loading={loading} empty={vacantes.length === 0}
+      <Table headers={HEADERS} loading={loading} empty={vacantesTab.length === 0}
         emptyMessage="No hay vacantes en esta categoría." emptyIcon="💼">
-        {vacantes.map(v => (
+        {vacantesTab.map(v => (
           <tr key={v.id} className="border-b border-gray-100 hover:bg-gray-50">
             <td className="px-4 py-3 font-medium text-gray-800">{v.razonSocialEmpresa}</td>
             <td className="px-4 py-3 text-gray-600">{v.area}</td>
             <td className="px-4 py-3 text-gray-600 text-center">{v.cuposOcupados} / {v.cuposTotales}</td>
             <td className="px-4 py-3 text-gray-600 text-sm">{v.fechaPublicacion}</td>
             <td className="px-4 py-3">
-              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${BADGE[v.estado]}`}>{v.estado}</span>
+              <span className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${BADGE[v.estado]}`}>
+                {LABEL[v.estado]}
+              </span>
             </td>
             <td className="px-4 py-3">
-              <div className="flex gap-2">
-                {v.estado === 'PENDIENTE' && (
-                  <>
-                    <button onClick={() => setConfirm({ open: true, id: v.id, accion: 'aprobar' })}
-                      className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition-colors font-medium">Aprobar</button>
-                    <button onClick={() => setModalRechazar({ id: v.id, motivo: '' })}
-                      className="text-xs bg-red-100 text-red-700 px-3 py-1 rounded-lg hover:bg-red-200 transition-colors font-medium">Rechazar</button>
-                  </>
-                )}
-                {v.estado === 'DISPONIBLE' && (
-                  <button onClick={() => setConfirm({ open: true, id: v.id, accion: 'cerrar' })}
-                    className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors font-medium">Cerrar</button>
-                )}
-              </div>
+              {esActiva(v) ? (
+                <button
+                  onClick={() => setConfirm({ open: true, id: v.id, accion: 'desactivar' })}
+                  className="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                >
+                  Desactivar
+                </button>
+              ) : (
+                <button
+                  onClick={() => setConfirm({ open: true, id: v.id, accion: 'activar' })}
+                  className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition-colors font-medium"
+                  disabled={v.cuposOcupados >= v.cuposTotales}
+                  title={v.cuposOcupados >= v.cuposTotales ? 'Todos los cupos están ocupados' : 'Activar vacante'}
+                >
+                  Activar
+                </button>
+              )}
             </td>
           </tr>
         ))}
@@ -143,44 +152,58 @@ export default function VacantesPage() {
           {errorModal && <div className="bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{errorModal}</div>}
           <form onSubmit={handleCrear} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Empresa <span className="text-red-500">*</span></label>
-              <select className="input-field" required value={form.empresaId || ''} onChange={e => setForm({ ...form, empresaId: Number(e.target.value) })}>
-                <option value="">Selecciona una empresa aprobada</option>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Empresa <span className="text-red-500">*</span>
+              </label>
+              <select
+                className="input-field"
+                required
+                value={form.empresaId || ''}
+                onChange={e => setForm({ ...form, empresaId: Number(e.target.value) })}
+              >
+                <option value="">Selecciona una empresa activa</option>
                 {empresas.map(em => <option key={em.id} value={em.id}>{em.razonSocial}</option>)}
               </select>
             </div>
-            <Input label="Área" required placeholder="Ej. Sistemas, Contabilidad" value={form.area} onChange={e => setForm({ ...form, area: e.target.value })} />
-            <Input label="Cupos Totales" type="number" min={1} required value={form.cuposTotales} onChange={e => setForm({ ...form, cuposTotales: Number(e.target.value) })} />
+            <Input
+              label="Área"
+              required
+              placeholder="Ej. Sistemas, Contabilidad"
+              value={form.area}
+              onChange={e => setForm({ ...form, area: e.target.value })}
+            />
+            <Input
+              label="Cupos Totales"
+              type="number"
+              min={1}
+              required
+              value={form.cuposTotales}
+              onChange={e => setForm({ ...form, cuposTotales: Number(e.target.value) })}
+            />
+            <p className="text-xs text-gray-400">La vacante quedará activa inmediatamente.</p>
             <div className="flex gap-3 pt-2">
-              <Button variant="secondary" className="flex-1" type="button" onClick={() => { setModalCrear(false); setErrorModal('') }}>Cancelar</Button>
+              <Button variant="secondary" className="flex-1" type="button"
+                onClick={() => { setModalCrear(false); setErrorModal('') }}>
+                Cancelar
+              </Button>
               <Button className="flex-1" type="submit" loading={saving}>Crear</Button>
             </div>
           </form>
         </Modal>
       )}
 
-      {modalRechazar.id > 0 && (
-        <Modal title="Rechazar Vacante" onClose={() => setModalRechazar(RECHAZAR_INICIAL)}>
-          <form onSubmit={handleRechazar} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Motivo <span className="text-red-500">*</span></label>
-              <textarea className="input-field" rows={4} required value={modalRechazar.motivo} onChange={e => setModalRechazar({ ...modalRechazar, motivo: e.target.value })} />
-            </div>
-            <div className="flex gap-3">
-              <Button variant="secondary" className="flex-1" type="button" onClick={() => setModalRechazar(RECHAZAR_INICIAL)}>Cancelar</Button>
-              <Button variant="danger" className="flex-1" type="submit" loading={saving}>Rechazar</Button>
-            </div>
-          </form>
-        </Modal>
-      )}
-
-      <ConfirmModal open={confirm.open}
-        title={confirm.accion === 'aprobar' ? '¿Aprobar vacante?' : '¿Cerrar vacante?'}
-        message={confirm.accion === 'aprobar' ? 'La vacante quedará disponible para asignaciones.' : 'La vacante se cerrará y no recibirá más asignaciones.'}
-        confirmLabel={confirm.accion === 'aprobar' ? 'Aprobar' : 'Cerrar'}
-        variant={confirm.accion === 'cerrar' ? 'danger' : 'primary'}
+      <ConfirmModal
+        open={confirm.open}
+        title={confirm.accion === 'activar' ? '¿Activar vacante?' : '¿Desactivar vacante?'}
+        message={
+          confirm.accion === 'activar'
+            ? 'La vacante quedará disponible para nuevas asignaciones.'
+            : 'La vacante no podrá recibir nuevas asignaciones mientras esté inactiva.'
+        }
+        confirmLabel={confirm.accion === 'activar' ? 'Activar' : 'Desactivar'}
+        variant={confirm.accion === 'desactivar' ? 'danger' : 'primary'}
         onConfirm={handleConfirm}
-        onCancel={() => setConfirm({ open: false, id: 0, accion: 'aprobar' })}
+        onCancel={() => setConfirm({ open: false, id: 0, accion: 'activar' })}
       />
     </div>
   )

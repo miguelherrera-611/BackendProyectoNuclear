@@ -1,167 +1,189 @@
 import { useState, useEffect } from 'react'
-import { TutorEmpresarialResponse, EmpresaResponse } from '../../types'
-import { tutorService } from '../../services/tutorService'
+import type { UsuarioResponse, EmpresaResponse } from '../../types'
+import { usuarioService } from '../../services/usuarioService'
 import { empresaService } from '../../services/empresaService'
-import { Modal } from '../../components/common/Modal/Modal'
-import { Button } from '../../components/common/Button/Button'
-import { Input } from '../../components/common/Input/Input'
-import { useToast } from '../../components/common/Notifications/Toast'
 
 export default function TutoresPage() {
-  const { showToast } = useToast()
-  const [tutores, setTutores]           = useState<TutorEmpresarialResponse[]>([])
-  const [empresas, setEmpresas]         = useState<EmpresaResponse[]>([])
-  const [empresaFiltro, setEmpresaFiltro] = useState<number>(0)
-  const [loading, setLoading]           = useState(false)
-  const [saving, setSaving]             = useState(false)
-  const [modalTelefono, setModalTelefono] = useState<{
-    open: boolean; tutorId: number; nombre: string; telefonoActual: string
-  }>({ open: false, tutorId: 0, nombre: '', telefonoActual: '' })
-  const [telefono, setTelefono]         = useState('')
-  const [errorModal, setErrorModal]     = useState('')
+  const [tutores, setTutores] = useState<UsuarioResponse[]>([])
+  const [empresas, setEmpresas] = useState<EmpresaResponse[]>([])
+  const [busqueda, setBusqueda] = useState('')
+  const [loading, setLoading] = useState(true)
 
-  useEffect(() => { empresaService.listarActivas().then(setEmpresas) }, [])
+  // Estado del panel de vinculación
+  const [tutorActivo, setTutorActivo] = useState<UsuarioResponse | null>(null)
+  const [empresaSeleccionada, setEmpresaSeleccionada] = useState<number | ''>('')
+  const [guardando, setGuardando] = useState(false)
+  const [error, setError] = useState('')
 
-  const cargar = (empresaId: number) => {
-    if (!empresaId) { setTutores([]); return }
-    setLoading(true)
-    tutorService.listarPorEmpresa(empresaId).then(setTutores).finally(() => setLoading(false))
+  useEffect(() => {
+    Promise.all([
+      usuarioService.listarTutores(),
+      empresaService.listarActivas(),
+    ]).then(([t, e]) => {
+      setTutores(t)
+      setEmpresas(e)
+    }).finally(() => setLoading(false))
+  }, [])
+
+  const tutoresFiltrados = tutores.filter(t => {
+    const texto = busqueda.toLowerCase()
+    return !texto ||
+      t.nombre.toLowerCase().includes(texto) ||
+      t.correo.toLowerCase().includes(texto) ||
+      (t.razonSocialEmpresa ?? '').toLowerCase().includes(texto)
+  })
+
+  const abrirPanel = (tutor: UsuarioResponse) => {
+    setTutorActivo(tutor)
+    setEmpresaSeleccionada(tutor.empresaId ?? '')
+    setError('')
   }
 
-  const abrirModalTelefono = (t: TutorEmpresarialResponse) => {
-    setTelefono(t.telefono ?? '')
-    setErrorModal('')
-    setModalTelefono({ open: true, tutorId: t.id, nombre: t.nombre, telefonoActual: t.telefono ?? '' })
+  const cerrarPanel = () => {
+    setTutorActivo(null)
+    setEmpresaSeleccionada('')
+    setError('')
   }
 
-  const cerrarModalTelefono = () => {
-    setModalTelefono({ open: false, tutorId: 0, nombre: '', telefonoActual: '' })
-    setTelefono('')
-    setErrorModal('')
-  }
-
-  const handleActualizarTelefono = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setErrorModal('')
-    setSaving(true)
+  const guardar = async () => {
+    if (!tutorActivo) return
+    setGuardando(true)
+    setError('')
     try {
-      const actualizado = await tutorService.actualizarTelefono(modalTelefono.tutorId, telefono)
+      const actualizado = await usuarioService.vincularEmpresa(
+        tutorActivo.id,
+        empresaSeleccionada !== '' ? Number(empresaSeleccionada) : null
+      )
       setTutores(prev => prev.map(t => t.id === actualizado.id ? actualizado : t))
-      cerrarModalTelefono()
-      showToast('Teléfono actualizado correctamente.')
-    } catch (err: unknown) {
-      setErrorModal((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al actualizar el teléfono.')
+      cerrarPanel()
+    } catch {
+      setError('No se pudo guardar el vínculo. Intenta de nuevo.')
     } finally {
-      setSaving(false)
+      setGuardando(false)
     }
   }
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Tutores Empresariales</h1>
-          <p className="text-sm text-gray-500 mt-0.5">Consulta de información. Solo se permite actualizar el teléfono de contacto.</p>
-        </div>
+      {/* Encabezado */}
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Tutores Empresariales</h1>
+        <p className="text-sm text-gray-500 mt-0.5">
+          Usuarios con rol Tutor Empresarial. Vincúlalos a la empresa correspondiente.
+        </p>
       </div>
 
-      <div className="card py-4 flex items-end gap-4">
-        <div className="flex-1 max-w-sm">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Filtrar por empresa</label>
-          <select
-            className="input-field"
-            value={empresaFiltro || ''}
-            onChange={e => { const id = Number(e.target.value); setEmpresaFiltro(id); cargar(id) }}
-          >
-            <option value="">Selecciona una empresa</option>
-            {empresas.map(em => <option key={em.id} value={em.id}>{em.razonSocial}</option>)}
-          </select>
-        </div>
-        {empresaFiltro > 0 && (
-          <span className="text-sm text-gray-500 pb-2">
-            <strong>{tutores.length}</strong> tutor{tutores.length !== 1 ? 'es' : ''}
-          </span>
-        )}
+      {/* Buscador */}
+      <div className="card py-4">
+        <input
+          type="text"
+          placeholder="Buscar por nombre, correo o empresa..."
+          value={busqueda}
+          onChange={e => setBusqueda(e.target.value)}
+          className="input-field max-w-sm"
+        />
       </div>
 
-      {empresaFiltro === 0 ? (
-        <div className="card text-center py-16">
-          <div className="text-gray-300 text-5xl mb-3">👨‍💼</div>
-          <p className="text-gray-400 text-sm">Selecciona una empresa para ver sus tutores.</p>
-        </div>
-      ) : loading ? (
+      {loading ? (
         <div className="flex justify-center py-16">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cue-primary" />
         </div>
       ) : tutores.length === 0 ? (
         <div className="card text-center py-16">
           <div className="text-gray-300 text-5xl mb-3">👤</div>
-          <p className="text-gray-400 text-sm">Esta empresa no tiene tutores registrados.</p>
+          <p className="text-gray-400 text-sm">No hay tutores empresariales registrados.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {tutores.map(t => (
-            <div key={t.id} className="card hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-gray-800 truncate">{t.nombre}</h3>
-                  {t.cargo && <p className="text-xs text-gray-500 mt-0.5">{t.cargo}</p>}
-                  <p className="text-xs text-cue-primary font-medium mt-0.5 truncate">🏢 {t.razonSocialEmpresa}</p>
+        <>
+          <p className="text-xs text-gray-400">
+            {tutoresFiltrados.length} de {tutores.length} tutor{tutores.length !== 1 ? 'es' : ''}
+          </p>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {tutoresFiltrados.map(t => (
+              <div key={t.id} className="card hover:shadow-md transition-shadow flex flex-col gap-3">
+                {/* Nombre + estado */}
+                <div className="flex items-start justify-between">
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-gray-800 truncate">{t.nombre}</h3>
+                    <p className="text-xs text-gray-400 mt-0.5">ID: {t.id}</p>
+                  </div>
+                  <span className={t.activo ? 'badge-apto ml-2 shrink-0' : 'badge-no-apto ml-2 shrink-0'}>
+                    {t.activo ? 'Activo' : 'Inactivo'}
+                  </span>
                 </div>
-                <span className={t.activo ? 'badge-apto ml-2 shrink-0' : 'badge-no-apto ml-2 shrink-0'}>
-                  {t.activo ? 'Activo' : 'Inactivo'}
-                </span>
-              </div>
-              <div className="mt-3 space-y-1.5">
-                <p className="text-sm text-gray-600">✉ {t.correo}</p>
-                <div className="flex items-center justify-between">
-                  <p className="text-sm text-gray-600">
-                    {t.telefono ? `📞 ${t.telefono}` : <span className="text-gray-400 italic text-xs">Sin teléfono registrado</span>}
-                  </p>
-                  <button
-                    onClick={() => abrirModalTelefono(t)}
-                    className="text-xs text-cue-primary hover:underline transition-colors ml-2 shrink-0"
-                  >
-                    {t.telefono ? 'Editar' : 'Agregar'}
-                  </button>
+
+                {/* Datos de contacto */}
+                <div className="space-y-1">
+                  <p className="text-sm text-gray-600 truncate">✉ {t.correo}</p>
+                  {t.telefono
+                    ? <p className="text-sm text-gray-600">📞 {t.telefono}</p>
+                    : <p className="text-xs text-gray-400 italic">Sin teléfono</p>
+                  }
                 </div>
-                <p className={`text-xs mt-1 font-medium ${t.disponible ? 'text-green-600' : 'text-amber-600'}`}>
-                  {t.disponible ? '● Disponible' : '● No disponible'}
-                </p>
+
+                {/* Empresa vinculada */}
+                <div className="border-t border-gray-100 pt-2">
+                  {t.razonSocialEmpresa ? (
+                    <p className="text-sm text-gray-700">
+                      🏢 <span className="font-medium">{t.razonSocialEmpresa}</span>
+                    </p>
+                  ) : (
+                    <p className="text-xs text-amber-600 italic">Sin empresa vinculada</p>
+                  )}
+                </div>
+
+                {/* Acción vincular */}
+                <button
+                  className="btn-secondary text-sm py-1.5"
+                  onClick={() => abrirPanel(t)}
+                >
+                  {t.empresaId ? 'Cambiar empresa' : 'Vincular empresa'}
+                </button>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
 
-      {modalTelefono.open && (
-        <Modal
-          title="Actualizar teléfono"
-          subtitle={modalTelefono.nombre}
-          size="sm"
-          onClose={cerrarModalTelefono}
-        >
-          {errorModal && (
-            <div className="bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{errorModal}</div>
-          )}
-          <form onSubmit={handleActualizarTelefono} className="space-y-4">
-            <Input
-              label="Teléfono de contacto"
-              value={telefono}
-              required
-              onChange={e => setTelefono(e.target.value)}
-              placeholder="Ej. +57 300 123 4567"
-            />
-            <div className="flex gap-3 pt-1">
-              <Button variant="secondary" className="flex-1" type="button" onClick={cerrarModalTelefono}>
-                Cancelar
-              </Button>
-              <Button className="flex-1" type="submit" loading={saving}>
-                Guardar
-              </Button>
+      {/* Panel / modal de vinculación */}
+      {tutorActivo && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md p-6 space-y-4">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">Vincular empresa</h2>
+              <p className="text-sm text-gray-500 mt-0.5">Tutor: <strong>{tutorActivo.nombre}</strong></p>
             </div>
-          </form>
-        </Modal>
+
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">Empresa</label>
+              <select
+                className="input-field"
+                value={empresaSeleccionada}
+                onChange={e => setEmpresaSeleccionada(e.target.value === '' ? '' : Number(e.target.value))}
+              >
+                <option value="">— Sin empresa (desvincular) —</option>
+                {empresas.map(e => (
+                  <option key={e.id} value={e.id}>{e.razonSocial} · {e.nit}</option>
+                ))}
+              </select>
+              {empresas.length === 0 && (
+                <p className="text-xs text-amber-600">No hay empresas activas registradas.</p>
+              )}
+            </div>
+
+            {error && <p className="text-sm text-red-600">{error}</p>}
+
+            <div className="flex gap-3 pt-1">
+              <button className="btn-secondary flex-1" onClick={cerrarPanel} disabled={guardando}>
+                Cancelar
+              </button>
+              <button className="btn-primary flex-1" onClick={guardar} disabled={guardando}>
+                {guardando ? 'Guardando...' : 'Guardar'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

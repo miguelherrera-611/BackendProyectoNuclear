@@ -57,7 +57,7 @@ public class Vacante {
     @Enumerated(EnumType.STRING)
     @Column(name = "estado", nullable = false, length = 20)
     @Builder.Default
-    private EstadoVacante estado = EstadoVacante.PENDIENTE;
+    private EstadoVacante estado = EstadoVacante.DISPONIBLE;
 
     @Column(name = "fecha_publicacion")
     @Builder.Default
@@ -79,22 +79,33 @@ public class Vacante {
 
     // ── PATRÓN STATE: transiciones ────────────────────────────────────────
 
-    /** PENDIENTE → DISPONIBLE */
+    /** Cualquier estado → DISPONIBLE. Reactiva vacantes inactivas o heredadas. */
+    public void activar() {
+        if (this.estado == EstadoVacante.DISPONIBLE)
+            throw new OperacionNoPermitidaException("La vacante ya está activa.");
+        this.estado = EstadoVacante.DISPONIBLE;
+        this.motivoRechazo = null;
+    }
+
+    /** DISPONIBLE/PENDIENTE → CERRADA (inactiva manualmente). */
+    public void desactivar() {
+        if (this.estado == EstadoVacante.CERRADA)
+            throw new OperacionNoPermitidaException("La vacante ya está inactiva.");
+        this.estado = EstadoVacante.CERRADA;
+    }
+
+    /** @deprecated Usar activar(). Mantenido para compatibilidad interna. */
     public void aprobar() {
-        validarEstado(EstadoVacante.PENDIENTE, "aprobar");
         this.estado = EstadoVacante.DISPONIBLE;
     }
 
-    /** PENDIENTE → RECHAZADA */
+    /** @deprecated Usar desactivar(). Mantenido para compatibilidad interna. */
     public void rechazar(String motivo) {
-        if (motivo == null || motivo.isBlank())
-            throw new OperacionNoPermitidaException("El motivo de rechazo es obligatorio.");
-        validarEstado(EstadoVacante.PENDIENTE, "rechazar");
         this.estado = EstadoVacante.RECHAZADA;
         this.motivoRechazo = motivo;
     }
 
-    /** DISPONIBLE → CERRADA (irreversible — OCL: cerradaNoAcepta) */
+    /** DISPONIBLE → CERRADA. Usado internamente por ocuparCupo(). */
     public void cerrar() {
         validarEstado(EstadoVacante.DISPONIBLE, "cerrar");
         this.estado = EstadoVacante.CERRADA;

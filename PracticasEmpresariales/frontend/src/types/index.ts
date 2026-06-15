@@ -49,6 +49,8 @@ export interface UsuarioResponse {
   facultadNombre?: string
   programaId?: number
   programaNombre?: string
+  empresaId?: number
+  razonSocialEmpresa?: string
   estadoEstudiante?: EstadoEstudiante
   estadoCuenta?: EstadoCuenta
   identificacion?: string
@@ -129,19 +131,6 @@ export interface EmpresaResponse {
   correo?: string
   estado: EstadoEmpresa
   areasDisponibles: string[]
-  creadoEn: string
-}
-
-export interface TutorEmpresarialResponse {
-  id: number
-  nombre: string
-  cargo?: string
-  correo: string
-  telefono?: string
-  empresaId: number
-  razonSocialEmpresa: string
-  disponible: boolean
-  activo: boolean
   creadoEn: string
 }
 
@@ -362,6 +351,9 @@ export interface EncuestaCoordinadorResumen {
   instanciaId: number
   nombrePractica: string
   nombreEstudiante: string
+  programaNombre?: string
+  nombreEmpresa?: string
+  nombreDocenteAsesor?: string
   tutorEmpresarialId?: number
   nombreTutor?: string
   evaluacionDocenteCompleta: boolean

@@ -33,18 +33,21 @@ export const vacanteService = {
     return res.data.datos!
   },
 
-  async aprobar(id: number): Promise<VacanteResponse> {
-    const res = await api.patch<ApiResponse<VacanteResponse>>(`/api/v1/vacantes/${id}/aprobar`)
+  async activar(id: number): Promise<VacanteResponse> {
+    const res = await api.patch<ApiResponse<VacanteResponse>>(`/api/v1/vacantes/${id}/activar`)
     return res.data.datos!
   },
 
-  async rechazar(id: number, motivo: string): Promise<VacanteResponse> {
-    const res = await api.patch<ApiResponse<VacanteResponse>>(`/api/v1/vacantes/${id}/rechazar`, { motivo })
+  async desactivar(id: number): Promise<VacanteResponse> {
+    const res = await api.patch<ApiResponse<VacanteResponse>>(`/api/v1/vacantes/${id}/desactivar`)
     return res.data.datos!
+  },
+
+  async aprobar(id: number): Promise<VacanteResponse> {
+    return this.activar(id)
   },
 
   async cerrar(id: number): Promise<VacanteResponse> {
-    const res = await api.patch<ApiResponse<VacanteResponse>>(`/api/v1/vacantes/${id}/cerrar`)
-    return res.data.datos!
+    return this.desactivar(id)
   },
 }

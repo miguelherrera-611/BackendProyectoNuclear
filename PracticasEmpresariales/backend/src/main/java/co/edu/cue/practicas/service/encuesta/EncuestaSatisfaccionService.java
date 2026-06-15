@@ -240,6 +240,10 @@ public class EncuestaSatisfaccionService {
                     .instanciaId(i.getId())
                     .nombrePractica(i.getNombre())
                     .nombreEstudiante(i.getExpediente().getEstudiante().getNombre())
+                    .programaNombre(i.getExpediente().getEstudiante().getPrograma() != null
+                            ? i.getExpediente().getEstudiante().getPrograma().getNombre() : null)
+                    .nombreEmpresa(i.getEmpresa() != null ? i.getEmpresa().getRazonSocial() : null)
+                    .nombreDocenteAsesor(i.getDocenteAsesor() != null ? i.getDocenteAsesor().getNombre() : null)
                     .tutorEmpresarialId(i.getTutorEmpresarial() != null ? i.getTutorEmpresarial().getId() : null)
                     .nombreTutor(i.getTutorEmpresarial() != null ? i.getTutorEmpresarial().getNombre() : null)
                     .evaluacionDocenteCompleta(evalDocente)

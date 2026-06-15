@@ -53,9 +53,19 @@ public class VacanteController {
         return ResponseEntity.ok(ApiResponse.ok("Vacantes empresa.", vacanteService.listarPorEmpresa(empresaId)));
     }
 
+    @PatchMapping("/{id}/activar")
+    public ResponseEntity<ApiResponse<VacanteResponse>> activar(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("Vacante activada.", vacanteService.activarVacante(id)));
+    }
+
+    @PatchMapping("/{id}/desactivar")
+    public ResponseEntity<ApiResponse<VacanteResponse>> desactivar(@PathVariable Long id) {
+        return ResponseEntity.ok(ApiResponse.ok("Vacante desactivada.", vacanteService.desactivarVacante(id)));
+    }
+
     @PatchMapping("/{id}/aprobar")
     public ResponseEntity<ApiResponse<VacanteResponse>> aprobar(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.ok("Vacante aprobada.", vacanteService.aprobarVacante(id)));
+        return ResponseEntity.ok(ApiResponse.ok("Vacante aprobada.", vacanteService.activarVacante(id)));
     }
 
     @PatchMapping("/{id}/rechazar")
