@@ -1,6 +1,7 @@
 package co.edu.cue.practicas.controller.auth;
 
 import co.edu.cue.practicas.dto.request.CambiarPasswordRequest;
+import co.edu.cue.practicas.dto.request.ConfirmarCambioCorreoRequest;
 import co.edu.cue.practicas.dto.request.LoginRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.LoginResponse;
@@ -36,5 +37,22 @@ public class AuthController {
 
         authService.cambiarPassword(request, userDetails);
         return ResponseEntity.ok(ApiResponse.ok("Contraseña actualizada correctamente", null));
+    }
+
+    @PostMapping("/correo/solicitar-cambio")
+    public ResponseEntity<ApiResponse<Void>> solicitarCambioCorreo(
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        authService.solicitarCambioCorreo(userDetails);
+        return ResponseEntity.ok(ApiResponse.ok("Código de verificación enviado a tu correo actual", null));
+    }
+
+    @PostMapping("/correo/confirmar-cambio")
+    public ResponseEntity<ApiResponse<Void>> confirmarCambioCorreo(
+            @Valid @RequestBody ConfirmarCambioCorreoRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        authService.confirmarCambioCorreo(request, userDetails);
+        return ResponseEntity.ok(ApiResponse.ok("Correo electrónico actualizado correctamente", null));
     }
 }

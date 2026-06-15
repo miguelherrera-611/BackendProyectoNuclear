@@ -22,6 +22,7 @@ import SeguimientoDetallePage from '../pages/seguimiento/SeguimientoDetallePage'
 import EstudiantesPage from '../pages/estudiantes/EstudiantesPage'
 import PracticasPage from '../pages/coordinacion-academica/PracticasPage'
 import EstudiantesValidacionPage from '../pages/coordinacion-academica/EstudiantesValidacionPage'
+import ParametrosProgramaPage from '../pages/coordinacion-academica/ParametrosProgramaPage'
 import MisPracticantesPage from '../pages/docente-asesor/MisPracticantesPage'
 import SustentacionesPage from '../pages/docente-asesor/SustentacionesPage'
 import TutorMisPracticantesPage from '../pages/tutor-empresarial/MisPracticantesPage'
@@ -88,6 +89,7 @@ export default function AppRouter() {
             <Route element={<ProtectedRoute rolesPermitidos={['COORDINACION_ACADEMICA']} />}>
               <Route path="/validacion-estudiantes" element={<EstudiantesValidacionPage />} />
               <Route path="/practicas" element={<PracticasPage />} />
+              <Route path="/parametros-programa" element={<ParametrosProgramaPage />} />
             </Route>
 
             <Route element={<ProtectedRoute rolesPermitidos={['DIRECCION']} />}>

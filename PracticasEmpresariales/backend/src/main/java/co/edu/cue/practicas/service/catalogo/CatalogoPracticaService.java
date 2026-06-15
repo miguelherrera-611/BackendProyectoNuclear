@@ -48,7 +48,7 @@ public class CatalogoPracticaService {
 
     // ── CREAR — PATRÓN BUILDER via Director ──────────────────────────────────
 
-    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.ADMIN_DTI})
+    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA})
     public CatalogoPracticaResponse crearEntrada(CrearCatalogoPracticaRequest req) {
         Programa programa = buscarProgramaOFallar(req.programaId());
         validarNumeroUnico(req.programaId(), req.numeroPractica());
@@ -100,7 +100,7 @@ public class CatalogoPracticaService {
 
     // ── ACTUALIZAR ────────────────────────────────────────────────────────────
 
-    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.ADMIN_DTI})
+    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA})
     public CatalogoPracticaResponse actualizar(Long id, ActualizarCatalogoPracticaRequest req) {
         CatalogoPractica catalogo = buscarOFallar(id);
         catalogo.setNombre(req.nombre());
@@ -116,7 +116,7 @@ public class CatalogoPracticaService {
 
     // ── DESACTIVAR — OCL: noDesactivarConEstudiantesActivos ──────────────────
 
-    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.ADMIN_DTI})
+    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA})
     public CatalogoPracticaResponse desactivar(Long id) {
         CatalogoPractica catalogo = buscarOFallar(id);
         validarSinEstudiantesActivos(id);

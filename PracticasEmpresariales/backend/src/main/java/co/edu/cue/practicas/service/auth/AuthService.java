@@ -3,6 +3,7 @@ package co.edu.cue.practicas.service.auth;
 import co.edu.cue.practicas.audit.ModuloAuditoria;
 import co.edu.cue.practicas.audit.singleton.AuditoriaLogger;
 import co.edu.cue.practicas.dto.request.CambiarPasswordRequest;
+import co.edu.cue.practicas.dto.request.ConfirmarCambioCorreoRequest;
 import co.edu.cue.practicas.dto.request.LoginRequest;
 import co.edu.cue.practicas.dto.response.LoginResponse;
 import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
@@ -14,6 +15,7 @@ import co.edu.cue.practicas.model.enums.TipoAccion;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.security.jwt.JwtUtil;
+import co.edu.cue.practicas.service.notificacion.EmailService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,7 +27,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * PATRON SINGLETON — GPE-136, GPE-137
@@ -34,29 +39,28 @@ import java.time.LocalDateTime;
  * Centraliza la creación y validación de credenciales evitando
  * múltiples instancias que podrían generar inconsistencias.
  *
- * Dos responsabilidades principales:
- *   1. login()           → verifica credenciales y devuelve token JWT
- *   2. cambiarPassword() → permite al usuario actualizar su propia contraseña
+ * Responsabilidades:
+ *   1. login()              → verifica credenciales y devuelve token JWT
+ *   2. cambiarPassword()    → permite al usuario actualizar su propia contraseña
+ *   3. solicitarCambioCorreo() / confirmarCambioCorreo() → flujo 2FA para cambio de correo
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthService {
 
-    // Delegamos la verificación de credenciales al mecanismo de Spring Security
     private final AuthenticationManager authenticationManager;
-
-    // Genera y valida los tokens JWT que viajan en cada petición HTTP
     private final JwtUtil jwtUtil;
-
-    // Acceso a la base de datos de usuarios para actualizar último acceso y guardar cambios
     private final UsuarioRepository usuarioRepository;
-
-    // Encripta contraseñas con BCrypt y compara texto plano contra el hash almacenado
     private final PasswordEncoder passwordEncoder;
-
-    // Registra cada acción relevante en la bitácora de auditoría (quién hizo qué y cuándo)
     private final AuditoriaLogger auditoriaLogger;
+    private final EmailService emailService;
+
+    private record CodigoEntry(String codigo, LocalDateTime expiracion) {}
+    private final Map<Long, CodigoEntry> codigosPendientes = new ConcurrentHashMap<>();
+
+    private static final int CODIGO_DIGITOS = 6;
+    private static final int EXPIRACION_MINUTOS = 10;
 
     /**
      * Autentica al usuario y retorna un token JWT junto con los datos del perfil.
@@ -78,31 +82,23 @@ public class AuthService {
     @Transactional
     public LoginResponse login(LoginRequest request, String ipOrigen) {
         try {
-            // Spring Security delega la verificación a CustomUserDetailsService,
-            // que carga el usuario desde la BD y compara el hash de la contraseña
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getCorreo(), request.getPassword())
             );
 
-            // Si llegamos aquí, las credenciales son correctas — obtenemos el usuario autenticado
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             Usuario usuario = userDetails.getUsuario();
 
-            // Marcamos la fecha y hora exacta de este acceso para trazabilidad
             usuario.setUltimoAcceso(LocalDateTime.now());
 
-            // Primer login exitoso: confirmamos que el usuario usó su password temporal
             if (EstadoCuenta.PENDIENTE.equals(usuario.getEstadoCuenta())) {
                 usuario.setEstadoCuenta(EstadoCuenta.ACTIVO);
             }
 
             usuarioRepository.save(usuario);
 
-            // Generamos el JWT con los claims del usuario (id, rol, etiqueta, facultad, programa)
-            // Este token viaja en el header Authorization de cada petición posterior
             String token = jwtUtil.generarToken(userDetails);
 
-            // Dejamos constancia del login exitoso en la bitácora de auditoría
             auditoriaLogger.registrar(BitacoraAuditoria.builder()
                     .usuario(usuario)
                     .nombreUsuario(usuario.getNombre())
@@ -113,9 +109,6 @@ public class AuthService {
                     .ipOrigen(ipOrigen)
                     .exitoso(true));
 
-            // Construimos la respuesta con el token y los datos del perfil.
-            // El frontend los usa para decidir qué dashboard mostrar y
-            // para saber si debe forzar el cambio de contraseña (primerIngreso=true).
             return LoginResponse.builder()
                     .token(token)
                     .tipo("Bearer")
@@ -124,14 +117,12 @@ public class AuthService {
                     .correo(usuario.getCorreo())
                     .rol(usuario.getRol())
                     .etiquetaCargo(usuario.getEtiquetaCargo())
-                    .primerIngreso(usuario.isPrimerIngreso())  // true → frontend redirige al cambio de contraseña
+                    .primerIngreso(usuario.isPrimerIngreso())
                     .facultadId(usuario.getFacultad() != null ? usuario.getFacultad().getId() : null)
                     .programaId(usuario.getPrograma() != null ? usuario.getPrograma().getId() : null)
                     .build();
 
         } catch (BadCredentialsException | DisabledException e) {
-            // Credenciales incorrectas o usuario desactivado → registramos el intento fallido
-            // y lanzamos 403 sin revelar qué fue exactamente lo incorrecto
             registrarLoginFallido(request.getCorreo(), ipOrigen);
             throw new AccesoNoAutorizadoException("Credenciales incorrectas o cuenta inactiva.");
         }
@@ -140,39 +131,26 @@ public class AuthService {
     /**
      * Permite al usuario autenticado cambiar su propia contraseña.
      *
-     * Validaciones antes de guardar:
-     *   - La nueva contraseña y su confirmación deben ser iguales.
-     *   - La contraseña actual debe coincidir con el hash en la BD.
-     *
-     * Al completarse, se marca primerIngreso=false para que el sistema
-     * no vuelva a exigir el cambio en el siguiente login.
-     *
      * @param request     contiene passwordActual, passwordNueva y passwordConfirmacion
      * @param userDetails usuario autenticado extraído del token JWT por Spring Security
      */
     @Transactional
     public void cambiarPassword(CambiarPasswordRequest request, CustomUserDetails userDetails) {
 
-        // Verificamos que ambas versiones de la nueva contraseña coincidan
         if (!request.getPasswordNueva().equals(request.getPasswordConfirmacion())) {
             throw new OperacionNoPermitidaException("Las contraseñas nuevas no coinciden.");
         }
 
         Usuario usuario = userDetails.getUsuario();
 
-        // Comparamos el texto plano recibido contra el hash BCrypt almacenado en BD
         if (!passwordEncoder.matches(request.getPasswordActual(), usuario.getPasswordHash())) {
             throw new AccesoNoAutorizadoException("La contraseña actual es incorrecta.");
         }
 
-        // Guardamos el nuevo hash; nunca almacenamos contraseñas en texto plano
         usuario.setPasswordHash(passwordEncoder.encode(request.getPasswordNueva()));
-
-        // Marcamos que ya no es el primer ingreso, para que no se fuerce el cambio nuevamente
         usuario.setPrimerIngreso(false);
         usuarioRepository.save(usuario);
 
-        // Registramos el cambio de contraseña en la bitácora para trazabilidad
         auditoriaLogger.registrar(BitacoraAuditoria.builder()
                 .usuario(usuario)
                 .nombreUsuario(usuario.getNombre())
@@ -186,11 +164,71 @@ public class AuthService {
     }
 
     /**
-     * Registra en la bitácora un intento de login fallido.
-     * Se usa el correo ingresado como nombre de usuario porque el usuario
-     * puede no existir en el sistema (no hay objeto Usuario disponible).
-     * Este método solo registra; la excepción la lanza quien lo llama.
+     * Genera un código de 6 dígitos, lo almacena en memoria con expiración de 10 minutos
+     * y lo envía al correo actual del usuario. Solo se permite un código activo por usuario.
+     *
+     * @param userDetails usuario autenticado
      */
+    public void solicitarCambioCorreo(CustomUserDetails userDetails) {
+        Usuario usuario = userDetails.getUsuario();
+        String codigo = generarCodigo();
+        codigosPendientes.put(usuario.getId(),
+                new CodigoEntry(codigo, LocalDateTime.now().plusMinutes(EXPIRACION_MINUTOS)));
+        emailService.enviarCodigoVerificacionCorreo(usuario.getCorreo(), usuario.getNombre(), codigo);
+        log.info("[AUTH] Código de cambio de correo enviado al usuario {}", usuario.getId());
+    }
+
+    /**
+     * Valida el código recibido y, si es correcto y no ha expirado, actualiza el correo del usuario.
+     *
+     * @param request     contiene el código y el nuevo correo
+     * @param userDetails usuario autenticado
+     */
+    @Transactional
+    public void confirmarCambioCorreo(ConfirmarCambioCorreoRequest request, CustomUserDetails userDetails) {
+        Usuario usuario = userDetails.getUsuario();
+        Long userId = usuario.getId();
+
+        CodigoEntry entry = codigosPendientes.get(userId);
+        if (entry == null) {
+            throw new OperacionNoPermitidaException("No hay un código de verificación pendiente. Solicita uno nuevo.");
+        }
+        if (LocalDateTime.now().isAfter(entry.expiracion())) {
+            codigosPendientes.remove(userId);
+            throw new OperacionNoPermitidaException("El código ha expirado. Solicita uno nuevo.");
+        }
+        if (!entry.codigo().equals(request.codigo())) {
+            throw new AccesoNoAutorizadoException("El código de verificación es incorrecto.");
+        }
+        if (usuarioRepository.existsByCorreo(request.nuevoCorreo())) {
+            throw new OperacionNoPermitidaException("El correo " + request.nuevoCorreo() + " ya está en uso por otra cuenta.");
+        }
+
+        String correoAnterior = usuario.getCorreo();
+        usuario.setCorreo(request.nuevoCorreo());
+        usuarioRepository.save(usuario);
+        codigosPendientes.remove(userId);
+
+        auditoriaLogger.registrar(BitacoraAuditoria.builder()
+                .usuario(usuario)
+                .nombreUsuario(usuario.getNombre())
+                .rolUsuario(usuario.getRol())
+                .etiquetaCargoUsuario(usuario.getEtiquetaCargo())
+                .modulo(ModuloAuditoria.AUTH)
+                .tipoAccion(TipoAccion.CAMBIO_CORREO)
+                .registroAfectadoId(userId)
+                .registroAfectadoTipo("Usuario")
+                .exitoso(true));
+
+        log.info("[AUTH] Correo del usuario {} cambiado de {} a {}", userId, correoAnterior, request.nuevoCorreo());
+    }
+
+    private String generarCodigo() {
+        SecureRandom rng = new SecureRandom();
+        int num = rng.nextInt((int) Math.pow(10, CODIGO_DIGITOS));
+        return String.format("%0" + CODIGO_DIGITOS + "d", num);
+    }
+
     private void registrarLoginFallido(String correo, String ipOrigen) {
         auditoriaLogger.registrar(BitacoraAuditoria.builder()
                 .nombreUsuario(correo)

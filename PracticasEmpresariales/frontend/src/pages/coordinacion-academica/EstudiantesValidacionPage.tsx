@@ -27,6 +27,12 @@ export default function EstudiantesValidacionPage() {
   const [modalApto, setModalApto] = useState<{ open: boolean; estudianteId: number; nombre: string }>({
     open: false, estudianteId: 0, nombre: '',
   })
+  const [modalEnviar, setModalEnviar] = useState<{ open: boolean; estudianteId: number; nombre: string }>({
+    open: false, estudianteId: 0, nombre: '',
+  })
+  const [modalBulkEnviar, setModalBulkEnviar] = useState(false)
+  const [seleccionados, setSeleccionados]     = useState<Set<number>>(new Set())
+
   const [catalogos, setCatalogos]           = useState<CatalogoPracticaResponse[]>([])
   const [catalogoSeleccionado, setCatalogo] = useState('')
 
@@ -44,6 +50,7 @@ export default function EstudiantesValidacionPage() {
 
   useEffect(() => { setPagina(0); cargar(estado, 0) }, [estado])
   useEffect(() => { cargar(estado, pagina) }, [pagina])
+  useEffect(() => { setSeleccionados(new Set()) }, [estado, pagina])
 
   const abrirModalApto = async (e: UsuarioResponse) => {
     setModalApto({ open: true, estudianteId: e.id, nombre: e.nombre })
@@ -68,13 +75,78 @@ export default function EstudiantesValidacionPage() {
     }
   }
 
+  const handleEnviarIndividual = async () => {
+    setProcessing(true)
+    try {
+      await estudianteService.enviarAlProceso([modalEnviar.estudianteId])
+      setModalEnviar({ open: false, estudianteId: 0, nombre: '' })
+      showToast(`${modalEnviar.nombre} enviado a Coordinación de Prácticas.`)
+      await cargar(estado, pagina)
+    } catch (err: unknown) {
+      showToast((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al enviar al proceso.', 'error')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
+  const handleEnviarBulk = async () => {
+    setProcessing(true)
+    try {
+      await estudianteService.enviarAlProceso([...seleccionados])
+      const count = seleccionados.size
+      setSeleccionados(new Set())
+      setModalBulkEnviar(false)
+      showToast(`${count} estudiante${count !== 1 ? 's' : ''} enviado${count !== 1 ? 's' : ''} a Coordinación de Prácticas.`)
+      await cargar(estado, pagina)
+    } catch (err: unknown) {
+      showToast((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al enviar al proceso.', 'error')
+    } finally {
+      setProcessing(false)
+    }
+  }
+
   const estudiantesFiltrados = busqueda
     ? estudiantes.filter(e =>
         e.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
         (e.correo ?? '').toLowerCase().includes(busqueda.toLowerCase()))
     : estudiantes
 
-  const HEADERS = ['Estudiante', 'Contacto', 'Programa', 'Semestre', 'Estado', 'Acciones']
+  const seleccionables = useMemo(
+    () => estudiantesFiltrados.filter(e => e.estadoEstudiante === 'APTO' && !e.enviadoAlProceso),
+    [estudiantesFiltrados]
+  )
+  const todosSeleccionados = seleccionables.length > 0 && seleccionables.every(e => seleccionados.has(e.id))
+  const algunoSeleccionado = seleccionables.some(e => seleccionados.has(e.id))
+
+  const toggleSeleccion = (id: number) => {
+    setSeleccionados(prev => {
+      const next = new Set(prev)
+      next.has(id) ? next.delete(id) : next.add(id)
+      return next
+    })
+  }
+
+  const toggleTodos = () => {
+    if (todosSeleccionados) {
+      setSeleccionados(new Set())
+    } else {
+      setSeleccionados(new Set(seleccionables.map(e => e.id)))
+    }
+  }
+
+  const checkboxHeader = (
+    <input
+      type="checkbox"
+      className="accent-cue-primary h-4 w-4 cursor-pointer"
+      checked={todosSeleccionados}
+      ref={el => { if (el) el.indeterminate = algunoSeleccionado && !todosSeleccionados }}
+      onChange={toggleTodos}
+      disabled={seleccionables.length === 0}
+      title={todosSeleccionados ? 'Deseleccionar todos' : 'Seleccionar todos los aptos pendientes'}
+    />
+  )
+
+  const HEADERS = [checkboxHeader, 'Estudiante', 'Contacto', 'Programa', 'Semestre', 'Estado', 'Acciones']
 
   return (
     <div className="space-y-6">
@@ -108,40 +180,87 @@ export default function EstudiantesValidacionPage() {
         </button>
       </div>
 
+      {/* Barra de acción masiva */}
+      {seleccionados.size > 0 && (
+        <div className="flex items-center justify-between bg-cue-primary/5 border border-cue-primary/20 rounded-xl px-4 py-3">
+          <p className="text-sm font-medium text-cue-primary">
+            {seleccionados.size} estudiante{seleccionados.size !== 1 ? 's' : ''} seleccionado{seleccionados.size !== 1 ? 's' : ''}
+          </p>
+          <div className="flex gap-3">
+            <button
+              onClick={() => setSeleccionados(new Set())}
+              className="text-xs text-gray-500 hover:text-gray-700 transition-colors"
+            >
+              Limpiar selección
+            </button>
+            <Button onClick={() => setModalBulkEnviar(true)} disabled={processing}>
+              Enviar {seleccionados.size} a Coord. Prácticas
+            </Button>
+          </div>
+        </div>
+      )}
+
       <Table headers={HEADERS} loading={loading} empty={estudiantesFiltrados.length === 0}
         emptyMessage="No hay estudiantes para mostrar." emptyIcon="👨‍🎓">
-        {estudiantesFiltrados.map(e => (
-          <tr key={e.id} className="border-b border-gray-100 hover:bg-gray-50">
-            <td className="px-4 py-3">
-              <div className="font-medium text-gray-900">{e.nombre}</div>
-              <div className="text-xs text-gray-400">{e.identificacion ?? 'Sin identificación'}</div>
-            </td>
-            <td className="px-4 py-3 text-gray-600 text-sm">
-              <div>{e.correo}</div>
-              <div className="text-xs text-gray-400">{e.telefono ?? '—'}</div>
-            </td>
-            <td className="px-4 py-3 text-gray-600 text-sm">
-              <div>{e.programaNombre ?? '—'}</div>
-              <div className="text-xs text-gray-400">{e.facultadNombre ?? '—'}</div>
-            </td>
-            <td className="px-4 py-3 text-center text-gray-700">{e.semestre ?? '—'}</td>
-            <td className="px-4 py-3">
-              <span className={e.estadoEstudiante === 'APTO' ? 'badge-apto' : 'badge-no-apto'}>
-                {e.estadoEstudiante ?? 'N/D'}
-              </span>
-            </td>
-            <td className="px-4 py-3">
-              {e.estadoEstudiante !== 'APTO' ? (
-                <button onClick={() => abrirModalApto(e)} disabled={processing}
-                  className="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-lg hover:bg-green-100 transition-colors font-medium">
-                  Marcar APTO
-                </button>
-              ) : (
-                <span className="text-xs text-gray-400 italic">Validado</span>
-              )}
-            </td>
-          </tr>
-        ))}
+        {estudiantesFiltrados.map(e => {
+          const esSeleccionable = e.estadoEstudiante === 'APTO' && !e.enviadoAlProceso
+          const estaSeleccionado = seleccionados.has(e.id)
+          return (
+            <tr key={e.id}
+              className={`border-b border-gray-100 hover:bg-gray-50 transition-colors ${estaSeleccionado ? 'bg-blue-50/60' : ''}`}>
+              <td className="px-4 py-3 w-8">
+                {esSeleccionable ? (
+                  <input
+                    type="checkbox"
+                    className="accent-cue-primary h-4 w-4 cursor-pointer"
+                    checked={estaSeleccionado}
+                    onChange={() => toggleSeleccion(e.id)}
+                  />
+                ) : (
+                  <span className="block w-4" />
+                )}
+              </td>
+              <td className="px-4 py-3">
+                <div className="font-medium text-gray-900">{e.nombre}</div>
+                <div className="text-xs text-gray-400">{e.identificacion ?? 'Sin identificación'}</div>
+              </td>
+              <td className="px-4 py-3 text-gray-600 text-sm">
+                <div>{e.correo}</div>
+                <div className="text-xs text-gray-400">{e.telefono ?? '—'}</div>
+              </td>
+              <td className="px-4 py-3 text-gray-600 text-sm">
+                <div>{e.programaNombre ?? '—'}</div>
+                <div className="text-xs text-gray-400">{e.facultadNombre ?? '—'}</div>
+              </td>
+              <td className="px-4 py-3 text-center text-gray-700">{e.semestre ?? '—'}</td>
+              <td className="px-4 py-3">
+                <span className={e.estadoEstudiante === 'APTO' ? 'badge-apto' : 'badge-no-apto'}>
+                  {e.estadoEstudiante ?? 'N/D'}
+                </span>
+              </td>
+              <td className="px-4 py-3">
+                {e.estadoEstudiante !== 'APTO' ? (
+                  <button onClick={() => abrirModalApto(e)} disabled={processing}
+                    className="text-xs bg-green-50 text-green-700 px-3 py-1 rounded-lg hover:bg-green-100 transition-colors font-medium">
+                    Marcar APTO
+                  </button>
+                ) : e.enviadoAlProceso ? (
+                  <span className="text-xs font-medium bg-blue-50 text-blue-700 px-2.5 py-1 rounded-full">
+                    Enviado
+                  </span>
+                ) : (
+                  <button
+                    onClick={() => setModalEnviar({ open: true, estudianteId: e.id, nombre: e.nombre })}
+                    disabled={processing}
+                    className="text-xs bg-cue-primary text-white px-3 py-1.5 rounded-lg hover:opacity-90 transition-opacity font-medium whitespace-nowrap"
+                  >
+                    Enviar a Coord. Prácticas
+                  </button>
+                )}
+              </td>
+            </tr>
+          )
+        })}
       </Table>
 
       <Pagination
@@ -152,6 +271,53 @@ export default function EstudiantesValidacionPage() {
         disabled={loading}
       />
 
+      {/* Modal: envío individual */}
+      {modalEnviar.open && (
+        <Modal
+          title="Enviar a Coordinación de Prácticas"
+          subtitle={`¿Deseas enviar a ${modalEnviar.nombre} al proceso de asignación de prácticas?`}
+          onClose={() => setModalEnviar({ open: false, estudianteId: 0, nombre: '' })}
+        >
+          <p className="text-sm text-gray-600 mb-6">
+            Una vez enviado, el estudiante quedará disponible para que el Coordinador de Prácticas
+            lo asigne a una empresa. Esta acción no se puede deshacer desde este panel.
+          </p>
+          <div className="flex gap-3">
+            <Button variant="secondary" className="flex-1" type="button"
+              onClick={() => setModalEnviar({ open: false, estudianteId: 0, nombre: '' })}>
+              Cancelar
+            </Button>
+            <Button className="flex-1" loading={processing} onClick={handleEnviarIndividual}>
+              Confirmar envío
+            </Button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal: envío masivo */}
+      {modalBulkEnviar && (
+        <Modal
+          title="Envío masivo a Coordinación de Prácticas"
+          subtitle={`Se enviarán ${seleccionados.size} estudiante${seleccionados.size !== 1 ? 's' : ''} al proceso de asignación.`}
+          onClose={() => setModalBulkEnviar(false)}
+        >
+          <p className="text-sm text-gray-600 mb-6">
+            Todos los estudiantes seleccionados quedarán disponibles para que el Coordinador de Prácticas
+            los asigne a una empresa. Esta acción no se puede deshacer desde este panel.
+          </p>
+          <div className="flex gap-3">
+            <Button variant="secondary" className="flex-1" type="button"
+              onClick={() => setModalBulkEnviar(false)}>
+              Cancelar
+            </Button>
+            <Button className="flex-1" loading={processing} onClick={handleEnviarBulk}>
+              Confirmar envío de {seleccionados.size}
+            </Button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Modal: marcar APTO */}
       {modalApto.open && (
         <Modal title="Marcar como APTO" subtitle={`Selecciona el catálogo para ${modalApto.nombre}.`}
           onClose={() => setModalApto({ open: false, estudianteId: 0, nombre: '' })}>

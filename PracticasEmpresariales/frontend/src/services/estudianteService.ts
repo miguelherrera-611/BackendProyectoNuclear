@@ -24,8 +24,8 @@ export const estudianteService = {
     return res.data.datos!
   },
 
-  async enviarAlProceso(estudiantesIds: number[]): Promise<UsuarioResponse[]> {
-    const res = await api.post<ApiResponse<UsuarioResponse[]>>('/api/v1/estudiantes/enviar-al-proceso', { estudiantesIds })
+  async enviarAlProceso(estudianteIds: number[]): Promise<UsuarioResponse[]> {
+    const res = await api.post<ApiResponse<UsuarioResponse[]>>('/api/v1/estudiantes/enviar-al-proceso', { estudianteIds })
     return res.data.datos ?? []
   },
 }

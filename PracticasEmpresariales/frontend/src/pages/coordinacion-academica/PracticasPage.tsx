@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react'
 import { CatalogoPracticaResponse, ProgramaResponse, ApiResponse, Pageable } from '../../types'
 import { catalogoPracticaService } from '../../services/catalogoPracticaService'
-import { sprint4Service, type ConfigurarProgramaRequest } from '../../services/sprint4Service'
-import { REQUISITOS_CIERRE, CONFIG_DEFAULTS } from '../../constants/configuracion'
 import api from '../../services/api'
 import { Modal } from '../../components/common/Modal/Modal'
 import { Button } from '../../components/common/Button/Button'
@@ -34,9 +32,6 @@ export default function PracticasPage() {
   const [filtroPrograma, setFiltroPrograma] = useState('')
   const [errorModal, setErrorModal]   = useState('')
 
-  const [config, setConfig]                 = useState<ConfigurarProgramaRequest>(CONFIG_DEFAULTS)
-  const [cargandoConfig, setCargandoConfig] = useState(false)
-
   const cargar = () => {
     setLoading(true)
     catalogoPracticaService.listar().then(setCatalogos).finally(() => setLoading(false))
@@ -48,48 +43,16 @@ export default function PracticasPage() {
       .then(r => setProgramas(r.data.datos?.content ?? []))
   }, [])
 
-  const cargarConfigPrograma = async (programaId: string) => {
-    if (!programaId) { setConfig(CONFIG_DEFAULTS); return }
-    setCargandoConfig(true)
-    try {
-      const datos = await sprint4Service.obtenerConfiguracionPrograma(Number(programaId))
-      setConfig({
-        numeroPracticas:       datos.numeroPracticas,
-        semanasSeguimiento:    datos.semanasSeguimiento,
-        notaMinimaAprobacion:  datos.notaMinimaAprobacion,
-        requisitosCierre:      datos.requisitosCierre ?? CONFIG_DEFAULTS.requisitosCierre,
-        umbralInactividadDias: datos.umbralInactividadDias,
-      })
-    } catch {
-      setConfig(CONFIG_DEFAULTS)
-    } finally {
-      setCargandoConfig(false)
-    }
-  }
-
-  const requisitosActivos = config.requisitosCierre
-    ? config.requisitosCierre.split(',').map(r => r.trim()).filter(Boolean)
-    : []
-
-  const toggleRequisito = (valor: string) => {
-    const siguiente = requisitosActivos.includes(valor)
-      ? requisitosActivos.filter(r => r !== valor)
-      : [...requisitosActivos, valor]
-    setConfig({ ...config, requisitosCierre: siguiente.join(',') })
-  }
-
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrorModal('')
     setSaving(true)
     try {
       await catalogoPracticaService.crear({ ...form, programaId: Number(form.programaId) })
-      await sprint4Service.configurarPrograma(Number(form.programaId), config)
       setModalCrear(false)
       setForm(FORM_INICIAL)
-      setConfig(CONFIG_DEFAULTS)
       cargar()
-      showToast('Catálogo y parámetros del programa guardados correctamente.')
+      showToast('Catálogo creado correctamente.')
     } catch (err: unknown) {
       setErrorModal((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al crear el catálogo.')
     } finally {
@@ -149,7 +112,7 @@ export default function PracticasPage() {
           <h1 className="text-2xl font-bold text-gray-900">Catálogo de Prácticas</h1>
           <p className="text-sm text-gray-500 mt-1">Plantillas de prácticas por programa académico.</p>
         </div>
-        <Button onClick={() => { setErrorModal(''); setForm(FORM_INICIAL); setConfig(CONFIG_DEFAULTS); setModalCrear(true) }}>
+        <Button onClick={() => { setErrorModal(''); setForm(FORM_INICIAL); setModalCrear(true) }}>
           + Nuevo Catálogo
         </Button>
       </div>
@@ -199,7 +162,7 @@ export default function PracticasPage() {
       {/* Modal: Crear */}
       {modalCrear && (
         <Modal title="Nuevo Catálogo de Práctica"
-          subtitle="Define la plantilla de la práctica y los parámetros operativos del programa."
+          subtitle="Define la plantilla de práctica para el programa."
           size="lg" onClose={() => { setModalCrear(false); setErrorModal('') }}>
           {errorModal && <div className="bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{errorModal}</div>}
           <form onSubmit={handleCrear} className="space-y-6">
@@ -214,10 +177,7 @@ export default function PracticasPage() {
                   Programa <span className="text-red-500">*</span>
                 </label>
                 <select className="input-field" required value={form.programaId}
-                  onChange={e => {
-                    setForm({ ...form, programaId: e.target.value })
-                    cargarConfigPrograma(e.target.value)
-                  }}>
+                  onChange={e => setForm({ ...form, programaId: e.target.value })}>
                   <option value="">— Selecciona un programa —</option>
                   {programas.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
                 </select>
@@ -243,89 +203,6 @@ export default function PracticasPage() {
                 <textarea className="input-field" rows={2} placeholder="Describe los documentos necesarios..."
                   value={form.documentosRequeridos}
                   onChange={e => setForm({ ...form, documentosRequeridos: e.target.value })} />
-              </div>
-            </div>
-
-            {/* ── Sección 2: Parámetros del programa ── */}
-            <div className="space-y-4">
-              <div className="border-b border-gray-200 pb-2 flex items-center gap-2">
-                <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                  Parámetros del programa
-                </h3>
-                {cargandoConfig && (
-                  <span className="text-xs text-cue-primary flex items-center gap-1">
-                    <span className="animate-spin rounded-full h-3 w-3 border-b-2 border-cue-primary inline-block" />
-                    Cargando configuración...
-                  </span>
-                )}
-              </div>
-              <p className="text-xs text-gray-400 -mt-2">
-                Reglas operativas que aplican a todo el programa. Al seleccionar un programa se carga su configuración actual.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <Input
-                  label="Número de prácticas del programa"
-                  type="number" min={1}
-                  value={config.numeroPracticas}
-                  onChange={e => setConfig({ ...config, numeroPracticas: Number(e.target.value) })}
-                  hint="Total de prácticas que puede cursar un estudiante."
-                  disabled={!form.programaId}
-                />
-                <Input
-                  label="Semanas de seguimiento"
-                  type="number" min={1}
-                  value={config.semanasSeguimiento}
-                  onChange={e => setConfig({ ...config, semanasSeguimiento: Number(e.target.value) })}
-                  hint="Duración del período de seguimiento por práctica."
-                  disabled={!form.programaId}
-                />
-                <Input
-                  label="Nota mínima de aprobación (0 – 5)"
-                  type="number" step="0.1" min={0} max={5}
-                  value={config.notaMinimaAprobacion}
-                  onChange={e => setConfig({ ...config, notaMinimaAprobacion: Number(e.target.value) })}
-                  hint="Nota mínima para aprobar la práctica."
-                  disabled={!form.programaId}
-                />
-                <Input
-                  label="Días de inactividad permitidos"
-                  type="number" min={1}
-                  value={config.umbralInactividadDias}
-                  onChange={e => setConfig({ ...config, umbralInactividadDias: Number(e.target.value) })}
-                  hint="Sin reportes en este plazo → práctica marcada inactiva."
-                  disabled={!form.programaId}
-                />
-              </div>
-
-              <div>
-                <p className="text-sm font-medium text-gray-700 mb-1">Requisitos para el cierre formal</p>
-                <p className="text-xs text-gray-400 mb-3">
-                  Condiciones que deben cumplirse antes de poder cerrar oficialmente una práctica.
-                </p>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {REQUISITOS_CIERRE.map(req => (
-                    <label
-                      key={req.valor}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border cursor-pointer transition-colors ${
-                        !form.programaId
-                          ? 'opacity-40 cursor-not-allowed border-gray-200 bg-gray-50'
-                          : requisitosActivos.includes(req.valor)
-                          ? 'border-cue-accent bg-blue-50'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
-                      }`}
-                    >
-                      <input
-                        type="checkbox"
-                        className="accent-cue-accent h-4 w-4 shrink-0"
-                        checked={requisitosActivos.includes(req.valor)}
-                        onChange={() => toggleRequisito(req.valor)}
-                        disabled={!form.programaId}
-                      />
-                      <span className="text-sm text-gray-700">{req.etiqueta}</span>
-                    </label>
-                  ))}
-                </div>
               </div>
             </div>
 

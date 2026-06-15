@@ -33,6 +33,11 @@ public class TutorEmpresarialController {
         return ResponseEntity.ok(ApiResponse.ok("Tutor obtenido.", tutorService.obtenerPorId(id)));
     }
 
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<TutorEmpresarialResponse>>> listarTodos() {
+        return ResponseEntity.ok(ApiResponse.ok("Tutores.", tutorService.listarTodos()));
+    }
+
     @GetMapping("/empresa/{empresaId}")
     public ResponseEntity<ApiResponse<List<TutorEmpresarialResponse>>> listarPorEmpresa(
             @PathVariable Long empresaId) {

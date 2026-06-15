@@ -56,6 +56,10 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Page<Usuario> findByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndPrograma_IdAndActivoTrue(
             Rol rol, EstadoEstudiante estadoEstudiante, Long programaId, Pageable pageable);
 
+    /** GPE-147 — Coordinador de Prácticas sin programa asignado: todos los APTOS enviados al proceso */
+    Page<Usuario> findByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndActivoTrue(
+            Rol rol, EstadoEstudiante estadoEstudiante, Pageable pageable);
+
     long countByRolAndEstadoEstudianteAndActivoTrue(Rol rol, EstadoEstudiante estadoEstudiante);
 
     long countByRolAndEstadoEstudianteAndEnviadoAlProcesoFalseAndActivoTrue(

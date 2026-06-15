@@ -25,8 +25,8 @@ public class ProgramaConfiguracionService {
 
     @Transactional
     public ProgramaConfiguracionResponse configurar(Long programaId, ConfigurarProgramaRequest req, CustomUserDetails actor) {
-        if (actor.getRol() != Rol.ADMIN_DTI) {
-            throw new AccesoNoAutorizadoException("Solo DTI puede configurar parametros por programa.");
+        if (actor.getRol() != Rol.COORDINACION_ACADEMICA) {
+            throw new AccesoNoAutorizadoException("Solo Coordinación Académica puede configurar parámetros por programa.");
         }
         Programa programa = programaRepository.findById(programaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Programa no encontrado."));

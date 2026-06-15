@@ -21,4 +21,12 @@ export const authService = {
   async cambiarPassword(data: CambiarPasswordRequest): Promise<void> {
     await api.post('/auth/cambiar-password', data)
   },
+
+  async solicitarCambioCorreo(): Promise<void> {
+    await api.post('/auth/correo/solicitar-cambio')
+  },
+
+  async confirmarCambioCorreo(data: { codigo: string; nuevoCorreo: string }): Promise<void> {
+    await api.post('/auth/correo/confirmar-cambio', data)
+  },
 }

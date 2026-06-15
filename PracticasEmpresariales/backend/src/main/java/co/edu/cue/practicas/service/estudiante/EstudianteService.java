@@ -172,12 +172,9 @@ public class EstudianteService extends PlantillaValidacionAptitud {
                 yield usuarioRepository.findEstudiantesPorFacultad(
                         Rol.ESTUDIANTE, facultadId, pageable);
             }
-            case COORDINADOR_PRACTICAS -> {
-                Long programaId = usuario.getProgramaId();
-                yield usuarioRepository
-                        .findByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndPrograma_IdAndActivoTrue(
-                                Rol.ESTUDIANTE, EstadoEstudiante.APTO, programaId, pageable);
-            }
+            case COORDINADOR_PRACTICAS ->
+                usuarioRepository.findByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndActivoTrue(
+                        Rol.ESTUDIANTE, EstadoEstudiante.APTO, pageable);
             default -> usuarioRepository.findByRol(Rol.ESTUDIANTE, pageable);
         };
 

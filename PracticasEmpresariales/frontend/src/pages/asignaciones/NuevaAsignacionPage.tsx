@@ -25,8 +25,23 @@ export default function NuevaAsignacionPage() {
 
   const [loading, setLoading] = useState(false)
   const [error, setError]     = useState('')
+  const [busquedaEst, setBusquedaEst]     = useState('')
+  const [filtroProgramaEst, setFiltroProgramaEst] = useState('')
 
   const vacanteSeleccionada = vacantes.find(v => v.id === vacanteId)
+
+  const programasDisponibles = Array.from(
+    new Map(estudiantes.filter(e => e.programaNombre).map(e => [e.programaNombre, e.programaNombre])).values()
+  ).sort()
+
+  const estudiantesFiltrados = estudiantes.filter(e => {
+    const texto = busquedaEst.toLowerCase()
+    const matchTexto = !texto ||
+      e.nombre.toLowerCase().includes(texto) ||
+      (e.identificacion ?? '').toLowerCase().includes(texto)
+    const matchPrograma = !filtroProgramaEst || e.programaNombre === filtroProgramaEst
+    return matchTexto && matchPrograma
+  })
 
   useEffect(() => {
     vacanteService.listarDisponibles().then(setVacantes).catch(() => setError('Error cargando vacantes.'))
@@ -38,8 +53,8 @@ export default function NuevaAsignacionPage() {
         .then(p => setEstudiantes(p.content.filter(e => e.enviadoAlProceso)))
         .catch(() => setError('Error cargando estudiantes APTOS.'))
     }
-    if (paso === 3 && vacanteSeleccionada) {
-      tutorService.listarPorEmpresa(vacanteSeleccionada.empresaId).then(setTutores).catch(() => setError('Error cargando tutores.'))
+    if (paso === 3) {
+      tutorService.listarTodos().then(setTutores).catch(() => setError('Error cargando tutores.'))
       usuarioService.listarDocentes().then(setDocentes).catch(() => setError('Error cargando docentes asesores.'))
     }
   }, [paso])
@@ -107,18 +122,56 @@ export default function NuevaAsignacionPage() {
       {paso === 2 && (
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-800">2. Selecciona el estudiante APTO</h2>
+
+          {/* Filtros */}
+          <div className="flex gap-3 flex-wrap">
+            <input
+              type="text"
+              placeholder="Buscar por nombre o cédula..."
+              value={busquedaEst}
+              onChange={e => setBusquedaEst(e.target.value)}
+              className="input-field flex-1 min-w-48"
+            />
+            <select
+              className="input-field min-w-48"
+              value={filtroProgramaEst}
+              onChange={e => setFiltroProgramaEst(e.target.value)}
+            >
+              <option value="">Todos los programas</option>
+              {programasDisponibles.map(p => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Lista */}
           <div className="space-y-2 max-h-96 overflow-y-auto">
-            {estudiantes.length === 0 && <p className="text-gray-400 text-sm">No hay estudiantes APTOS disponibles enviados al proceso.</p>}
-            {estudiantes.map(e => (
+            {estudiantes.length === 0 && (
+              <p className="text-gray-400 text-sm">No hay estudiantes APTOS disponibles enviados al proceso.</p>
+            )}
+            {estudiantes.length > 0 && estudiantesFiltrados.length === 0 && (
+              <p className="text-gray-400 text-sm">Ningún estudiante coincide con los filtros aplicados.</p>
+            )}
+            {estudiantesFiltrados.map(e => (
               <label key={e.id} className={`flex items-start gap-3 p-3 border rounded-lg cursor-pointer transition-colors ${estudianteId === e.id ? 'border-cue-primary bg-blue-50' : 'border-gray-200 hover:bg-gray-50'}`}>
                 <input type="radio" name="estudiante" value={e.id} checked={estudianteId === e.id} onChange={() => setEstudianteId(e.id)} className="mt-1" />
                 <div>
                   <div className="font-medium text-gray-900">{e.nombre}</div>
-                  <div className="text-sm text-gray-500">{e.correo} · {e.programaNombre ?? 'Sin programa'}</div>
+                  <div className="text-sm text-gray-500">
+                    {e.identificacion ? `CC ${e.identificacion} · ` : ''}{e.programaNombre ?? 'Sin programa'}
+                  </div>
+                  <div className="text-xs text-gray-400">{e.correo}</div>
                 </div>
               </label>
             ))}
           </div>
+
+          {estudiantesFiltrados.length > 0 && (
+            <p className="text-xs text-gray-400">
+              Mostrando {estudiantesFiltrados.length} de {estudiantes.length} estudiante{estudiantes.length !== 1 ? 's' : ''}
+            </p>
+          )}
+
           <div className="flex gap-2">
             <button className="btn-secondary flex-1" onClick={() => setPaso(1)}>← Anterior</button>
             <button className="btn-primary flex-1" disabled={!estudianteId} onClick={() => setPaso(3)}>Siguiente →</button>
@@ -142,7 +195,7 @@ export default function NuevaAsignacionPage() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tutor Empresarial *</label>
             {tutores.length === 0
-              ? <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">No hay tutores registrados para esta empresa.</p>
+              ? <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">No hay tutores empresariales registrados en el sistema.</p>
               : <select className="input-field" value={tutorId ?? ''} onChange={e => setTutorId(e.target.value ? Number(e.target.value) : null)}>
                   <option value="">-- Selecciona un tutor --</option>
                   {tutores.map(t => <option key={t.id} value={t.id}>{t.nombre} — {t.cargo}</option>)}

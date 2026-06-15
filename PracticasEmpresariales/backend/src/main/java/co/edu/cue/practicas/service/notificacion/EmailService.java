@@ -63,6 +63,39 @@ public class EmailService {
     }
 
     @Async
+    public void enviarCodigoVerificacionCorreo(String destinatario, String nombre, String codigo) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(systemConfig.getMailFromAddress(), systemConfig.getMailFromName());
+            helper.setTo(destinatario);
+            helper.setSubject("Código de verificación — " + systemConfig.getNombreSistema());
+
+            String html = """
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #1a365d;">%s</h2>
+                        <p>Estimado/a <strong>%s</strong>,</p>
+                        <p>Se ha solicitado un cambio de correo electrónico en tu cuenta. Usa el siguiente código para confirmar la operación:</p>
+                        <div style="background: #f7fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 24px; margin: 20px 0; text-align: center;">
+                            <p style="margin: 0; font-size: 32px; font-weight: bold; letter-spacing: 8px; color: #1a365d;">%s</p>
+                        </div>
+                        <p style="color: #718096; font-size: 13px;">Este código es válido por <strong>10 minutos</strong>. Si no solicitaste este cambio, ignora este mensaje.</p>
+                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                        <p style="color: #718096; font-size: 12px;">Este es un mensaje automático. No respondas a este correo.</p>
+                    </div>
+                    """.formatted(systemConfig.getNombreSistema(), nombre, codigo);
+
+            helper.setText(html, true);
+            mailSender.send(message);
+            log.info("[EMAIL] Código de verificación de correo enviado a: {}", destinatario);
+
+        } catch (Exception e) {
+            log.error("[EMAIL] Error enviando código de verificación a {}: {}", destinatario, e.getMessage());
+        }
+    }
+
+    @Async
     public void notificarNuevoEstudiante(Usuario estudiante) {
         log.info("[EMAIL] Notificación de nuevo estudiante pendiente: {} → Coordinación Académica", estudiante.getNombre());
         // En Sprint 2 se implementa la consulta de coordinadores por facultad para notificarlos

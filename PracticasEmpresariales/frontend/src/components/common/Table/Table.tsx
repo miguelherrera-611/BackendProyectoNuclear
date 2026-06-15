@@ -1,7 +1,7 @@
 import { ReactNode } from 'react'
 
 interface TableProps {
-  headers: string[]
+  headers: (string | ReactNode)[]
   loading?: boolean
   empty?: boolean
   emptyMessage?: string
@@ -22,8 +22,8 @@ export function Table({
       <table className="w-full text-sm">
         <thead className="bg-gray-50 border-b border-gray-200">
           <tr>
-            {headers.map(h => (
-              <th key={h} className="text-left px-4 py-3 text-gray-600 font-semibold whitespace-nowrap">
+            {headers.map((h, i) => (
+              <th key={i} className="text-left px-4 py-3 text-gray-600 font-semibold whitespace-nowrap">
                 {h}
               </th>
             ))}

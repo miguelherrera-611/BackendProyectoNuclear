@@ -76,6 +76,14 @@ public class TutorEmpresarialService {
                 .stream().map(mapper::toTutorResponse).toList();
     }
 
+    @SoloLectura
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
+    @Transactional(readOnly = true)
+    public List<TutorEmpresarialResponse> listarTodos() {
+        return tutorRepository.findAll()
+                .stream().map(mapper::toTutorResponse).toList();
+    }
+
     @RequiereRol(roles = {Rol.ADMIN_DTI})
     public TutorEmpresarialResponse desactivarTutor(Long id) {
         TutorEmpresarial tutor = buscarOFallar(id);

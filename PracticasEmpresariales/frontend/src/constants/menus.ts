@@ -16,10 +16,11 @@ export const MENUS_POR_ROL: Record<Rol, MenuItem[]> = {
     { id: 'auditoria', label: 'Bitacora de Auditoria', ruta: '/auditoria', icono: 'Clipboard' },
   ],
   COORDINACION_ACADEMICA: [
-    { id: 'dashboard', label: 'Panel Principal', ruta: '/dashboard', icono: 'Home' },
-    { id: 'validacion', label: 'Validar Estudiantes', ruta: '/validacion-estudiantes', icono: 'Check' },
-    { id: 'practicas', label: 'Catalogo de Practicas', ruta: '/practicas', icono: 'File' },
-    { id: 'reportes', label: 'Reportes Proceso', ruta: '/reportes-proceso', icono: 'Chart' },
+    { id: 'dashboard',   label: 'Panel Principal',      ruta: '/dashboard',              icono: 'Home' },
+    { id: 'validacion',  label: 'Validar Estudiantes',  ruta: '/validacion-estudiantes', icono: 'Check' },
+    { id: 'practicas',   label: 'Catálogo de Prácticas', ruta: '/practicas',             icono: 'File' },
+    { id: 'parametros',  label: 'Parámetros del Programa', ruta: '/parametros-programa', icono: 'Settings' },
+    { id: 'reportes',    label: 'Reportes Proceso',     ruta: '/reportes-proceso',       icono: 'Chart' },
   ],
   COORDINADOR_PRACTICAS: [
     { id: 'dashboard', label: 'Panel Principal', ruta: '/dashboard', icono: 'Home' },
