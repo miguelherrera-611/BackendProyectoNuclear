@@ -292,6 +292,7 @@ export type EstadoEncuesta = 'PENDIENTE' | 'EN_BORRADOR' | 'COMPLETADA'
 export type ResultadoSustentacion = 'APROBADO' | 'NO_APROBADO'
 export type TipoExportacionReporte = 'EXCEL' | 'PDF'
 export type TipoEventoNotificacion =
+  | 'INICIO_PRACTICA'
   | 'EVALUACION_DOCENTE_COMPLETADA'
   | 'EVALUACION_TUTOR_COMPLETADA'
   | 'NOTA_FINAL_REGISTRADA'

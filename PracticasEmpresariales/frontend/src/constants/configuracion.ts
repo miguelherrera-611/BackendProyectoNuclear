@@ -1,6 +1,7 @@
 import type { TipoEventoNotificacion } from '../types'
 
 export const ETIQUETAS_EVENTO: Record<TipoEventoNotificacion, string> = {
+  INICIO_PRACTICA:                  'Inicio de práctica (vinculación confirmada)',
   EVALUACION_DOCENTE_COMPLETADA:    'Evaluación del docente completada',
   EVALUACION_TUTOR_COMPLETADA:      'Evaluación del tutor completada',
   NOTA_FINAL_REGISTRADA:            'Nota final registrada',
@@ -12,6 +13,7 @@ export const ETIQUETAS_EVENTO: Record<TipoEventoNotificacion, string> = {
 }
 
 export const EVENTOS_NOTIFICACION: TipoEventoNotificacion[] = [
+  'INICIO_PRACTICA',
   'EVALUACION_DOCENTE_COMPLETADA',
   'EVALUACION_TUTOR_COMPLETADA',
   'NOTA_FINAL_REGISTRADA',
@@ -44,6 +46,8 @@ export const VARIABLES_PLANTILLA = [
   { variable: '{{nombre_tutor}}',      descripcion: 'Nombre del tutor empresarial' },
   { variable: '{{programa}}',          descripcion: 'Nombre del programa académico' },
   { variable: '{{empresa}}',           descripcion: 'Nombre de la empresa' },
+  { variable: '{{fecha_inicio}}',      descripcion: 'Fecha de inicio de la práctica' },
+  { variable: '{{fecha_fin}}',         descripcion: 'Fecha de fin de la práctica' },
   { variable: '{{nota_final}}',        descripcion: 'Nota final de la práctica' },
   { variable: '{{resultado}}',         descripcion: 'Resultado: APROBADO / NO_APROBADO' },
   { variable: '{{fecha_cierre}}',      descripcion: 'Fecha del cierre formal' },

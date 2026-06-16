@@ -87,20 +87,6 @@ export default function PlanPracticaPage() {
     }
   }
 
-  const handleAprobarTutor = async () => {
-    if (!plan) return
-    setSaving(true)
-    try {
-      const updated = await planPracticaService.aprobarTutor(plan.id)
-      setPlan(updated)
-      setSuccess('Plan aprobado como tutor.')
-    } catch (e: any) {
-      setError(e?.response?.data?.mensaje ?? 'Error al aprobar.')
-    } finally {
-      setSaving(false)
-    }
-  }
-
   const handleAprobarDocente = async () => {
     if (!plan) return
     setSaving(true)
@@ -152,7 +138,7 @@ export default function PlanPracticaPage() {
       {success && <div className="card border-green-200 bg-green-50 text-green-700 text-sm">{success}</div>}
 
       {plan && (
-        <div className="card flex items-center justify-between">
+        <div className="card flex flex-wrap items-center justify-between gap-2">
           <div>
             <span className="text-sm font-medium text-gray-700">Estado del plan:</span>
             <span className={`ml-2 text-xs font-medium px-2 py-1 rounded-full ${BADGE[plan.estado]}`}>
@@ -243,7 +229,7 @@ export default function PlanPracticaPage() {
       )}
 
       {/* Vista del plan para docente / tutor / estudiante en solo lectura */}
-      {plan && (plan.estado === 'APROBADO_DOCENTE' || plan.estado === 'APROBADO_TUTOR' || plan.estado === 'BORRADOR') && (
+      {plan && (esTutor || esDocente || !puedeEditar) && (
         <div className="card space-y-3">
           <h2 className="font-semibold text-gray-800">Contenido del plan</h2>
 
@@ -280,20 +266,12 @@ export default function PlanPracticaPage() {
             </div>
           )}
 
-          <div className="flex gap-2 border-t border-gray-100 pt-3">
-            {esTutor && plan.estado === 'BORRADOR' && (
-              <>
-                <button className="btn-primary flex-1" onClick={handleAprobarTutor} disabled={saving}>Aprobar como tutor</button>
-                <button className="btn-secondary flex-1 text-red-600" onClick={handleRechazar} disabled={saving}>Rechazar</button>
-              </>
-            )}
-            {esDocente && (plan.estado === 'APROBADO_TUTOR' || plan.estado === 'BORRADOR') && (
-              <>
-                <button className="btn-primary flex-1" onClick={handleAprobarDocente} disabled={saving}>Aprobar plan</button>
-                <button className="btn-secondary flex-1 text-red-600" onClick={handleRechazar} disabled={saving}>Rechazar</button>
-              </>
-            )}
-          </div>
+          {esDocente && (plan.estado === 'APROBADO_TUTOR' || plan.estado === 'BORRADOR') && (
+            <div className="flex gap-2 border-t border-gray-100 pt-3">
+              <button className="btn-primary flex-1" onClick={handleAprobarDocente} disabled={saving}>Aprobar plan</button>
+              <button className="btn-secondary flex-1 text-red-600" onClick={handleRechazar} disabled={saving}>Rechazar</button>
+            </div>
+          )}
         </div>
       )}
     </div>

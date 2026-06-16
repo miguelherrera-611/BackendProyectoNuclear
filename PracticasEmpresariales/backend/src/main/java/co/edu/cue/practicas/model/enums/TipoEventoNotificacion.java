@@ -1,6 +1,7 @@
 package co.edu.cue.practicas.model.enums;
 
 public enum TipoEventoNotificacion {
+    INICIO_PRACTICA,
     EVALUACION_DOCENTE_COMPLETADA,
     EVALUACION_TUTOR_COMPLETADA,
     NOTA_FINAL_REGISTRADA,

@@ -17,7 +17,7 @@ export function Pagination({
   const canNext = totalPages > 0 && page < totalPages - 1
 
   return (
-    <div className="flex items-center justify-between gap-3">
+    <div className="flex flex-wrap items-center justify-between gap-3">
       <p className="text-sm text-gray-500">
         Página <span className="font-medium">{page + 1}</span> de{' '}
         <span className="font-medium">{totalPages || 1}</span>

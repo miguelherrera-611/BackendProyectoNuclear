@@ -40,7 +40,7 @@ export const MENUS_POR_ROL: Record<Rol, MenuItem[]> = {
   TUTOR_EMPRESARIAL: [
     { id: 'dashboard', label: 'Panel Principal', ruta: '/dashboard', icono: 'Home' },
     { id: 'practicantes', label: 'Mis Practicantes', ruta: '/mis-practicantes-empresa', icono: 'Users' },
-    { id: 'planes', label: 'Aprobar Planes', ruta: '/planes', icono: 'Clipboard' },
+    { id: 'planes', label: 'Plan Estudiante', ruta: '/planes', icono: 'Clipboard' },
     { id: 'encuestas', label: 'Encuestas', ruta: '/encuestas', icono: 'Chart' },
   ],
   ESTUDIANTE: [

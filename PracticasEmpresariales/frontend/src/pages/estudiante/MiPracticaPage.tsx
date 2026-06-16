@@ -41,7 +41,7 @@ export default function MiPracticaPage() {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 gap-3 text-sm text-gray-600">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-600">
               <div><span className="font-medium text-gray-700">Empresa:</span> {practica.razonSocialEmpresa ?? '—'}</div>
               <div><span className="font-medium text-gray-700">Docente:</span> {practica.nombreDocenteAsesor ?? '—'}</div>
               <div><span className="font-medium text-gray-700">Tutor:</span> {practica.nombreTutorEmpresarial ?? '—'}</div>
@@ -69,7 +69,7 @@ export default function MiPracticaPage() {
           </div>
 
           {practica.estado === 'EN_CURSO' && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button className="card text-left hover:shadow-md transition-shadow cursor-pointer" onClick={() => navigate(`/mi-practica/plan`)}>
                 <h3 className="font-semibold text-gray-800">Plan de práctica</h3>
                 <p className="text-sm text-gray-500 mt-1">Carga y gestiona tu plan de práctica para iniciar seguimientos.</p>

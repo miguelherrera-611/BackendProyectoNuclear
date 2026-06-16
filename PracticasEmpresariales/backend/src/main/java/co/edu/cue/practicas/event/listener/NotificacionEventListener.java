@@ -5,12 +5,17 @@ import co.edu.cue.practicas.event.AsignacionCreadaEvent;
 import co.edu.cue.practicas.event.AsignacionCanceladaEvent;
 import co.edu.cue.practicas.event.VinculacionConfirmadaEvent;
 import co.edu.cue.practicas.model.enums.Rol;
+import co.edu.cue.practicas.model.enums.TipoEventoNotificacion;
 import co.edu.cue.practicas.service.notificacion.EmailService;
+import co.edu.cue.practicas.service.notificacion.NotificacionConfigurableService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
+
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * PATRON OBSERVER — GPE-136, GPE-139
@@ -28,6 +33,7 @@ public class NotificacionEventListener {
     private static final String ESTUDIANTE_DEFAULT = "(estudiante)";
 
     private final EmailService emailService;
+    private final NotificacionConfigurableService notificacionService;
 
     @EventListener
     @Async
@@ -117,13 +123,40 @@ public class NotificacionEventListener {
         if (instancia == null) return;
 
         try {
-            if (instancia.getExpediente() != null && instancia.getExpediente().getEstudiante() != null) {
-                var estudiante = instancia.getExpediente().getEstudiante();
-                if (estudiante.getCorreo() != null) {
-                    String html = SALUDO_HTML + estudiante.getNombre() + ",</p>"
-                            + "<p>Tu vinculacion ha sido confirmada y la practica ya esta en <strong>EN_CURSO</strong>.</p>";
-                    emailService.notificarAsignacion(estudiante.getCorreo(), estudiante.getNombre(), html, "Vinculacion confirmada");
-                }
+            if (instancia.getExpediente() == null || instancia.getExpediente().getEstudiante() == null) return;
+
+            var estudiante = instancia.getExpediente().getEstudiante();
+
+            Map<String, String> vars = new HashMap<>();
+            vars.put("nombre_estudiante", estudiante.getNombre());
+            vars.put("empresa",           instancia.getEmpresa() != null ? instancia.getEmpresa().getRazonSocial() : "");
+            vars.put("nombre_practica",   instancia.getNombre());
+            vars.put("fecha_inicio",      instancia.getFechaInicio() != null ? instancia.getFechaInicio().toString() : "");
+            vars.put("fecha_fin",         instancia.getFechaFin()    != null ? instancia.getFechaFin().toString()    : "");
+            vars.put("nombre_docente",    instancia.getDocenteAsesor() != null ? instancia.getDocenteAsesor().getNombre() : "");
+            vars.put("nombre_tutor",      instancia.getTutorEmpresarial() != null ? instancia.getTutorEmpresarial().getNombre() : "");
+            vars.put("enlace_encuesta",   "");
+            vars.put("resultado",         "");
+            vars.put("nota_final",        "");
+
+            // Notifica al estudiante
+            if (estudiante.getCorreo() != null) {
+                notificacionService.enviar(TipoEventoNotificacion.INICIO_PRACTICA,
+                        estudiante.getId(), estudiante.getCorreo(), estudiante.getNombre(), vars);
+            }
+
+            // Notifica al docente asesor
+            if (instancia.getDocenteAsesor() != null && instancia.getDocenteAsesor().getCorreo() != null) {
+                var docente = instancia.getDocenteAsesor();
+                notificacionService.enviar(TipoEventoNotificacion.INICIO_PRACTICA,
+                        docente.getId(), docente.getCorreo(), docente.getNombre(), vars);
+            }
+
+            // Notifica al tutor empresarial
+            if (instancia.getTutorEmpresarial() != null && instancia.getTutorEmpresarial().getCorreo() != null) {
+                var tutor = instancia.getTutorEmpresarial();
+                notificacionService.enviar(TipoEventoNotificacion.INICIO_PRACTICA,
+                        tutor.getId(), tutor.getCorreo(), tutor.getNombre(), vars);
             }
         } catch (Exception e) {
             log.error("[NOTIFICACION] Error al procesar evento VinculacionConfirmada: {}", e.getMessage());

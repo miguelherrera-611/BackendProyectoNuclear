@@ -246,7 +246,7 @@ export default function VinculacionPage() {
           />
         ))}
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           {TIPOS_FIRMA.map(tipo => {
             const confirmada = firmaConfirmada(tipo)
             const subiendo = uploadingFirmaType === tipo
@@ -288,7 +288,7 @@ export default function VinculacionPage() {
       {instancia?.estado === 'ASIGNADA_PENDIENTE_INICIO' && (
         <div className="card space-y-4">
           <h2 className="font-semibold text-gray-800">Confirmar vinculación → EN_CURSO</h2>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Fecha de inicio *</label>
               <input type="date" className="input-field" value={fechaInicio} onChange={e => setFechaInicio(e.target.value)} />

@@ -3,25 +3,40 @@ import { useAuth } from '../../../context/AuthContext'
 import { MENUS_POR_ROL } from '../../../constants/menus'
 import { ROL_LABELS } from '../../../constants/roles'
 
-/**
- * PATRON MEDIATOR — Frontend
- *
- * El Sidebar consulta el rol del usuario al AuthContext (Mediator)
- * y renderiza únicamente los ítems del menú permitidos para ese rol.
- * Ningún rol ve módulos que no le corresponden.
- */
-export default function Sidebar() {
+interface SidebarProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export default function Sidebar({ isOpen, onClose }: SidebarProps) {
   const { user, logout } = useAuth()
   if (!user) return null
 
   const menuItems = MENUS_POR_ROL[user.rol] ?? []
 
   return (
-    <aside className="w-64 bg-cue-primary text-white flex flex-col shadow-lg">
+    <aside
+      className={`
+        fixed top-0 left-0 h-full z-40 w-64 bg-cue-primary text-white flex flex-col shadow-lg
+        transition-transform duration-300 ease-in-out
+        lg:static lg:translate-x-0 lg:z-auto lg:shrink-0
+        ${isOpen ? 'translate-x-0' : '-translate-x-full'}
+      `}
+    >
       {/* Logo / header */}
-      <div className="p-6 border-b border-blue-800">
-        <h1 className="text-lg font-bold leading-tight">Prácticas Empresariales</h1>
-        <p className="text-blue-300 text-xs mt-1">Univ. Alexander Von Humboldt</p>
+      <div className="p-6 border-b border-blue-800 flex items-start justify-between">
+        <div>
+          <h1 className="text-lg font-bold leading-tight">Prácticas Empresariales</h1>
+          <p className="text-blue-300 text-xs mt-1">Univ. Alexander Von Humboldt</p>
+        </div>
+        {/* Botón cerrar solo visible en móvil */}
+        <button
+          onClick={onClose}
+          className="lg:hidden text-blue-300 hover:text-white transition-colors text-xl leading-none mt-0.5 ml-2 shrink-0"
+          aria-label="Cerrar menú"
+        >
+          ✕
+        </button>
       </div>
 
       {/* Info usuario */}
@@ -43,6 +58,7 @@ export default function Sidebar() {
           <NavLink
             key={item.id}
             to={item.ruta}
+            onClick={onClose}
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-3 text-sm transition-colors ${
                 isActive

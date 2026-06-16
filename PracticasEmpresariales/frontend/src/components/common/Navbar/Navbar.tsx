@@ -7,7 +7,11 @@ import { authService } from '../../../services/authService'
 
 type EmailStep = 'closed' | 'solicitar' | 'confirmar'
 
-export default function Navbar() {
+interface NavbarProps {
+  onMenuToggle: () => void
+}
+
+export default function Navbar({ onMenuToggle }: NavbarProps) {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
 
@@ -112,15 +116,27 @@ export default function Navbar() {
 
   return (
     <>
-      <header className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between shadow-sm">
-        <div />
-        <div className="flex items-center gap-4">
+      <header className="bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
+        {/* Botón hamburguesa visible solo en móvil */}
+        <button
+          onClick={onMenuToggle}
+          className="lg:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-cue-primary"
+          aria-label="Abrir menú"
+        >
+          <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+        {/* Espacio vacío en desktop para mantener el layout */}
+        <div className="hidden lg:block" />
+        <div className="flex items-center gap-3">
           {user.rol === 'DIRECCION' && (
-            <span className="text-xs bg-amber-100 text-amber-800 px-3 py-1 rounded-full font-medium">
+            <span className="text-xs bg-amber-100 text-amber-800 px-2 py-1 rounded-full font-medium hidden sm:inline">
               Solo lectura
             </span>
           )}
-          <div className="text-right">
+          {/* Nombre y rol ocultos en pantallas muy pequeñas */}
+          <div className="text-right hidden sm:block">
             <p className="text-sm font-medium text-gray-800">{user.nombre}</p>
             <p className="text-xs text-gray-500">{ROL_LABELS[user.rol]}</p>
           </div>

@@ -3,12 +3,28 @@ import { useNavigate } from 'react-router-dom'
 import type { InstanciaPracticaResponseV2 } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 
+const ESTADOS_FILTRO = [
+  { label: 'Todos los estados', value: '' },
+  { label: 'En curso',                   value: 'EN_CURSO' },
+  { label: 'Pendiente inicio',           value: 'ASIGNADA_PENDIENTE_INICIO' },
+  { label: 'Finalizada',                 value: 'FINALIZADA' },
+  { label: 'Cancelada',                  value: 'CANCELADA' },
+]
+
+const ESTADO_BADGE: Record<string, string> = {
+  EN_CURSO:                  'bg-green-100 text-green-800',
+  ASIGNADA_PENDIENTE_INICIO: 'bg-yellow-100 text-yellow-800',
+  FINALIZADA:                'bg-blue-100 text-blue-800',
+  CANCELADA:                 'bg-red-100 text-red-800',
+}
+
 export default function TutorMisPracticantesPage() {
-  const navigate  = useNavigate()
+  const navigate = useNavigate()
   const [practicas, setPracticas] = useState<InstanciaPracticaResponseV2[]>([])
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState('')
   const [busqueda, setBusqueda]   = useState('')
+  const [estadoFiltro, setEstadoFiltro] = useState('')
 
   useEffect(() => {
     seguimientoService.misPracticantes()
@@ -17,19 +33,14 @@ export default function TutorMisPracticantesPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const filtradas: InstanciaPracticaResponseV2[] = busqueda
-    ? practicas.filter(p =>
-        p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
-        (p.razonSocialEmpresa ?? '').toLowerCase().includes(busqueda.toLowerCase())
-      )
-    : practicas
-
-  const ESTADO_BADGE: Record<string, string> = {
-    EN_CURSO:                  'bg-green-100 text-green-800',
-    ASIGNADA_PENDIENTE_INICIO: 'bg-yellow-100 text-yellow-800',
-    FINALIZADA:                'bg-blue-100 text-blue-800',
-    CANCELADA:                 'bg-red-100 text-red-800',
-  }
+  const filtradas: InstanciaPracticaResponseV2[] = practicas.filter(p => {
+    const coincideTexto = !busqueda ||
+      p.nombre.toLowerCase().includes(busqueda.toLowerCase()) ||
+      (p.razonSocialEmpresa ?? '').toLowerCase().includes(busqueda.toLowerCase()) ||
+      (p.nombreEstudiante ?? '').toLowerCase().includes(busqueda.toLowerCase())
+    const coincideEstado = !estadoFiltro || p.estado === estadoFiltro
+    return coincideTexto && coincideEstado
+  })
 
   return (
     <div className="space-y-6">
@@ -44,16 +55,25 @@ export default function TutorMisPracticantesPage() {
         <div className="card border-red-200 bg-red-50 text-red-700 text-sm">{error}</div>
       )}
 
-      {/* Filtro */}
+      {/* Filtros */}
       {!loading && practicas.length > 0 && (
-        <div className="card py-3 flex gap-3 items-center">
+        <div className="card py-3 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
           <input
             className="input-field flex-1"
             placeholder="Buscar por estudiante o empresa..."
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
           />
-          <span className="text-sm text-gray-500 whitespace-nowrap">
+          <select
+            className="input-field sm:w-56"
+            value={estadoFiltro}
+            onChange={e => setEstadoFiltro(e.target.value)}
+          >
+            {ESTADOS_FILTRO.map(op => (
+              <option key={op.value} value={op.value}>{op.label}</option>
+            ))}
+          </select>
+          <span className="text-sm text-gray-500 whitespace-nowrap self-center">
             {filtradas.length} de {practicas.length}
           </span>
         </div>
@@ -67,10 +87,12 @@ export default function TutorMisPracticantesPage() {
         <div className="card text-center py-16">
           <div className="text-gray-300 text-5xl mb-3">👨‍💼</div>
           <h3 className="font-medium text-gray-600 mb-1">
-            {busqueda ? 'Sin resultados' : 'Sin practicantes asignados'}
+            {busqueda || estadoFiltro ? 'Sin resultados' : 'Sin practicantes asignados'}
           </h3>
           <p className="text-gray-400 text-sm">
-            {busqueda ? 'Intenta con otro término de búsqueda.' : 'Aún no tienes practicantes asignados a tu cargo.'}
+            {busqueda || estadoFiltro
+              ? 'Intenta con otro término o cambia el filtro de estado.'
+              : 'Aún no tienes practicantes asignados a tu cargo.'}
           </p>
         </div>
       ) : (
@@ -106,9 +128,9 @@ export default function TutorMisPracticantesPage() {
                   <p className="text-xs text-gray-500 mb-2 font-medium">Estado de firmas</p>
                   <div className="flex gap-3">
                     {[
-                      { label: 'Tutor',     done: p.firmaTutor },
-                      { label: 'Docente',   done: p.firmaDocente },
-                      { label: 'Estudiante',done: p.firmaEstudiante },
+                      { label: 'Tutor',      done: p.firmaTutor },
+                      { label: 'Docente',    done: p.firmaDocente },
+                      { label: 'Estudiante', done: p.firmaEstudiante },
                     ].map(firma => (
                       <div key={firma.label} className={`flex items-center gap-1 text-xs ${firma.done ? 'text-green-600' : 'text-gray-400'}`}>
                         <span>{firma.done ? '✓' : '○'}</span>
@@ -120,24 +142,12 @@ export default function TutorMisPracticantesPage() {
               )}
 
               {/* Acciones */}
-              <div className="border-t border-gray-100 pt-3 flex gap-2">
+              <div className="border-t border-gray-100 pt-3">
                 <button
-                  className="btn-primary text-xs flex-1"
+                  className="btn-primary text-xs w-full"
                   onClick={() => navigate(`/plan/${p.id}`)}
                 >
                   Ver Plan
-                </button>
-                <button
-                  className="btn-secondary text-xs flex-1"
-                  onClick={() => navigate(`/seguimiento/${p.id}`)}
-                >
-                  Seguimientos
-                </button>
-                <button
-                  className="btn-secondary text-xs flex-1"
-                  onClick={() => navigate(`/evaluacion-tutor/${p.id}`)}
-                >
-                  Evaluar
                 </button>
               </div>
             </div>

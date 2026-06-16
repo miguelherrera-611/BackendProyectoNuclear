@@ -206,7 +206,7 @@ export default function SeguimientoEstudiantePage() {
                   )}
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                 <div>
                   <p className="font-medium text-gray-700">Actividades</p>
                   <p className="text-gray-600 mt-1">{s.actividades}</p>
