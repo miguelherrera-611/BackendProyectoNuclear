@@ -3,33 +3,36 @@ import axios from 'axios'
 /**
  * Instancia Axios configurada como Singleton.
  * Un solo punto de entrada para todas las peticiones HTTP.
+ *
+ * En desarrollo usa el proxy de Vite (/api), en producción usa la URL
+ * completa del backend definida en la variable de entorno VITE_API_URL.
  */
 const api = axios.create({
-  baseURL: '/api',
-  headers: { 'Content-Type': 'application/json' },
+    baseURL: import.meta.env.VITE_API_URL || '/api',
+    headers: { 'Content-Type': 'application/json' },
 })
 
 // Interceptor: inyecta el token JWT en cada petición
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token')
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
+    const token = localStorage.getItem('token')
+    if (token) {
+        config.headers.Authorization = `Bearer ${token}`
+    }
+    return config
 })
 
 // Interceptor: maneja errores globales
 api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    const status = error.response?.status
-    if (status === 401) {
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
-      window.location.href = '/login'
+    (response) => response,
+    (error) => {
+        const status = error.response?.status
+        if (status === 401) {
+            localStorage.removeItem('token')
+            localStorage.removeItem('user')
+            window.location.href = '/login'
+        }
+        return Promise.reject(error)
     }
-    return Promise.reject(error)
-  }
 )
 
 export default api
