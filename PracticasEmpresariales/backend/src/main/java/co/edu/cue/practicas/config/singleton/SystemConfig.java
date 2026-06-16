@@ -14,11 +14,13 @@ import org.springframework.stereotype.Component;
  * los consulte sin acceder directamente a application.properties.
  *
  * Valores configurables en application.properties:
- *   app.nombre           → nombre del sistema mostrado en correos y UI
- *   app.universidad      → nombre de la institución
+ *   app.nombre            → nombre del sistema mostrado en correos y UI
+ *   app.universidad       → nombre de la institución
  *   app.jwt.expiration-ms → duración del token JWT en milisegundos
- *   app.mail.from.name   → nombre visible del remitente en los correos
- *   app.mail.from.address → dirección de correo del remitente
+ *   app.mail.from.name    → nombre visible del remitente en los correos
+ *   app.mail.from.address → dirección de correo del remitente (debe ser
+ *                           el remitente verificado en SendGrid)
+ *   sendgrid.api-key      → API Key de SendGrid (permiso "Mail Send")
  */
 @Component
 public class SystemConfig {
@@ -40,6 +42,7 @@ public class SystemConfig {
     private String mailFromName;
 
     // Dirección de correo desde la que se envían las notificaciones del sistema
+    // (debe coincidir con el remitente verificado en SendGrid)
     @Value("${app.mail.from.address}")
     private String mailFromAddress;
 
@@ -51,6 +54,10 @@ public class SystemConfig {
     @Value("${app.mail.retry.delay-ms:120000}")
     private long mailRetryDelayMs;
 
+    // API Key de SendGrid usada para autenticar las peticiones HTTP a /v3/mail/send
+    @Value("${sendgrid.api-key}")
+    private String sendgridApiKey;
+
     public String getNombreSistema() { return nombreSistema; }
     public String getNombreUniversidad() { return nombreUniversidad; }
     public long getJwtExpirationMs() { return jwtExpirationMs; }
@@ -58,4 +65,5 @@ public class SystemConfig {
     public String getMailFromAddress() { return mailFromAddress; }
     public int getMailRetryAttempts() { return mailRetryAttempts; }
     public long getMailRetryDelayMs() { return mailRetryDelayMs; }
+    public String getSendgridApiKey() { return sendgridApiKey; }
 }
