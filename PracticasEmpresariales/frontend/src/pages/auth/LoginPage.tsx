@@ -136,8 +136,8 @@ export default function LoginPage() {
   const codigoExpirado = contadorIniciado && tiempoRestante === 0
 
   return (
-    <div className="min-h-screen bg-cue-primary flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-br from-cue-primary via-cue-primary to-cue-secondary flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden border-2 border-white/20 shadow-[0_8px_40px_rgba(0,0,0,0.55)]">
 
         {/* Header */}
         <div className="bg-cue-primary px-6 py-7 sm:px-8 sm:py-8 text-center">
