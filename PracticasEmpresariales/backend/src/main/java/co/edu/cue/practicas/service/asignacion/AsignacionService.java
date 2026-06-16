@@ -225,23 +225,30 @@ public class AsignacionService {
         }
     }
 
-    /** GPE-158 — Lista asignaciones activas con filtro opcional por estado */
+    /** GPE-158 — Lista asignaciones filtradas por la facultad del coordinador */
     @Transactional
     public List<InstanciaPracticaResponse> listarAsignaciones(String estadoStr, CustomUserDetails actor) {
         if (actor == null || actor.getRol() != Rol.COORDINADOR_PRACTICAS)
             throw new AccesoNoAutorizadoException("Solo el Coordinador de Prácticas puede ver las asignaciones.");
 
+        Long facultadId = actor.getFacultadId();
         List<InstanciaPractica> instancias;
+
         if (estadoStr != null && !estadoStr.isBlank()) {
             try {
                 EstadoPractica estado = EstadoPractica.valueOf(estadoStr.toUpperCase());
-                instancias = instanciaRepository.findAllByEstado(estado);
+                instancias = facultadId != null
+                        ? instanciaRepository.findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(estado, facultadId)
+                        : instanciaRepository.findAllByEstado(estado);
             } catch (IllegalArgumentException e) {
                 throw new IllegalArgumentException("Estado no válido: " + estadoStr);
             }
         } else {
-            instancias = instanciaRepository.findAll();
+            instancias = facultadId != null
+                    ? instanciaRepository.findAllByExpediente_Estudiante_Programa_Facultad_Id(facultadId)
+                    : instanciaRepository.findAll();
         }
+
         return instancias.stream().map(estudianteMapper::toInstanciaPracticaResponse).toList();
     }
 

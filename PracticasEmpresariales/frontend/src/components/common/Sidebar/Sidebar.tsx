@@ -71,7 +71,7 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           onClick={logout}
           className="w-full text-sm text-blue-300 hover:text-white transition-colors text-left flex items-center gap-2"
         >
-          <span>🚪</span> Cerrar sesión
+          <span></span> Cerrar sesión
         </button>
       </div>
     </aside>

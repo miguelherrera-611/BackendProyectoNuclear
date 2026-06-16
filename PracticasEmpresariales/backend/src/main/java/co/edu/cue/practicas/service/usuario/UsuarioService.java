@@ -73,6 +73,14 @@ public class UsuarioService {
             throw new OperacionNoPermitidaException("La etiqueta de cargo es obligatoria para el rol Coordinacion Academica.");
         }
 
+        if (Rol.COORDINACION_ACADEMICA.equals(request.getRol()) && request.getProgramaId() == null) {
+            throw new OperacionNoPermitidaException("El programa es obligatorio para el rol Coordinacion Academica.");
+        }
+
+        if (Rol.COORDINADOR_PRACTICAS.equals(request.getRol()) && request.getFacultadId() == null) {
+            throw new OperacionNoPermitidaException("La facultad es obligatoria para el rol Coordinador de Practicas.");
+        }
+
         if (Rol.ESTUDIANTE.equals(request.getRol())
                 && request.getIdentificacion() != null
                 && usuarioRepository.existsByIdentificacion(request.getIdentificacion())) {
@@ -82,6 +90,11 @@ public class UsuarioService {
 
         Facultad facultad = resolverFacultad(request);
         Programa programa = resolverPrograma(request);
+
+        // Para COORDINACION_ACADEMICA, la facultad se deriva del programa asignado
+        if (Rol.COORDINACION_ACADEMICA.equals(request.getRol()) && facultad == null && programa != null) {
+            facultad = programa.getFacultad();
+        }
         String passwordTemporal = generarPasswordTemporal();
 
         Usuario usuario = Usuario.builder()

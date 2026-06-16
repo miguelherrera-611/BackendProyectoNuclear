@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import type { UsuarioResponse, EmpresaResponse } from '../../types'
 import { usuarioService } from '../../services/usuarioService'
 import { empresaService } from '../../services/empresaService'
+import { Select } from '../../components/common/Select/Select'
 
 export default function TutoresPage() {
   const [tutores, setTutores] = useState<UsuarioResponse[]>([])
@@ -156,9 +157,8 @@ export default function TutoresPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">Empresa</label>
-              <select
-                className="input-field"
+              <Select
+                label="Empresa"
                 value={empresaSeleccionada}
                 onChange={e => setEmpresaSeleccionada(e.target.value === '' ? '' : Number(e.target.value))}
               >
@@ -166,7 +166,7 @@ export default function TutoresPage() {
                 {empresas.map(e => (
                   <option key={e.id} value={e.id}>{e.razonSocial} · {e.nit}</option>
                 ))}
-              </select>
+              </Select>
               {empresas.length === 0 && (
                 <p className="text-xs text-amber-600">No hay empresas activas registradas.</p>
               )}

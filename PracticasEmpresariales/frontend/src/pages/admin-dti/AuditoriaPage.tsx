@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { TipoAccion } from '../../types'
 import api from '../../services/api'
 import { ApiResponse, Pageable } from '../../types'
+import { Select } from '../../components/common/Select/Select'
 
 const TIPO_ACCCION_BADGE: Partial<Record<TipoAccion, string>> = {
   LOGIN_EXITOSO:        'bg-green-100 text-green-800',
@@ -62,39 +63,35 @@ export default function AuditoriaPage() {
 
       {/* Filtros */}
       <div className="card flex gap-4 flex-wrap items-end">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Tipo de acción</label>
-          <select
-            className="input-field w-auto"
-            value={filtroAccion}
-            onChange={e => { setFiltroAccion(e.target.value); setFiltroModulo('') }}
-          >
-            <option value="">Todos los tipos</option>
-            {[
-              'LOGIN_EXITOSO','LOGIN_FALLIDO','LOGOUT',
-              'CREAR','EDITAR','CONFIRMAR','ASIGNAR',
-              'DESACTIVAR','ACTIVAR','CAMBIO_ESTADO',
-              'SUBIR_DOCUMENTO','FIRMAR','CERRAR','CALIFICAR',
-              'ACCESO_NO_AUTORIZADO','CAMBIO_PASSWORD','RESET_PASSWORD',
-              'EXPORTAR','CONSULTAR',
-            ].map(t => (
-              <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
-            ))}
-          </select>
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Módulo</label>
-          <select
-            className="input-field w-auto"
-            value={filtroModulo}
-            onChange={e => setFiltroModulo(e.target.value)}
-          >
-            <option value="">Todos los módulos</option>
-            {modulosDisponibles.map(m => (
-              <option key={m} value={m}>{m}</option>
-            ))}
-          </select>
-        </div>
+        <Select
+          label="Tipo de acción"
+          className="w-auto"
+          value={filtroAccion}
+          onChange={e => { setFiltroAccion(e.target.value); setFiltroModulo('') }}
+        >
+          <option value="">Todos los tipos</option>
+          {[
+            'LOGIN_EXITOSO','LOGIN_FALLIDO','LOGOUT',
+            'CREAR','EDITAR','CONFIRMAR','ASIGNAR',
+            'DESACTIVAR','ACTIVAR','CAMBIO_ESTADO',
+            'SUBIR_DOCUMENTO','FIRMAR','CERRAR','CALIFICAR',
+            'ACCESO_NO_AUTORIZADO','CAMBIO_PASSWORD','RESET_PASSWORD',
+            'EXPORTAR','CONSULTAR',
+          ].map(t => (
+            <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>
+          ))}
+        </Select>
+        <Select
+          label="Módulo"
+          className="w-auto"
+          value={filtroModulo}
+          onChange={e => setFiltroModulo(e.target.value)}
+        >
+          <option value="">Todos los módulos</option>
+          {modulosDisponibles.map(m => (
+            <option key={m} value={m}>{m}</option>
+          ))}
+        </Select>
         <button className="btn-primary" onClick={cargar}>Buscar</button>
       </div>
 

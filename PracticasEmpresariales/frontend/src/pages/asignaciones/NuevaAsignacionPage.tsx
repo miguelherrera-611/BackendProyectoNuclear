@@ -5,6 +5,7 @@ import { vacanteService } from '../../services/vacanteService'
 import { estudianteService } from '../../services/estudianteService'
 import { usuarioService } from '../../services/usuarioService'
 import { asignacionService } from '../../services/asignacionService'
+import { Select } from '../../components/common/Select/Select'
 
 type Paso = 1 | 2 | 3
 
@@ -131,8 +132,8 @@ export default function NuevaAsignacionPage() {
               onChange={e => setBusquedaEst(e.target.value)}
               className="input-field flex-1 min-w-48"
             />
-            <select
-              className="input-field min-w-48"
+            <Select
+              className="min-w-48"
               value={filtroProgramaEst}
               onChange={e => setFiltroProgramaEst(e.target.value)}
             >
@@ -140,7 +141,7 @@ export default function NuevaAsignacionPage() {
               {programasDisponibles.map(p => (
                 <option key={p} value={p}>{p}</option>
               ))}
-            </select>
+            </Select>
           </div>
 
           {/* Lista */}
@@ -185,20 +186,20 @@ export default function NuevaAsignacionPage() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Docente Asesor *</label>
             {docentes.length === 0
               ? <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">No hay docentes asesores activos registrados en el sistema.</p>
-              : <select className="input-field" value={docenteId ?? ''} onChange={e => setDocenteId(e.target.value ? Number(e.target.value) : null)}>
+              : <Select value={docenteId ?? ''} onChange={e => setDocenteId(e.target.value ? Number(e.target.value) : null)}>
                   <option value="">-- Selecciona un docente --</option>
                   {docentes.map(d => <option key={d.id} value={d.id}>{d.nombre}</option>)}
-                </select>
+                </Select>
             }
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Tutor Empresarial *</label>
             {tutores.length === 0
               ? <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">No hay tutores empresariales registrados en el sistema.</p>
-              : <select className="input-field" value={tutorId ?? ''} onChange={e => setTutorId(e.target.value ? Number(e.target.value) : null)}>
+              : <Select value={tutorId ?? ''} onChange={e => setTutorId(e.target.value ? Number(e.target.value) : null)}>
                   <option value="">-- Selecciona un tutor --</option>
                   {tutores.map(t => <option key={t.id} value={t.id}>{t.nombre} — {t.correo}</option>)}
-                </select>
+                </Select>
             }
           </div>
           <div className="bg-gray-50 rounded-lg p-4 text-sm text-gray-600 space-y-1">

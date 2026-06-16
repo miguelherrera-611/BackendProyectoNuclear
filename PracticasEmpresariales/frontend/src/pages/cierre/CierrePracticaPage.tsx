@@ -4,6 +4,7 @@ import { ChecklistCierrePanel } from '../../components/cierre/ChecklistCierrePan
 import { sprint4Service } from '../../services/sprint4Service'
 import { usuarioService } from '../../services/usuarioService'
 import type { ChecklistCierreResponse, CierreFormalResponse, ResultadoSustentacion, UsuarioResponse } from '../../types'
+import { Select } from '../../components/common/Select/Select'
 
 export default function CierrePracticaPage() {
   // SPRINT 4 - Facade UI: una pantalla coordina sustentacion, encuestas, checklist y cierre formal.
@@ -130,10 +131,10 @@ export default function CierrePracticaPage() {
           <input className="input-field" placeholder="Jurados separados por coma" value={jurados} onChange={e => setJurados(e.target.value)} />
           <button className="btn-secondary w-full" disabled={saving || !fecha || !jurados} onClick={programar}>Programar sustentacion</button>
           <div className="border-t border-gray-100 pt-4 space-y-3">
-            <select className="input-field" value={resultadoSust} onChange={e => setResultadoSust(e.target.value as ResultadoSustentacion)}>
+            <Select value={resultadoSust} onChange={e => setResultadoSust(e.target.value as ResultadoSustentacion)}>
               <option value="APROBADO">Aprobado</option>
               <option value="NO_APROBADO">No aprobado</option>
-            </select>
+            </Select>
             <input className="input-field" placeholder="URL o ruta del acta firmada" value={actaUrl} onChange={e => setActaUrl(e.target.value)} />
             <button className="btn-secondary w-full" disabled={saving || !actaUrl} onClick={registrarResultado}>Registrar acta y resultado</button>
           </div>
@@ -146,8 +147,7 @@ export default function CierrePracticaPage() {
         <h2 className="font-semibold text-gray-900">Encuestas obligatorias</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <input className="input-field" placeholder="Titulo de encuesta" value={tituloEncuesta} onChange={e => setTituloEncuesta(e.target.value)} />
-          <select
-            className="input-field"
+          <Select
             value={tutorEmpresarialId ?? ''}
             onChange={e => setTutorEmpresarialId(e.target.value ? Number(e.target.value) : null)}
           >
@@ -155,7 +155,7 @@ export default function CierrePracticaPage() {
             {tutores.map(t => (
               <option key={t.id} value={t.id}>{t.nombre} — {t.correo}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <textarea className="input-field" rows={3} value={preguntasEncuesta} onChange={e => setPreguntasEncuesta(e.target.value)} />
         <div className="flex flex-col sm:flex-row gap-3">

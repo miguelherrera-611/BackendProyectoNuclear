@@ -5,6 +5,7 @@ import { empresaService } from '../../services/empresaService'
 import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
 import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
+import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
 import { useToast } from '../../components/common/Notifications/Toast'
 
@@ -151,20 +152,15 @@ export default function VacantesPage() {
         <Modal title="Nueva Vacante" onClose={() => { setModalCrear(false); setErrorModal('') }}>
           {errorModal && <div className="bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{errorModal}</div>}
           <form onSubmit={handleCrear} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Empresa <span className="text-red-500">*</span>
-              </label>
-              <select
-                className="input-field"
-                required
-                value={form.empresaId || ''}
-                onChange={e => setForm({ ...form, empresaId: Number(e.target.value) })}
-              >
-                <option value="">Selecciona una empresa activa</option>
-                {empresas.map(em => <option key={em.id} value={em.id}>{em.razonSocial}</option>)}
-              </select>
-            </div>
+            <Select
+              label="Empresa"
+              required
+              value={form.empresaId || ''}
+              onChange={e => setForm({ ...form, empresaId: Number(e.target.value) })}
+            >
+              <option value="">Selecciona una empresa activa</option>
+              {empresas.map(em => <option key={em.id} value={em.id}>{em.razonSocial}</option>)}
+            </Select>
             <Input
               label="Área"
               required

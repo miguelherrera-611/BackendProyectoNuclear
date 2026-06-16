@@ -73,12 +73,12 @@ public class Usuario {
 
     // ===== SCOPES según rol =====
 
-    /** Scope para COORDINACION_ACADEMICA */
+    /** Scope para COORDINADOR_PRACTICAS (y derivado para COORDINACION_ACADEMICA desde su programa) */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "facultad_id")
     private Facultad facultad;
 
-    /** Scope para COORDINADOR_PRACTICAS */
+    /** Scope para COORDINACION_ACADEMICA y ESTUDIANTE */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "programa_id")
     private Programa programa;

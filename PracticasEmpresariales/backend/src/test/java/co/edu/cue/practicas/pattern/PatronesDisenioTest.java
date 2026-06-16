@@ -43,7 +43,7 @@ class PatronesDisenioTest {
         assertNotNull(empresa);
         assertEquals("TechCo S.A.", empresa.getRazonSocial());
         assertEquals("900.123.456-7", empresa.getNit());
-        assertEquals(EstadoEmpresa git commit -m "Merge branch 'origin/main' into main".PENDIENTE, empresa.getEstado()); // siempre inicia PENDIENTE
+        assertEquals(EstadoEmpresa "Merge branch 'origin/main' into main".PENDIENTE, empresa.getEstado()); // siempre inicia PENDIENTE
         assertEquals(2, empresa.getAreasDisponibles().size());
     }
 

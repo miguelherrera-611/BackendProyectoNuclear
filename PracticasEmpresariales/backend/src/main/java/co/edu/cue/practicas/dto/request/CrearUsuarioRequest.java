@@ -28,10 +28,10 @@ public class CrearUsuarioRequest {
 
     private String telefono;
 
-    /** ID de facultad — requerido para COORDINACION_ACADEMICA */
+    /** ID de facultad — requerido para COORDINADOR_PRACTICAS */
     private Long facultadId;
 
-    /** ID de programa — requerido para COORDINADOR_PRACTICAS y ESTUDIANTE */
+    /** ID de programa — requerido para COORDINACION_ACADEMICA y ESTUDIANTE */
     private Long programaId;
 
     // ── Campos exclusivos de ESTUDIANTE ──────────────────────────────────────

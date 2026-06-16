@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { sprint4Service } from '../../services/sprint4Service'
 import type { ReporteEstadoProcesoResponse, TipoExportacionReporte } from '../../types'
+import { Select } from '../../components/common/Select/Select'
 
 const AÑO_ACTUAL = new Date().getFullYear()
 
@@ -78,23 +79,16 @@ export default function ReportesPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Semestre */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Semestre académico
-            </label>
-            <select
-              className="input-field"
-              value={semestre}
-              onChange={e => { setSemestre(e.target.value); setReporte(null) }}
-            >
-              {SEMESTRES.map(s => (
-                <option key={s.value} value={s.value}>{s.label}</option>
-              ))}
-            </select>
-            <p className="text-xs text-gray-400 mt-1">
-              {semestre ? `Filtrado por: ${semestre}` : 'Sin filtro de semestre — muestra todos los registros'}
-            </p>
-          </div>
+          <Select
+            label="Semestre académico"
+            value={semestre}
+            onChange={e => { setSemestre(e.target.value); setReporte(null) }}
+            hint={semestre ? `Filtrado por: ${semestre}` : 'Sin filtro de semestre — muestra todos los registros'}
+          >
+            {SEMESTRES.map(s => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
+          </Select>
 
           {/* Formato */}
           <div>

@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react'
 import { Input } from '../common/Input/Input'
+import { Select } from '../common/Select/Select'
 import { Button } from '../common/Button/Button'
 import type { PlantillaNotificacionRequest } from '../../services/sprint4Service'
 import type { PlantillaNotificacionResponse, TipoEventoNotificacion } from '../../types'
@@ -148,25 +149,19 @@ export function PlantillasNotificacionPanel({
       </div>
 
       {/* Evento */}
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          ¿Cuándo se envía este correo? <span className="text-red-500">*</span>
-        </label>
-        <select
-          className="input-field"
-          value={plantilla.tipoEvento}
-          onChange={e => onCambiarEvento(e.target.value as TipoEventoNotificacion)}
-        >
-          {EVENTOS_NOTIFICACION.map(ev => (
-            <option key={ev} value={ev}>
-              {guardadas.has(ev) ? '✓ ' : '○ '}{ETIQUETAS_EVENTO[ev]}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-gray-400 mt-1">
-          El sistema enviará este correo automáticamente cada vez que ocurra esta situación.
-        </p>
-      </div>
+      <Select
+        label="¿Cuándo se envía este correo?"
+        required
+        value={plantilla.tipoEvento}
+        onChange={e => onCambiarEvento(e.target.value as TipoEventoNotificacion)}
+        hint="El sistema enviará este correo automáticamente cada vez que ocurra esta situación."
+      >
+        {EVENTOS_NOTIFICACION.map(ev => (
+          <option key={ev} value={ev}>
+            {guardadas.has(ev) ? '✓ ' : '○ '}{ETIQUETAS_EVENTO[ev]}
+          </option>
+        ))}
+      </Select>
 
       {/* Editor + Vista previa */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -1,4 +1,5 @@
 import { Input } from '../common/Input/Input'
+import { Select } from '../common/Select/Select'
 import { Button } from '../common/Button/Button'
 import type { ProgramaResponse } from '../../types'
 import type { ConfigurarProgramaRequest } from '../../services/sprint4Service'
@@ -38,24 +39,18 @@ export function ParametrosProgramaPanel({
 
   return (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          Programa académico <span className="text-red-500">*</span>
-        </label>
-        <select
-          className="input-field"
-          value={programaId}
-          onChange={e => onSeleccionarPrograma(e.target.value)}
-        >
-          <option value="">Selecciona un programa para cargar su configuración</option>
-          {programas.map(p => (
-            <option key={p.id} value={p.id}>{p.nombre}</option>
-          ))}
-        </select>
-        <p className="text-xs text-gray-400 mt-1">
-          Cada programa puede tener parámetros distintos. Selecciónalo para ver y editar su configuración vigente.
-        </p>
-      </div>
+      <Select
+        label="Programa académico"
+        required
+        value={programaId}
+        onChange={e => onSeleccionarPrograma(e.target.value)}
+        hint="Cada programa puede tener parámetros distintos. Selecciónalo para ver y editar su configuración vigente."
+      >
+        <option value="">Selecciona un programa para cargar su configuración</option>
+        {programas.map(p => (
+          <option key={p.id} value={p.id}>{p.nombre}</option>
+        ))}
+      </Select>
 
       {cargando ? (
         <div className="flex items-center gap-3 py-8 justify-center text-gray-400">

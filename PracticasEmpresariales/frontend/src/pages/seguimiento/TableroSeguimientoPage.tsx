@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import type { InstanciaPracticaResponseV2 } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 import { useAuth } from '../../context/AuthContext'
+import { Select } from '../../components/common/Select/Select'
 
 export default function TableroSeguimientoPage() {
   const navigate = useNavigate()
@@ -38,22 +39,20 @@ export default function TableroSeguimientoPage() {
 
       <div className="card flex gap-4 items-end flex-wrap">
         <div className="flex-1 min-w-48">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Empresa</label>
-          <select className="input-field" value={filtroEmpresa} onChange={e => setFiltroEmpresa(e.target.value)}>
+          <Select label="Empresa" value={filtroEmpresa} onChange={e => setFiltroEmpresa(e.target.value)}>
             <option value="">Todas las empresas</option>
             {[...new Set(practicas.map(p => p.razonSocialEmpresa).filter(Boolean))].sort().map(e => (
               <option key={e} value={e!}>{e}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <div className="flex-1 min-w-48">
-          <label className="block text-sm font-medium text-gray-700 mb-1">Docente asesor</label>
-          <select className="input-field" value={filtroDocente} onChange={e => setFiltroDocente(e.target.value)}>
+          <Select label="Docente asesor" value={filtroDocente} onChange={e => setFiltroDocente(e.target.value)}>
             <option value="">Todos los docentes</option>
             {[...new Set(practicas.map(p => p.nombreDocenteAsesor).filter(Boolean))].sort().map(d => (
               <option key={d} value={d!}>{d}</option>
             ))}
-          </select>
+          </Select>
         </div>
         <span className="text-sm text-gray-500 self-end pb-2">{filtradas.length} resultado{filtradas.length !== 1 ? 's' : ''}</span>
       </div>

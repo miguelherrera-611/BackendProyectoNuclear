@@ -3,6 +3,7 @@ import { EstadoEstudiante, Pageable, UsuarioResponse } from '../../types'
 import { estudianteService } from '../../services/estudianteService'
 import { Modal } from '../../components/common/Modal/Modal'
 import { Button } from '../../components/common/Button/Button'
+import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
 import { Pagination } from '../../components/common/Table/Pagination'
 import { useToast } from '../../components/common/Notifications/Toast'
@@ -187,15 +188,12 @@ export default function EstudiantesPage() {
         <Modal title="Marcar como APTO" subtitle={`Asigna un catálogo de práctica a ${modalApto.nombre}.`}
           onClose={() => setModalApto({ open: false, id: 0, nombre: '' })}>
           <form onSubmit={handleMarcarApto} className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Catálogo de práctica <span className="text-red-500">*</span></label>
-              <select className="input-field" required value={catalogoSeleccionado} onChange={e => setCatalogo(e.target.value)}>
-                <option value="">— Selecciona un catálogo —</option>
-                {catalogos.filter(c => c.activo).map(c => (
-                  <option key={c.id} value={c.id}>{c.programaNombre} · Práctica {c.numeroPractica} — {c.nombre}</option>
-                ))}
-              </select>
-            </div>
+            <Select label="Catálogo de práctica" required value={catalogoSeleccionado} onChange={e => setCatalogo(e.target.value)}>
+              <option value="">— Selecciona un catálogo —</option>
+              {catalogos.filter(c => c.activo).map(c => (
+                <option key={c.id} value={c.id}>{c.programaNombre} · Práctica {c.numeroPractica} — {c.nombre}</option>
+              ))}
+            </Select>
             <div className="flex gap-3">
               <Button variant="secondary" className="flex-1" type="button" onClick={() => setModalApto({ open: false, id: 0, nombre: '' })}>Cancelar</Button>
               <Button className="flex-1" type="submit" loading={processing}>Confirmar APTO</Button>

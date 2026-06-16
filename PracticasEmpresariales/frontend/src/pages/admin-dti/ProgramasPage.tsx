@@ -4,6 +4,7 @@ import api from '../../services/api'
 import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
 import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
+import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
 import { useToast } from '../../components/common/Notifications/Toast'
 
@@ -150,14 +151,11 @@ export default function ProgramasPage() {
                   onChange={e => setForm({ ...form, descripcion: e.target.value })} />
               </div>
               <div className="col-span-2">
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Facultad <span className="text-red-500">*</span>
-                </label>
-                <select className="input-field" required value={form.facultadId}
+                <Select label="Facultad" required value={form.facultadId}
                   onChange={e => setForm({ ...form, facultadId: e.target.value })}>
                   <option value="">— Selecciona una facultad —</option>
                   {facultades.map(f => <option key={f.id} value={f.id}>{f.nombre}</option>)}
-                </select>
+                </Select>
               </div>
               <Input
                 label="N° de Prácticas"

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import type { InstanciaPracticaResponseV2, UsuarioResponse, ApiResponse } from '../../types'
 import api from '../../services/api'
+import { Select } from '../../components/common/Select/Select'
 
 const TIPOS_FIRMA = ['TUTOR', 'DOCENTE', 'ESTUDIANTE'] as const
 type TipoFirma = typeof TIPOS_FIRMA[number]
@@ -299,15 +300,12 @@ export default function VinculacionPage() {
             </div>
           </div>
           {!instancia.docenteAsesorId && (
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Docente Asesor</label>
-              <select className="input-field" value={docenteAsesorId} onChange={e => setDocenteAsesorId(e.target.value)}>
-                <option value="">— Sin asignar —</option>
-                {docentes.map(d => (
-                  <option key={d.id} value={d.id}>{d.nombre}</option>
-                ))}
-              </select>
-            </div>
+            <Select label="Docente Asesor" value={docenteAsesorId} onChange={e => setDocenteAsesorId(e.target.value)}>
+              <option value="">— Sin asignar —</option>
+              {docentes.map(d => (
+                <option key={d.id} value={d.id}>{d.nombre}</option>
+              ))}
+            </Select>
           )}
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-800">
             <strong>Requiere las tres firmas:</strong> tutor, docente y estudiante registradas para activar EN_CURSO.

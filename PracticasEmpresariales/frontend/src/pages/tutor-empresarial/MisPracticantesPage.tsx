@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { InstanciaPracticaResponseV2 } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
+import { Select } from '../../components/common/Select/Select'
 
 const ESTADOS_FILTRO = [
   { label: 'Todos los estados', value: '' },
@@ -64,15 +65,15 @@ export default function TutorMisPracticantesPage() {
             value={busqueda}
             onChange={e => setBusqueda(e.target.value)}
           />
-          <select
-            className="input-field sm:w-56"
+          <Select
+            className="sm:w-56"
             value={estadoFiltro}
             onChange={e => setEstadoFiltro(e.target.value)}
           >
             {ESTADOS_FILTRO.map(op => (
               <option key={op.value} value={op.value}>{op.label}</option>
             ))}
-          </select>
+          </Select>
           <span className="text-sm text-gray-500 whitespace-nowrap self-center">
             {filtradas.length} de {practicas.length}
           </span>
