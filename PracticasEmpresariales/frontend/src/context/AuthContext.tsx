@@ -12,10 +12,16 @@ import { authService } from '../services/authService'
  * React garantiza una única instancia del contexto en el árbol de componentes.
  */
 
+interface PendienteVerificacion {
+  correo: string
+  expiresInSeconds: number
+}
+
 interface AuthContextType {
   user: AuthUser | null
   loading: boolean
-  login: (correo: string, password: string) => Promise<void>
+  iniciarLogin: (correo: string, password: string) => Promise<PendienteVerificacion>
+  verificarCodigo: (correo: string, codigo: string) => Promise<void>
   logout: () => void
   isAuthenticated: boolean
 }
@@ -29,10 +35,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   })
   const [loading, setLoading] = useState(false)
 
-  const login = useCallback(async (correo: string, password: string) => {
+  const iniciarLogin = useCallback(async (correo: string, password: string): Promise<PendienteVerificacion> => {
     setLoading(true)
     try {
-      const data = await authService.login({ correo, password })
+      const data = await authService.iniciarLogin({ correo, password })
+      return { correo: data.correo, expiresInSeconds: data.expiresInSeconds }
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
+  const verificarCodigo = useCallback(async (correo: string, codigo: string): Promise<void> => {
+    setLoading(true)
+    try {
+      const data = await authService.verificarCodigoLogin({ correo, codigo })
       localStorage.setItem('token', data.token)
       localStorage.setItem('user', JSON.stringify(data))
       setUser(data)
@@ -48,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{ user, loading, iniciarLogin, verificarCodigo, logout, isAuthenticated: !!user }}>
       {children}
     </AuthContext.Provider>
   )

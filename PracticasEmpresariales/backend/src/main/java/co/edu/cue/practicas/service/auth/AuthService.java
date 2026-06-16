@@ -5,6 +5,8 @@ import co.edu.cue.practicas.audit.singleton.AuditoriaLogger;
 import co.edu.cue.practicas.dto.request.CambiarPasswordRequest;
 import co.edu.cue.practicas.dto.request.ConfirmarCambioCorreoRequest;
 import co.edu.cue.practicas.dto.request.LoginRequest;
+import co.edu.cue.practicas.dto.request.VerificarCodigoLoginRequest;
+import co.edu.cue.practicas.dto.response.LoginPendienteResponse;
 import co.edu.cue.practicas.dto.response.LoginResponse;
 import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
@@ -58,29 +60,20 @@ public class AuthService {
 
     private record CodigoEntry(String codigo, LocalDateTime expiracion) {}
     private final Map<Long, CodigoEntry> codigosPendientes = new ConcurrentHashMap<>();
+    private final Map<Long, CodigoEntry> codigosLogin = new ConcurrentHashMap<>();
 
     private static final int CODIGO_DIGITOS = 6;
     private static final int EXPIRACION_MINUTOS = 10;
 
     /**
-     * Autentica al usuario y retorna un token JWT junto con los datos del perfil.
+     * Paso 1 del login con 2FA: valida credenciales y envía código de 6 dígitos al correo.
+     * El JWT solo se entrega en el paso 2 tras verificar el código.
      *
-     * Flujo:
-     *   1. Spring Security verifica correo y contraseña contra la BD.
-     *   2. Se actualiza la fecha de último acceso del usuario.
-     *   3. Se genera el token JWT con el rol, facultad y programa del usuario.
-     *   4. Se registra el login exitoso en la bitácora.
-     *   5. Se retorna el token y los datos necesarios para que el frontend
-     *      sepa qué panel mostrar según el rol.
-     *
-     * Si las credenciales son incorrectas o el usuario está inactivo,
-     * se registra el intento fallido y se lanza una excepción 403.
-     *
-     * @param request   objeto con correo y contraseña enviados desde el frontend
-     * @param ipOrigen  IP del cliente, extraída en el controlador para guardarla en auditoría
+     * @param request   correo y contraseña del usuario
+     * @param ipOrigen  IP del cliente para auditoría
      */
     @Transactional
-    public LoginResponse login(LoginRequest request, String ipOrigen) {
+    public LoginPendienteResponse login(LoginRequest request, String ipOrigen) {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.getCorreo(), request.getPassword())
@@ -89,43 +82,83 @@ public class AuthService {
             CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
             Usuario usuario = userDetails.getUsuario();
 
-            usuario.setUltimoAcceso(LocalDateTime.now());
+            String codigo = generarCodigo();
+            codigosLogin.put(usuario.getId(),
+                    new CodigoEntry(codigo, LocalDateTime.now().plusMinutes(EXPIRACION_MINUTOS)));
 
-            if (EstadoCuenta.PENDIENTE.equals(usuario.getEstadoCuenta())) {
-                usuario.setEstadoCuenta(EstadoCuenta.ACTIVO);
-            }
+            emailService.enviarCodigoLogin(usuario.getCorreo(), usuario.getNombre(), codigo);
+            log.info("[AUTH] Código 2FA de login enviado al usuario {}", usuario.getId());
 
-            usuarioRepository.save(usuario);
-
-            String token = jwtUtil.generarToken(userDetails);
-
-            auditoriaLogger.registrar(BitacoraAuditoria.builder()
-                    .usuario(usuario)
-                    .nombreUsuario(usuario.getNombre())
-                    .rolUsuario(usuario.getRol())
-                    .etiquetaCargoUsuario(usuario.getEtiquetaCargo())
-                    .modulo(ModuloAuditoria.AUTH)
-                    .tipoAccion(TipoAccion.LOGIN_EXITOSO)
-                    .ipOrigen(ipOrigen)
-                    .exitoso(true));
-
-            return LoginResponse.builder()
-                    .token(token)
-                    .tipo("Bearer")
-                    .usuarioId(usuario.getId())
-                    .nombre(usuario.getNombre())
+            return LoginPendienteResponse.builder()
                     .correo(usuario.getCorreo())
-                    .rol(usuario.getRol())
-                    .etiquetaCargo(usuario.getEtiquetaCargo())
-                    .primerIngreso(usuario.isPrimerIngreso())
-                    .facultadId(usuario.getFacultad() != null ? usuario.getFacultad().getId() : null)
-                    .programaId(usuario.getPrograma() != null ? usuario.getPrograma().getId() : null)
+                    .mensaje("Se ha enviado un código de verificación a tu correo electrónico.")
+                    .expiresInSeconds(EXPIRACION_MINUTOS * 60)
                     .build();
 
         } catch (BadCredentialsException | DisabledException e) {
             registrarLoginFallido(request.getCorreo(), ipOrigen);
             throw new AccesoNoAutorizadoException("Credenciales incorrectas o cuenta inactiva.");
         }
+    }
+
+    /**
+     * Paso 2 del login con 2FA: valida el código recibido por correo y entrega el JWT.
+     *
+     * @param request   correo del usuario y código de 6 dígitos
+     * @param ipOrigen  IP del cliente para auditoría
+     */
+    @Transactional
+    public LoginResponse verificarCodigoLogin(VerificarCodigoLoginRequest request, String ipOrigen) {
+        Usuario usuario = usuarioRepository.findByCorreoAndActivoTrue(request.correo())
+                .orElseThrow(() -> new AccesoNoAutorizadoException("Credenciales incorrectas o cuenta inactiva."));
+
+        Long userId = usuario.getId();
+        CodigoEntry entry = codigosLogin.get(userId);
+
+        if (entry == null) {
+            throw new OperacionNoPermitidaException("No hay un código de verificación activo. Inicia sesión de nuevo.");
+        }
+        if (LocalDateTime.now().isAfter(entry.expiracion())) {
+            codigosLogin.remove(userId);
+            throw new OperacionNoPermitidaException("El código ha expirado. Inicia sesión de nuevo.");
+        }
+        if (!entry.codigo().equals(request.codigo())) {
+            throw new AccesoNoAutorizadoException("El código de verificación es incorrecto.");
+        }
+
+        codigosLogin.remove(userId);
+
+        usuario.setUltimoAcceso(LocalDateTime.now());
+        if (EstadoCuenta.PENDIENTE.equals(usuario.getEstadoCuenta())) {
+            usuario.setEstadoCuenta(EstadoCuenta.ACTIVO);
+        }
+        usuarioRepository.save(usuario);
+
+        CustomUserDetails userDetails = new CustomUserDetails(usuario);
+        String token = jwtUtil.generarToken(userDetails);
+
+        auditoriaLogger.registrar(BitacoraAuditoria.builder()
+                .usuario(usuario)
+                .nombreUsuario(usuario.getNombre())
+                .rolUsuario(usuario.getRol())
+                .etiquetaCargoUsuario(usuario.getEtiquetaCargo())
+                .modulo(ModuloAuditoria.AUTH)
+                .tipoAccion(TipoAccion.LOGIN_EXITOSO)
+                .ipOrigen(ipOrigen)
+                .exitoso(true));
+
+        return LoginResponse.builder()
+                .token(token)
+                .tipo("Bearer")
+                .usuarioId(usuario.getId())
+                .nombre(usuario.getNombre())
+                .correo(usuario.getCorreo())
+                .rol(usuario.getRol())
+                .etiquetaCargo(usuario.getEtiquetaCargo())
+                .primerIngreso(usuario.isPrimerIngreso())
+                .facultadId(usuario.getFacultad() != null ? usuario.getFacultad().getId() : null)
+                .programaId(usuario.getPrograma() != null ? usuario.getPrograma().getId() : null)
+                .build();
     }
 
     /**

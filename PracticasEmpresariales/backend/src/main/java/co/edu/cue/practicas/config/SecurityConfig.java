@@ -51,7 +51,7 @@ public class SecurityConfig {
             .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 // Endpoints públicos
-                .requestMatchers("/auth/login", "/auth/cambiar-password").permitAll()
+                .requestMatchers("/auth/login", "/auth/login/verificar", "/auth/cambiar-password").permitAll()
                 .requestMatchers("/h2-console/**").permitAll()
                 // Todo lo demás requiere autenticación
                 // El control granular por rol lo hace el ScopeValidationAspect

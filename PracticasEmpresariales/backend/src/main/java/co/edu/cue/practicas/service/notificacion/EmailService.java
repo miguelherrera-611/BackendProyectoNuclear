@@ -96,6 +96,40 @@ public class EmailService {
     }
 
     @Async
+    public void enviarCodigoLogin(String destinatario, String nombre, String codigo) {
+        try {
+            MimeMessage message = mailSender.createMimeMessage();
+            MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+
+            helper.setFrom(systemConfig.getMailFromAddress(), systemConfig.getMailFromName());
+            helper.setTo(destinatario);
+            helper.setSubject("Código de acceso — " + systemConfig.getNombreSistema());
+
+            String html = """
+                    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                        <h2 style="color: #1a365d;">%s</h2>
+                        <p>Estimado/a <strong>%s</strong>,</p>
+                        <p>Se ha solicitado un inicio de sesión en tu cuenta. Usa el siguiente código para completar el acceso:</p>
+                        <div style="background: #ebf8ff; border: 2px solid #3182ce; border-radius: 12px; padding: 28px; margin: 24px 0; text-align: center;">
+                            <p style="margin: 0 0 8px 0; font-size: 13px; color: #2b6cb0; font-weight: bold; text-transform: uppercase; letter-spacing: 2px;">Código de verificación</p>
+                            <p style="margin: 0; font-size: 40px; font-weight: bold; letter-spacing: 12px; color: #1a365d;">%s</p>
+                        </div>
+                        <p style="color: #718096; font-size: 13px;">Este código es válido por <strong>10 minutos</strong>. Si no intentaste iniciar sesión, ignora este mensaje y considera cambiar tu contraseña.</p>
+                        <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 20px 0;">
+                        <p style="color: #718096; font-size: 12px;">Este es un mensaje automático. No respondas a este correo.</p>
+                    </div>
+                    """.formatted(systemConfig.getNombreSistema(), nombre, codigo);
+
+            helper.setText(html, true);
+            mailSender.send(message);
+            log.info("[EMAIL] Código de acceso 2FA enviado a: {}", destinatario);
+
+        } catch (Exception e) {
+            log.error("[EMAIL] Error enviando código de acceso 2FA a {}: {}", destinatario, e.getMessage());
+        }
+    }
+
+    @Async
     public void notificarNuevoEstudiante(Usuario estudiante) {
         log.info("[EMAIL] Notificación de nuevo estudiante pendiente: {} → Coordinación Académica", estudiante.getNombre());
         // En Sprint 2 se implementa la consulta de coordinadores por facultad para notificarlos

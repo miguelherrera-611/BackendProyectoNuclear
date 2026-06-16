@@ -3,7 +3,9 @@ package co.edu.cue.practicas.controller.auth;
 import co.edu.cue.practicas.dto.request.CambiarPasswordRequest;
 import co.edu.cue.practicas.dto.request.ConfirmarCambioCorreoRequest;
 import co.edu.cue.practicas.dto.request.LoginRequest;
+import co.edu.cue.practicas.dto.request.VerificarCodigoLoginRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
+import co.edu.cue.practicas.dto.response.LoginPendienteResponse;
 import co.edu.cue.practicas.dto.response.LoginResponse;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.auth.AuthService;
@@ -22,11 +24,20 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
-    public ResponseEntity<ApiResponse<LoginResponse>> login(
+    public ResponseEntity<ApiResponse<LoginPendienteResponse>> login(
             @Valid @RequestBody LoginRequest request,
             HttpServletRequest httpRequest) {
 
-        LoginResponse response = authService.login(request, httpRequest.getRemoteAddr());
+        LoginPendienteResponse response = authService.login(request, httpRequest.getRemoteAddr());
+        return ResponseEntity.ok(ApiResponse.ok("Código de verificación enviado", response));
+    }
+
+    @PostMapping("/login/verificar")
+    public ResponseEntity<ApiResponse<LoginResponse>> verificarCodigoLogin(
+            @Valid @RequestBody VerificarCodigoLoginRequest request,
+            HttpServletRequest httpRequest) {
+
+        LoginResponse response = authService.verificarCodigoLogin(request, httpRequest.getRemoteAddr());
         return ResponseEntity.ok(ApiResponse.ok("Login exitoso", response));
     }
 

@@ -6,6 +6,12 @@ interface LoginRequest {
   password: string
 }
 
+interface LoginPendienteResponse {
+  correo: string
+  mensaje: string
+  expiresInSeconds: number
+}
+
 interface CambiarPasswordRequest {
   passwordActual: string
   passwordNueva: string
@@ -13,8 +19,13 @@ interface CambiarPasswordRequest {
 }
 
 export const authService = {
-  async login(data: LoginRequest): Promise<AuthUser> {
-    const res = await api.post<ApiResponse<AuthUser & { token: string; tipo: string }>>('/auth/login', data)
+  async iniciarLogin(data: LoginRequest): Promise<LoginPendienteResponse> {
+    const res = await api.post<ApiResponse<LoginPendienteResponse>>('/auth/login', data)
+    return res.data.datos!
+  },
+
+  async verificarCodigoLogin(data: { correo: string; codigo: string }): Promise<AuthUser> {
+    const res = await api.post<ApiResponse<AuthUser & { token: string; tipo: string }>>('/auth/login/verificar', data)
     return res.data.datos!
   },
 
