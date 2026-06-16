@@ -86,12 +86,8 @@ public class AuthService {
             codigosLogin.put(usuario.getId(),
                     new CodigoEntry(codigo, LocalDateTime.now().plusMinutes(EXPIRACION_MINUTOS)));
 
-            try {
-                emailService.enviarCodigoLogin(usuario.getCorreo(), usuario.getNombre(), codigo);
-            } catch (Exception e) {
-                log.warn("[AUTH][DEV] Correo no disponible. Codigo 2FA para {}: {}", usuario.getCorreo(), codigo);
-            }
-            log.info("[AUTH] Codigo 2FA de login enviado al usuario {}", usuario.getId());
+            emailService.enviarCodigoLogin(usuario.getCorreo(), usuario.getNombre(), codigo);
+            log.info("[AUTH] Código 2FA de login enviado al usuario {}", usuario.getId());
 
             return LoginPendienteResponse.builder()
                     .correo(usuario.getCorreo())
