@@ -27,7 +27,6 @@ public class SustentacionService {
     public SustentacionResponse programar(Long instanciaId, RegistrarSustentacionRequest req, CustomUserDetails actor) {
         validarCoordinador(actor);
         InstanciaPractica instancia = buscarInstancia(instanciaId);
-        validarScope(instancia, actor);
         if (instancia.getFechaInicio() != null && req.getFecha().isBefore(instancia.getFechaInicio())) {
             throw new OperacionNoPermitidaException("La fecha de sustentacion debe ser posterior al inicio de practica.");
         }
@@ -43,7 +42,6 @@ public class SustentacionService {
         validarCoordinador(actor);
         SustentacionPractica sustentacion = sustentacionRepository.findByInstanciaPractica_Id(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Sustentacion no programada."));
-        validarScope(sustentacion.getInstanciaPractica(), actor);
         sustentacion.registrarResultado(req.getResultado(), req.getActaUrl(), req.isActaFirmada());
         return SustentacionResponse.desde(sustentacionRepository.save(sustentacion));
     }
@@ -63,10 +61,4 @@ public class SustentacionService {
         }
     }
 
-    private void validarScope(InstanciaPractica instancia, CustomUserDetails actor) {
-        Long programaId = instancia.getExpediente().getEstudiante().getPrograma().getId();
-        if (actor.getProgramaId() != null && !actor.getProgramaId().equals(programaId)) {
-            throw new AccesoNoAutorizadoException("No puedes gestionar sustentaciones de otro programa.");
-        }
-    }
 }

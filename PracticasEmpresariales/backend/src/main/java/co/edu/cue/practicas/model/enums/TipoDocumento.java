@@ -8,6 +8,7 @@ public enum TipoDocumento {
     FIRMA_TUTOR("Firma del Tutor Empresarial",     Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG)),
     FIRMA_DOCENTE("Firma del Docente Asesor",      Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG)),
     FIRMA_ESTUDIANTE("Firma del Estudiante",       Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG)),
+    ACTA_SUSTENTACION("Acta de sustentación firmada", Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG)),
     OTRO("Otro",                                   Set.of(MimeType.PDF, MimeType.JPEG, MimeType.PNG));
 
     private static final class MimeType {

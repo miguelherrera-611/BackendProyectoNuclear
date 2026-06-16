@@ -1,20 +1,24 @@
 package co.edu.cue.practicas.service.cierre;
 
 import co.edu.cue.practicas.dto.response.InstanciaPracticaResponse;
+import co.edu.cue.practicas.dto.response.PracticaDocumentoResponse;
 import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
 import co.edu.cue.practicas.model.entity.InstanciaPractica;
 import co.edu.cue.practicas.model.enums.EstadoPractica;
 import co.edu.cue.practicas.model.enums.Rol;
+import co.edu.cue.practicas.model.enums.TipoDocumento;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
+import co.edu.cue.practicas.service.documento.PracticaDocumentoService;
 import co.edu.cue.practicas.service.mapper.EstudianteMapper;
 import co.edu.cue.practicas.service.notificacion.EmailService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -31,6 +35,7 @@ public class SustentacionDocenteService {
     private final InstanciaPracticaRepository instanciaRepository;
     private final EmailService emailService;
     private final EstudianteMapper mapper;
+    private final PracticaDocumentoService documentoService;
 
     @Transactional
     public InstanciaPracticaResponse agendar(Long instanciaId, LocalDate fecha, CustomUserDetails actor) {
@@ -80,6 +85,42 @@ public class SustentacionDocenteService {
         }
 
         return mapper.toInstanciaPracticaResponse(instancia);
+    }
+
+    @Transactional
+    public PracticaDocumentoResponse subirActa(Long instanciaId, MultipartFile archivo, CustomUserDetails actor) {
+        if (actor.getRol() != Rol.DOCENTE_ASESOR) {
+            throw new AccesoNoAutorizadoException("Solo el Docente Asesor puede subir el acta de sustentación.");
+        }
+
+        InstanciaPractica instancia = instanciaRepository.findById(instanciaId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Practica no encontrada."));
+
+        if (instancia.getDocenteAsesor() == null || !instancia.getDocenteAsesor().getId().equals(actor.getId())) {
+            throw new AccesoNoAutorizadoException("No eres el docente asesor asignado a esta practica.");
+        }
+
+        if (instancia.getEstado() != EstadoPractica.EN_CURSO) {
+            throw new OperacionNoPermitidaException("Solo se puede subir el acta de prácticas EN_CURSO.");
+        }
+
+        if (instancia.getFechaSustentacion() == null) {
+            throw new OperacionNoPermitidaException("La sustentación aún no ha sido programada.");
+        }
+
+        if (LocalDate.now().isBefore(instancia.getFechaSustentacion())) {
+            String fecha = instancia.getFechaSustentacion().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            throw new OperacionNoPermitidaException(
+                    "Solo puedes subir el acta a partir de la fecha de sustentación (" + fecha + ").");
+        }
+
+        if (instancia.getFechaFin() != null && LocalDate.now().isAfter(instancia.getFechaFin())) {
+            String fecha = instancia.getFechaFin().format(DateTimeFormatter.ofPattern("dd/MM/yyyy"));
+            throw new OperacionNoPermitidaException(
+                    "El plazo para subir el acta ha vencido. La práctica debía finalizar el " + fecha + ".");
+        }
+
+        return documentoService.subirDocumento(instanciaId, TipoDocumento.ACTA_SUSTENTACION, archivo, actor);
     }
 
     private void notificarActores(InstanciaPractica instancia, LocalDate fecha, boolean esReagendamiento) {

@@ -6,18 +6,22 @@ import co.edu.cue.practicas.event.Sprint4DomainEvent;
 import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
+import co.edu.cue.practicas.model.entity.EvaluacionFinal;
 import co.edu.cue.practicas.model.entity.InstanciaPractica;
-import co.edu.cue.practicas.model.entity.NotaFinalCoordinador;
 import co.edu.cue.practicas.model.entity.PazYSalvo;
+import co.edu.cue.practicas.model.enums.EstadoEvaluacionFinal;
 import co.edu.cue.practicas.model.enums.EstadoPractica;
 import co.edu.cue.practicas.model.enums.ResultadoPractica;
 import co.edu.cue.practicas.model.enums.Rol;
+import co.edu.cue.practicas.model.enums.TipoEvaluacionFinal;
 import co.edu.cue.practicas.model.enums.TipoEventoNotificacion;
 import co.edu.cue.practicas.repository.cierre.PazYSalvoRepository;
+import co.edu.cue.practicas.repository.evaluacion.EvaluacionFinalRepository;
 import co.edu.cue.practicas.repository.evaluacion.NotaFinalCoordinadorRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
+import co.edu.cue.practicas.service.configuracion.ProgramaConfiguracionService;
 import co.edu.cue.practicas.service.notificacion.NotificacionConfigurableService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -32,11 +36,13 @@ public class CierreFormalFacade {
 
     private final InstanciaPracticaRepository instanciaRepository;
     private final NotaFinalCoordinadorRepository notaRepository;
+    private final EvaluacionFinalRepository evaluacionRepository;
     private final PazYSalvoRepository pazYSalvoRepository;
     private final ChecklistCierreService checklistService;
     private final NotificacionConfigurableService notificacionService;
     private final ApplicationEventPublisher eventPublisher;
     private final UsuarioRepository usuarioRepository;
+    private final ProgramaConfiguracionService configuracionService;
 
     @Transactional
     public CierreFormalResponse ejecutar(Long instanciaId, EjecutarCierreRequest req, CustomUserDetails actor) {
@@ -49,23 +55,42 @@ public class CierreFormalFacade {
         }
         InstanciaPractica instancia = instanciaRepository.findById(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Practica no encontrada."));
-        validarScope(instancia, actor);
         if (instancia.getEstado() != EstadoPractica.EN_CURSO) {
             throw new OperacionNoPermitidaException("Solo una practica EN_CURSO puede cerrarse formalmente.");
         }
         if (!checklistService.generar(instanciaId, actor).isPuedeEjecutarCierre()) {
             throw new OperacionNoPermitidaException("No se puede ejecutar cierre: checklist incompleto.");
         }
-        NotaFinalCoordinador notaFinal = notaRepository.findByInstanciaPractica_Id(instanciaId)
-                .orElseThrow(() -> new RecursoNoEncontradoException("Nota final no registrada."));
+
+        // Determinar resultado y nota: primero busca NotaFinalCoordinador, si no existe usa evaluacion del docente.
+        ResultadoPractica resultado;
+        double notaFinalValor;
+
+        var notaOpt = notaRepository.findByInstanciaPractica_Id(instanciaId);
+        if (notaOpt.isPresent()) {
+            resultado = notaOpt.get().getResultado();
+            notaFinalValor = notaOpt.get().getNotaFinal();
+        } else {
+            EvaluacionFinal evalDocente = evaluacionRepository
+                    .findByInstanciaPractica_IdAndTipo(instanciaId, TipoEvaluacionFinal.DOCENTE_ASESOR)
+                    .orElseThrow(() -> new RecursoNoEncontradoException("No hay nota del coordinador ni evaluacion del docente registrada."));
+            if (evalDocente.getEstado() != EstadoEvaluacionFinal.COMPLETADA) {
+                throw new OperacionNoPermitidaException("La evaluacion del docente asesor aun no esta completada.");
+            }
+            Long programaId = instancia.getExpediente().getEstudiante().getPrograma().getId();
+            double notaMinima = configuracionService.notaMinima(programaId);
+            notaFinalValor = evalDocente.getPromedioFinal();
+            resultado = notaFinalValor >= notaMinima ? ResultadoPractica.APROBADO : ResultadoPractica.NO_APROBADO;
+        }
+
         // SPRINT 4 - State: EN_CURSO -> FINALIZADA con resultado irreversible.
-        instancia.finalizarConResultado(notaFinal.getResultado());
+        instancia.finalizarConResultado(resultado);
         instanciaRepository.save(instancia);
 
         String codigoPazYSalvo = null;
         String contenidoPazYSalvo = null;
-        if (notaFinal.getResultado() == ResultadoPractica.APROBADO) {
-            contenidoPazYSalvo = construirPazYSalvo(instancia, notaFinal);
+        if (resultado == ResultadoPractica.APROBADO) {
+            contenidoPazYSalvo = construirPazYSalvo(instancia, resultado, notaFinalValor);
             String contenidoGenerado = contenidoPazYSalvo;
             PazYSalvo pazYSalvo = pazYSalvoRepository.findByInstanciaPractica_Id(instanciaId)
                     .orElseGet(() -> PazYSalvo.builder()
@@ -78,34 +103,27 @@ public class CierreFormalFacade {
         }
 
         // SPRINT 4 - Mediator: coordina notificaciones a estudiante, docente, tutor y Coordinacion Academica.
-        notificarActores(instancia, notaFinal);
+        notificarActores(instancia, resultado, notaFinalValor);
         // SPRINT 4 - Observer: cierre formal dispara refresco de dashboard/reportes.
         eventPublisher.publishEvent(new Sprint4DomainEvent(instanciaId, TipoEventoNotificacion.CIERRE_FORMAL_EJECUTADO));
         return CierreFormalResponse.builder()
                 .instanciaPracticaId(instanciaId)
                 .estado(instancia.getEstado())
-                .resultado(notaFinal.getResultado())
-                .notaFinal(notaFinal.getNotaFinal())
+                .resultado(resultado)
+                .notaFinal(notaFinalValor)
                 .codigoPazYSalvo(codigoPazYSalvo)
                 .pazYSalvo(contenidoPazYSalvo)
                 .build();
     }
 
-    private void validarScope(InstanciaPractica instancia, CustomUserDetails actor) {
-        Long programaId = instancia.getExpediente().getEstudiante().getPrograma().getId();
-        if (actor.getProgramaId() != null && !actor.getProgramaId().equals(programaId)) {
-            throw new AccesoNoAutorizadoException("No puedes cerrar practicas de otro programa.");
-        }
-    }
-
-    private void notificarActores(InstanciaPractica instancia, NotaFinalCoordinador notaFinal) {
+    private void notificarActores(InstanciaPractica instancia, ResultadoPractica resultado, double notaFinal) {
         Map<String, String> vars = Map.of(
                 "nombre_estudiante", instancia.getExpediente().getEstudiante().getNombre(),
                 "empresa", instancia.getEmpresa() != null ? instancia.getEmpresa().getRazonSocial() : "",
                 "nombre_practica", instancia.getNombre(),
                 "enlace_encuesta", "",
-                "resultado", notaFinal.getResultado().name(),
-                "nota_final", String.valueOf(notaFinal.getNotaFinal())
+                "resultado", resultado.name(),
+                "nota_final", String.valueOf(notaFinal)
         );
         var estudiante = instancia.getExpediente().getEstudiante();
         notificacionService.enviar(TipoEventoNotificacion.CIERRE_FORMAL_EJECUTADO,
@@ -139,7 +157,7 @@ public class CierreFormalFacade {
         }
     }
 
-    private String construirPazYSalvo(InstanciaPractica instancia, NotaFinalCoordinador notaFinal) {
+    private String construirPazYSalvo(InstanciaPractica instancia, ResultadoPractica resultado, double notaFinal) {
         String nombreEstudiante = instancia.getExpediente().getEstudiante().getNombre();
         String empresa = instancia.getEmpresa() != null
                 ? instancia.getEmpresa().getRazonSocial() : "empresa registrada";
@@ -147,8 +165,8 @@ public class CierreFormalFacade {
                 + "Estudiante: " + nombreEstudiante + "\n"
                 + "Practica: " + instancia.getNombre() + "\n"
                 + "Empresa: " + empresa + "\n"
-                + "Resultado: " + notaFinal.getResultado() + "\n"
-                + "Nota final: " + notaFinal.getNotaFinal() + "\n"
+                + "Resultado: " + resultado + "\n"
+                + "Nota final: " + notaFinal + "\n"
                 + "Fecha cierre: " + instancia.getFechaCierre() + "\n"
                 + "Se certifica cierre satisfactorio del expediente de practica.";
     }

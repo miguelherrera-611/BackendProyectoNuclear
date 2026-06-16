@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { InstanciaPracticaResponseV2 } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 import { sustentacionDocenteService } from '../../services/sustentacionDocenteService'
@@ -11,6 +11,15 @@ function fmt(dateStr?: string): string {
   return `${d}/${m}/${y}`
 }
 
+function puedeSubirActa(p: InstanciaPracticaResponseV2): boolean {
+  if (p.estado !== 'EN_CURSO' || !p.fechaSustentacion) return false
+  // fecha sustentacion ya pasó o es hoy
+  if (p.fechaSustentacion > TODAY) return false
+  // todavía dentro del período de la práctica
+  if (p.fechaFin && p.fechaFin <= TODAY) return false
+  return true
+}
+
 interface CardProps {
   p: InstanciaPracticaResponseV2
   agendandoId: number | null
@@ -21,11 +30,21 @@ interface CardProps {
   onCancelar: () => void
   onFechaChange: (v: string) => void
   onGuardar: (id: number) => void
+  actaSubida: boolean
+  subiendoActaId: number | null
+  errorActa: string
+  onSubirActa: (id: number, file: File) => void
 }
 
-function PracticaCard({ p, agendandoId, fechaSeleccionada, savingId, errorAgenda, onAgendar, onCancelar, onFechaChange, onGuardar }: CardProps) {
+function PracticaCard({
+  p, agendandoId, fechaSeleccionada, savingId, errorAgenda,
+  onAgendar, onCancelar, onFechaChange, onGuardar,
+  actaSubida, subiendoActaId, errorActa, onSubirActa,
+}: CardProps) {
   const esEnCurso = p.estado === 'EN_CURSO'
   const agendando = agendandoId === p.id
+  const fileRef = useRef<HTMLInputElement>(null)
+  const mostrarSubidaActa = puedeSubirActa(p)
 
   return (
     <div className="card space-y-3">
@@ -114,17 +133,58 @@ function PracticaCard({ p, agendandoId, fechaSeleccionada, savingId, errorAgenda
           <p className="text-sm text-gray-400 italic">Sin sustentación registrada en esta práctica.</p>
         </div>
       )}
+
+      {/* Sección de acta firmada */}
+      {mostrarSubidaActa && (
+        <div className="border-t border-gray-100 pt-3 space-y-2">
+          <p className="text-xs font-semibold text-gray-700 uppercase tracking-wide">Acta de sustentación firmada</p>
+          {actaSubida ? (
+            <div className="flex items-center gap-2 text-sm text-green-700 font-medium">
+              <span>✓</span>
+              <span>Acta subida correctamente.</span>
+            </div>
+          ) : (
+            <>
+              <p className="text-xs text-gray-500">
+                La sustentación ya ocurrió. Sube el acta firmada antes del {fmt(p.fechaFin)} (fecha fin de práctica).
+              </p>
+              <div className="flex items-center gap-3">
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  className="text-sm text-gray-600 file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-gray-100 file:text-gray-700 hover:file:bg-gray-200 disabled:opacity-50"
+                  disabled={subiendoActaId === p.id}
+                  onChange={e => {
+                    const file = e.target.files?.[0]
+                    if (file) onSubirActa(p.id, file)
+                  }}
+                />
+                {subiendoActaId === p.id && (
+                  <span className="text-xs text-gray-500">Subiendo...</span>
+                )}
+              </div>
+              {errorActa && subiendoActaId !== p.id && (
+                <p className="text-xs text-red-600">{errorActa}</p>
+              )}
+            </>
+          )}
+        </div>
+      )}
     </div>
   )
 }
 
 export default function SustentacionesPage() {
-  const [practicas, setPracticas]           = useState<InstanciaPracticaResponseV2[]>([])
-  const [loading, setLoading]               = useState(true)
-  const [agendandoId, setAgendandoId]       = useState<number | null>(null)
+  const [practicas, setPracticas]               = useState<InstanciaPracticaResponseV2[]>([])
+  const [loading, setLoading]                   = useState(true)
+  const [agendandoId, setAgendandoId]           = useState<number | null>(null)
   const [fechaSeleccionada, setFechaSeleccionada] = useState('')
-  const [savingId, setSavingId]             = useState<number | null>(null)
-  const [errorAgenda, setErrorAgenda]       = useState('')
+  const [savingId, setSavingId]                 = useState<number | null>(null)
+  const [errorAgenda, setErrorAgenda]           = useState('')
+  const [actasSubidas, setActasSubidas]         = useState<Set<number>>(new Set())
+  const [subiendoActaId, setSubiendoActaId]     = useState<number | null>(null)
+  const [errorActa, setErrorActa]               = useState('')
 
   useEffect(() => {
     seguimientoService.misPracticantes()
@@ -132,7 +192,7 @@ export default function SustentacionesPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const enCurso    = practicas.filter(p => p.estado === 'EN_CURSO')
+  const enCurso     = practicas.filter(p => p.estado === 'EN_CURSO')
   const finalizadas = practicas.filter(p => p.estado === 'FINALIZADA')
 
   const handleAgendar = (p: InstanciaPracticaResponseV2) => {
@@ -168,6 +228,22 @@ export default function SustentacionesPage() {
     }
   }
 
+  const handleSubirActa = async (instanciaId: number, file: File) => {
+    setSubiendoActaId(instanciaId)
+    setErrorActa('')
+    try {
+      await sustentacionDocenteService.subirActa(instanciaId, file)
+      setActasSubidas(prev => new Set([...prev, instanciaId]))
+    } catch (e: unknown) {
+      setErrorActa(
+        (e as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
+        ?? 'No se pudo subir el acta. Intenta de nuevo.'
+      )
+    } finally {
+      setSubiendoActaId(null)
+    }
+  }
+
   const cardProps = {
     agendandoId,
     fechaSeleccionada,
@@ -177,6 +253,9 @@ export default function SustentacionesPage() {
     onCancelar: handleCancelar,
     onFechaChange: (v: string) => { setFechaSeleccionada(v); setErrorAgenda('') },
     onGuardar: handleGuardar,
+    subiendoActaId,
+    errorActa,
+    onSubirActa: handleSubirActa,
   }
 
   return (
@@ -184,7 +263,7 @@ export default function SustentacionesPage() {
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Sustentaciones</h1>
         <p className="text-sm text-gray-500 mt-1">
-          Programa las fechas de sustentación de tus practicantes. Al confirmar, se notificará al estudiante y al tutor empresarial por correo.
+          Programa las fechas de sustentación de tus practicantes. Tras la sustentación, sube el acta firmada para habilitar el cierre.
         </p>
       </div>
 
@@ -204,7 +283,14 @@ export default function SustentacionesPage() {
               <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
                 En curso — programar sustentación ({enCurso.length})
               </h2>
-              {enCurso.map(p => <PracticaCard key={p.id} p={p} {...cardProps} />)}
+              {enCurso.map(p => (
+                <PracticaCard
+                  key={p.id}
+                  p={p}
+                  actaSubida={actasSubidas.has(p.id)}
+                  {...cardProps}
+                />
+              ))}
             </div>
           )}
           {finalizadas.length > 0 && (
@@ -212,7 +298,14 @@ export default function SustentacionesPage() {
               <h2 className="text-sm font-semibold text-gray-600 uppercase tracking-wide">
                 Finalizadas ({finalizadas.length})
               </h2>
-              {finalizadas.map(p => <PracticaCard key={p.id} p={p} {...cardProps} />)}
+              {finalizadas.map(p => (
+                <PracticaCard
+                  key={p.id}
+                  p={p}
+                  actaSubida={actasSubidas.has(p.id)}
+                  {...cardProps}
+                />
+              ))}
             </div>
           )}
         </>

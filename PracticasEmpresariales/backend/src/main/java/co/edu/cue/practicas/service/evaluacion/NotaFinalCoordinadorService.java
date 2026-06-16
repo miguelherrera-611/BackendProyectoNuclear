@@ -45,7 +45,6 @@ public class NotaFinalCoordinadorService {
         }
         InstanciaPractica instancia = instanciaRepository.findById(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Practica no encontrada."));
-        validarScope(instancia, actor);
         if (instancia.esInmutable()) {
             throw new OperacionNoPermitidaException("La practica esta cerrada e inmutable.");
         }
@@ -77,10 +76,4 @@ public class NotaFinalCoordinadorService {
         );
     }
 
-    private void validarScope(InstanciaPractica instancia, CustomUserDetails actor) {
-        Long programaId = instancia.getExpediente().getEstudiante().getPrograma().getId();
-        if (actor.getProgramaId() != null && !actor.getProgramaId().equals(programaId)) {
-            throw new AccesoNoAutorizadoException("No puedes registrar notas de otro programa.");
-        }
-    }
 }

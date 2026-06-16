@@ -4,17 +4,15 @@ import co.edu.cue.practicas.dto.response.ChecklistCierreResponse;
 import co.edu.cue.practicas.dto.response.ChecklistItemResponse;
 import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
-import co.edu.cue.practicas.model.entity.SustentacionPractica;
 import co.edu.cue.practicas.model.enums.EstadoEncuesta;
 import co.edu.cue.practicas.model.enums.EstadoEvaluacionFinal;
 import co.edu.cue.practicas.model.enums.Rol;
+import co.edu.cue.practicas.model.enums.TipoDocumento;
 import co.edu.cue.practicas.model.enums.TipoEncuesta;
 import co.edu.cue.practicas.model.enums.TipoEvaluacionFinal;
-import co.edu.cue.practicas.repository.cierre.SustentacionPracticaRepository;
 import co.edu.cue.practicas.repository.documento.PracticaDocumentoRepository;
 import co.edu.cue.practicas.repository.encuesta.EncuestaSatisfaccionRepository;
 import co.edu.cue.practicas.repository.evaluacion.EvaluacionFinalRepository;
-import co.edu.cue.practicas.repository.evaluacion.NotaFinalCoordinadorRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.configuracion.ProgramaConfiguracionService;
@@ -34,8 +32,6 @@ import java.util.stream.Collectors;
 public class ChecklistCierreService {
 
     private static final String ITEM_EVALUACION_DOCENTE  = "evaluacion_docente";
-    private static final String ITEM_EVALUACION_TUTOR    = "evaluacion_tutor";
-    private static final String ITEM_NOTA_FINAL          = "nota_final";
     private static final String ITEM_ENCUESTA_TUTOR      = "encuesta_tutor";
     private static final String ITEM_ENCUESTA_ESTUDIANTE = "encuesta_estudiante";
     private static final String ITEM_DOCUMENTOS          = "documentos";
@@ -43,20 +39,16 @@ public class ChecklistCierreService {
 
     private final InstanciaPracticaRepository instanciaRepository;
     private final EvaluacionFinalRepository evaluacionRepository;
-    private final NotaFinalCoordinadorRepository notaRepository;
     private final EncuestaSatisfaccionRepository encuestaRepository;
     private final PracticaDocumentoRepository documentoRepository;
-    private final SustentacionPracticaRepository sustentacionRepository;
     private final ProgramaConfiguracionService configuracionService;
 
     @Transactional(readOnly = true)
     public ChecklistCierreResponse generar(Long instanciaId, CustomUserDetails actor) {
+        if (actor == null || actor.getRol() != Rol.COORDINADOR_PRACTICAS)
+            throw new AccesoNoAutorizadoException("Solo el Coordinador de Prácticas puede consultar el checklist de cierre.");
         var instancia = instanciaRepository.findById(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Practica no encontrada."));
-        if (actor.getRol() == Rol.COORDINADOR_PRACTICAS && actor.getProgramaId() != null
-                && !actor.getProgramaId().equals(instancia.getExpediente().getEstudiante().getPrograma().getId())) {
-            throw new AccesoNoAutorizadoException("No puedes consultar cierres de otro programa.");
-        }
         Long programaId = instancia.getExpediente().getEstudiante().getPrograma().getId();
         Set<String> requisitos = requisitosConfigurados(programaId);
         Map<String, ChecklistItemResponse> base = new LinkedHashMap<>();
@@ -64,12 +56,6 @@ public class ChecklistCierreService {
         base.put(ITEM_EVALUACION_DOCENTE, item(ITEM_EVALUACION_DOCENTE, "Evaluacion Docente Asesor",
                 evaluacionRepository.existsByInstanciaPractica_IdAndTipoAndEstado(instanciaId, TipoEvaluacionFinal.DOCENTE_ASESOR, EstadoEvaluacionFinal.COMPLETADA),
                 "/evaluaciones/docente/" + instanciaId));
-        base.put(ITEM_EVALUACION_TUTOR, item(ITEM_EVALUACION_TUTOR, "Evaluacion Tutor Empresarial",
-                evaluacionRepository.existsByInstanciaPractica_IdAndTipoAndEstado(instanciaId, TipoEvaluacionFinal.TUTOR_EMPRESARIAL, EstadoEvaluacionFinal.COMPLETADA),
-                "/evaluaciones/tutor/" + instanciaId));
-        base.put(ITEM_NOTA_FINAL, item(ITEM_NOTA_FINAL, "Nota final Coordinador",
-                notaRepository.existsByInstanciaPractica_Id(instanciaId),
-                "/evaluaciones/coordinador/" + instanciaId));
         base.put(ITEM_ENCUESTA_TUTOR, item(ITEM_ENCUESTA_TUTOR, "Encuesta Tutor Empresarial",
                 encuestaRepository.existsByInstanciaPractica_IdAndTipoAndEstado(instanciaId, TipoEncuesta.PARA_TUTOR, EstadoEncuesta.COMPLETADA),
                 "/encuestas/tutor/" + instanciaId));
@@ -80,7 +66,7 @@ public class ChecklistCierreService {
                 documentoRepository.countByInstanciaPractica_Id(instanciaId) > 0,
                 "/documentos/practica/" + instanciaId));
         base.put(ITEM_SUSTENTACION, item(ITEM_SUSTENTACION, "Sustentacion con acta firmada",
-                sustentacionRepository.findByInstanciaPractica_Id(instanciaId).map(SustentacionPractica::estaCompleta).orElse(false),
+                documentoRepository.existsByInstanciaPractica_IdAndTipo(instanciaId, TipoDocumento.ACTA_SUSTENTACION),
                 "/cierre/sustentaciones/" + instanciaId));
         // SPRINT 4 - Decorator: al checklist base se le aplican requisitos configurables por programa.
         List<ChecklistItemResponse> items = base.entrySet().stream()
@@ -110,8 +96,8 @@ public class ChecklistCierreService {
         String raw = configuracionService.obtener(programaId).getRequisitosCierre();
         Set<String> requisitos = raw == null || raw.isBlank()
                 ? new java.util.HashSet<>(Set.of(
-                ITEM_EVALUACION_DOCENTE, ITEM_EVALUACION_TUTOR, ITEM_NOTA_FINAL,
-                ITEM_ENCUESTA_TUTOR, ITEM_ENCUESTA_ESTUDIANTE, ITEM_DOCUMENTOS, ITEM_SUSTENTACION))
+                ITEM_EVALUACION_DOCENTE, ITEM_ENCUESTA_TUTOR, ITEM_ENCUESTA_ESTUDIANTE,
+                ITEM_DOCUMENTOS, ITEM_SUSTENTACION))
                 : java.util.Arrays.stream(raw.split(","))
                 .map(String::trim)
                 .filter(s -> !s.isBlank())

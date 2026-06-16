@@ -9,4 +9,14 @@ export const sustentacionDocenteService = {
     )
     return res.data.datos!
   },
+
+  async subirActa(instanciaId: number, archivo: File): Promise<void> {
+    const formData = new FormData()
+    formData.append('archivo', archivo)
+    await api.post(
+      `/api/v1/sustentaciones-docente/${instanciaId}/acta`,
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
+    )
+  },
 }

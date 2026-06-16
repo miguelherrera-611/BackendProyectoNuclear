@@ -51,7 +51,6 @@ public class EncuestaSatisfaccionService {
             throw new AccesoNoAutorizadoException("Solo Coordinacion envia encuestas al tutor.");
         }
         InstanciaPractica instancia = buscarInstancia(instanciaId);
-        validarScope(instancia, actor);
         validarEvaluacionDocenteCompleta(instanciaId);
         Usuario tutor = usuarioRepository.findById(req.getTutorEmpresarialId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Tutor empresarial no encontrado."));
@@ -81,7 +80,6 @@ public class EncuestaSatisfaccionService {
             throw new AccesoNoAutorizadoException("Solo Coordinacion envia encuestas al estudiante.");
         }
         InstanciaPractica instancia = buscarInstancia(instanciaId);
-        validarScope(instancia, actor);
         validarEvaluacionDocenteCompleta(instanciaId);
         Usuario estudiante = instancia.getExpediente().getEstudiante();
         EncuestaSatisfaccion encuesta = encuestaRepository.findByInstanciaPractica_IdAndTipo(instanciaId, TipoEncuesta.PARA_ESTUDIANTE)
@@ -199,13 +197,6 @@ public class EncuestaSatisfaccionService {
         }
     }
 
-    private void validarScope(InstanciaPractica instancia, CustomUserDetails actor) {
-        Long programaId = instancia.getExpediente().getEstudiante().getPrograma().getId();
-        if (actor.getProgramaId() != null && !actor.getProgramaId().equals(programaId)) {
-            throw new AccesoNoAutorizadoException("No puedes gestionar encuestas de otro programa.");
-        }
-    }
-
     private void validarEvaluacionDocenteCompleta(Long instanciaId) {
         boolean completa = evaluacionRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
                 instanciaId, TipoEvaluacionFinal.DOCENTE_ASESOR, EstadoEvaluacionFinal.COMPLETADA);
@@ -220,10 +211,7 @@ public class EncuestaSatisfaccionService {
         if (actor.getRol() != Rol.COORDINADOR_PRACTICAS) {
             throw new AccesoNoAutorizadoException("Solo el coordinador puede ver este resumen.");
         }
-        java.util.List<InstanciaPractica> instancias = actor.getProgramaId() != null
-                ? instanciaRepository.findAllByEstadoAndExpediente_Estudiante_Programa_Id(
-                        EstadoPractica.EN_CURSO, actor.getProgramaId())
-                : instanciaRepository.findAllByEstado(EstadoPractica.EN_CURSO);
+        java.util.List<InstanciaPractica> instancias = instanciaRepository.findAllByEstado(EstadoPractica.EN_CURSO);
 
         return instancias.stream().map(i -> {
             boolean evalDocente = evaluacionRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
