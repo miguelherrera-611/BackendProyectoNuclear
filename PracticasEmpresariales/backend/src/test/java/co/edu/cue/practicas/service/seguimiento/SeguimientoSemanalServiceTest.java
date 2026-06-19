@@ -9,6 +9,7 @@ import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
 import co.edu.cue.practicas.model.entity.*;
 import co.edu.cue.practicas.model.enums.*;
+import co.edu.cue.practicas.repository.evaluacion.EvaluacionFinalRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.seguimiento.PlanPracticaRepository;
 import co.edu.cue.practicas.repository.seguimiento.SeguimientoSemanalRepository;
@@ -36,6 +37,7 @@ class SeguimientoSemanalServiceTest {
     @Mock private SeguimientoSemanalRepository seguimientoRepository;
     @Mock private InstanciaPracticaRepository instanciaRepository;
     @Mock private PlanPracticaRepository planRepository;
+    @Mock private EvaluacionFinalRepository evaluacionFinalRepository;
     @Mock private AuditoriaLogger auditoriaLogger;
     @Mock private EmailService emailService;
 
@@ -159,6 +161,20 @@ class SeguimientoSemanalServiceTest {
                 INSTANCIA_ID, new CrearSeguimientoRequest(1, "A", "L", null, null), estudianteDetails))
                 .isInstanceOf(OperacionNoPermitidaException.class)
                 .hasMessageContaining("semana 1");
+
+        verify(seguimientoRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("crearSeguimiento() debe bloquear si la práctica ya fue calificada por el docente — práctica congelada")
+    void crearSeguimientoPracticaCalificadaLanzaExcepcion() {
+        when(evaluacionFinalRepository.existsByInstanciaPractica_IdAndTipo(INSTANCIA_ID, TipoEvaluacionFinal.DOCENTE_ASESOR))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> service.crearSeguimiento(
+                INSTANCIA_ID, new CrearSeguimientoRequest(1, "A", "L", null, null), estudianteDetails))
+                .isInstanceOf(OperacionNoPermitidaException.class)
+                .hasMessageContaining("calificada");
 
         verify(seguimientoRepository, never()).save(any());
     }

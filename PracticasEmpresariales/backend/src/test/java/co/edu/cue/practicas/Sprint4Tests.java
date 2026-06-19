@@ -2,6 +2,7 @@ package co.edu.cue.practicas;
 
 import co.edu.cue.practicas.dto.request.*;
 import co.edu.cue.practicas.dto.response.*;
+import co.edu.cue.practicas.event.Sprint4DomainEvent;
 import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
@@ -16,6 +17,7 @@ import co.edu.cue.practicas.repository.evaluacion.NotaFinalCoordinadorRepository
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.programa.ProgramaConfiguracionRepository;
 import co.edu.cue.practicas.repository.programa.ProgramaRepository;
+import co.edu.cue.practicas.repository.seguimiento.SeguimientoSemanalRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.repository.empresa.EmpresaRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
@@ -169,6 +171,8 @@ class Sprint4Tests {
         @Mock private EvaluacionFinalRepository evaluacionRepo;
         @Mock private InstanciaPracticaRepository instanciaRepo;
         @Mock private ApplicationEventPublisher eventPublisher;
+        @Mock private SeguimientoSemanalRepository seguimientoRepo;
+        @Mock private ReglasNotaFinal reglasNotaFinal;
         @InjectMocks private EvaluacionDocenteService docenteService;
         @InjectMocks private EvaluacionTutorService tutorService;
 
@@ -302,8 +306,10 @@ class Sprint4Tests {
             @Mock private NotaFinalCoordinadorRepository notaRepo;
             @Mock private EvaluacionFinalRepository evalRepo;
             @Mock private InstanciaPracticaRepository instanciaRepo;
+            @Mock private SeguimientoSemanalRepository seguimientoRepo;
             @Mock private ProgramaConfiguracionService configuracionService;
             @Mock private ApplicationEventPublisher eventPublisher;
+            @Spy private ReglasNotaFinal reglasNotaFinal;
             @InjectMocks private NotaFinalCoordinadorService service;
 
             @Test
@@ -317,16 +323,43 @@ class Sprint4Tests {
             }
 
             @Test
-            @DisplayName("Coordinador de otro programa lanza acceso denegado")
-            void registrar_otroPrograma_lanzaAccesoDenegado() {
+            @DisplayName("Menos de 3 seguimientos REVISADO bloquea el registro de la nota — OCL")
+            void registrar_seguimientosInsuficientes_lanzaExcepcion() {
                 InstanciaPractica instancia = instanciaEnCurso(1L, 10L);
                 when(instanciaRepo.findById(1L)).thenReturn(Optional.of(instancia));
+                when(seguimientoRepo.countByInstanciaPractica_IdAndEstado(1L, EstadoSeguimiento.REVISADO))
+                        .thenReturn(1L);
 
-                CustomUserDetails actor = actor(Rol.COORDINADOR_PRACTICAS, 99L);
+                CustomUserDetails actor = actor(Rol.COORDINADOR_PRACTICAS, 10L);
                 RegistrarNotaFinalRequest req = new RegistrarNotaFinalRequest();
 
                 assertThatThrownBy(() -> service.registrar(1L, req, actor))
-                        .isInstanceOf(AccesoNoAutorizadoException.class);
+                        .isInstanceOf(OperacionNoPermitidaException.class)
+                        .hasMessageContaining("seguimientos");
+
+                verify(notaRepo, never()).save(any());
+            }
+
+            @Test
+            @DisplayName("Registro exitoso calcula el resultado segun la nota minima y publica evento")
+            void registrar_exitoso_calculaResultadoYPublicaEvento() {
+                InstanciaPractica instancia = instanciaEnCurso(1L, 10L);
+                when(instanciaRepo.findById(1L)).thenReturn(Optional.of(instancia));
+                when(seguimientoRepo.countByInstanciaPractica_IdAndEstado(1L, EstadoSeguimiento.REVISADO))
+                        .thenReturn(3L);
+                when(configuracionService.notaMinima(10L)).thenReturn(3.0);
+                when(notaRepo.findByInstanciaPractica_Id(1L)).thenReturn(Optional.empty());
+                when(notaRepo.save(any(NotaFinalCoordinador.class))).thenAnswer(inv -> inv.getArgument(0));
+
+                CustomUserDetails actor = actor(Rol.COORDINADOR_PRACTICAS, 10L);
+                RegistrarNotaFinalRequest req = new RegistrarNotaFinalRequest();
+                req.setNotaFinal(4.0);
+                req.setObservaciones("Buen desempeno");
+
+                NotaFinalResponse resultado = service.registrar(1L, req, actor);
+
+                assertThat(resultado.getResultado()).isEqualTo(ResultadoPractica.APROBADO);
+                verify(eventPublisher).publishEvent(any(Sprint4DomainEvent.class));
             }
         }
     }
@@ -427,6 +460,7 @@ class Sprint4Tests {
         @Mock private EncuestaSatisfaccionRepository encuestaRepo;
         @Mock private InstanciaPracticaRepository instanciaRepo;
         @Mock private UsuarioRepository usuarioRepo;
+        @Mock private EvaluacionFinalRepository evaluacionRepo;
         @Mock private NotificacionConfigurableService notificacionService;
         @Mock private ApplicationEventPublisher eventPublisher;
         @InjectMocks private EncuestaSatisfaccionService service;
@@ -468,6 +502,9 @@ class Sprint4Tests {
             instancia.setTutorEmpresarial(
                     Usuario.builder().id(1L).correo("t@e.com").passwordHash("h").rol(Rol.TUTOR_EMPRESARIAL).build());
             when(instanciaRepo.findById(1L)).thenReturn(Optional.of(instancia));
+            when(evaluacionRepo.existsByInstanciaPractica_IdAndTipoAndEstado(
+                    eq(1L), eq(TipoEvaluacionFinal.DOCENTE_ASESOR), eq(EstadoEvaluacionFinal.COMPLETADA)))
+                    .thenReturn(true);
             when(usuarioRepo.findById(99L)).thenReturn(
                     Optional.of(Usuario.builder().id(99L).correo("otro@e.com").passwordHash("h").rol(Rol.TUTOR_EMPRESARIAL).build()));
 
@@ -614,17 +651,18 @@ class Sprint4Tests {
 
         @Mock private InstanciaPracticaRepository instanciaRepo;
         @Mock private EvaluacionFinalRepository evaluacionRepo;
-        @Mock private NotaFinalCoordinadorRepository notaRepo;
         @Mock private EncuestaSatisfaccionRepository encuestaRepo;
         @Mock private PracticaDocumentoRepository documentoRepo;
-        @Mock private SustentacionPracticaRepository sustRepo;
         @Mock private ProgramaConfiguracionService configuracionService;
         @InjectMocks private ChecklistCierreService service;
 
+        // El checklist real tiene 5 items: evaluacion_docente, encuesta_tutor,
+        // encuesta_estudiante, documentos y sustentacion (esta ultima se verifica
+        // como un documento de tipo ACTA_SUSTENTACION, no via un repositorio propio).
         private ProgramaConfiguracionResponse configCompleta() {
             return ProgramaConfiguracionResponse.builder()
-                    .requisitosCierre("evaluacion_docente,evaluacion_tutor,nota_final," +
-                            "encuesta_tutor,encuesta_estudiante,documentos,sustentacion")
+                    .requisitosCierre("evaluacion_docente,encuesta_tutor,encuesta_estudiante," +
+                            "documentos,sustentacion")
                     .build();
         }
 
@@ -636,11 +674,10 @@ class Sprint4Tests {
             when(configuracionService.obtener(10L)).thenReturn(configCompleta());
             when(evaluacionRepo.existsByInstanciaPractica_IdAndTipoAndEstado(
                     any(), any(), any())).thenReturn(false);
-            when(notaRepo.existsByInstanciaPractica_Id(any())).thenReturn(false);
             when(encuestaRepo.existsByInstanciaPractica_IdAndTipoAndEstado(
                     any(), any(), any())).thenReturn(false);
             when(documentoRepo.countByInstanciaPractica_Id(any())).thenReturn(0L);
-            when(sustRepo.findByInstanciaPractica_Id(any())).thenReturn(Optional.empty());
+            when(documentoRepo.existsByInstanciaPractica_IdAndTipo(any(), any())).thenReturn(false);
 
             CustomUserDetails actor = actor(Rol.COORDINADOR_PRACTICAS, 10L);
             ChecklistCierreResponse resp = service.generar(1L, actor);
@@ -657,17 +694,11 @@ class Sprint4Tests {
             when(configuracionService.obtener(10L)).thenReturn(configCompleta());
             when(evaluacionRepo.existsByInstanciaPractica_IdAndTipoAndEstado(
                     any(), any(), any())).thenReturn(true);
-            when(notaRepo.existsByInstanciaPractica_Id(any())).thenReturn(true);
             when(encuestaRepo.existsByInstanciaPractica_IdAndTipoAndEstado(
                     any(), any(), any())).thenReturn(true);
             when(documentoRepo.countByInstanciaPractica_Id(any())).thenReturn(3L);
-
-            SustentacionPractica sustCompleta = SustentacionPractica.builder()
-                    .jurados(new ArrayList<>(List.of("Jurado A")))
-                    .actaUrl("http://acta.pdf").actaFirmada(true)
-                    .resultado(ResultadoSustentacion.APROBADO).build();
-            when(sustRepo.findByInstanciaPractica_Id(any()))
-                    .thenReturn(Optional.of(sustCompleta));
+            when(documentoRepo.existsByInstanciaPractica_IdAndTipo(any(), eq(TipoDocumento.ACTA_SUSTENTACION)))
+                    .thenReturn(true);
 
             CustomUserDetails actor = actor(Rol.COORDINADOR_PRACTICAS, 10L);
             ChecklistCierreResponse resp = service.generar(1L, actor);
@@ -682,9 +713,10 @@ class Sprint4Tests {
             when(instanciaRepo.findById(1L)).thenReturn(Optional.of(instancia));
             when(configuracionService.obtener(10L)).thenReturn(
                     ProgramaConfiguracionResponse.builder()
-                            .requisitosCierre("nota_final").build());
-            when(notaRepo.existsByInstanciaPractica_Id(any())).thenReturn(true);
-            when(sustRepo.findByInstanciaPractica_Id(any())).thenReturn(Optional.empty());
+                            .requisitosCierre("documentos").build());
+            when(documentoRepo.countByInstanciaPractica_Id(any())).thenReturn(1L);
+            when(documentoRepo.existsByInstanciaPractica_IdAndTipo(any(), eq(TipoDocumento.ACTA_SUSTENTACION)))
+                    .thenReturn(false);
 
             CustomUserDetails actor = actor(Rol.COORDINADOR_PRACTICAS, 10L);
             ChecklistCierreResponse resp = service.generar(1L, actor);
@@ -694,15 +726,24 @@ class Sprint4Tests {
         }
 
         @Test
-        @DisplayName("Coordinador de otro programa no puede consultar checklist")
-        void generar_otroPrograma_lanzaAccesoDenegado() {
-            InstanciaPractica instancia = instanciaEnCurso(1L, 10L);
-            when(instanciaRepo.findById(1L)).thenReturn(Optional.of(instancia));
-
-            CustomUserDetails actor = actor(Rol.COORDINADOR_PRACTICAS, 99L);
+        @DisplayName("Rol distinto a COORDINADOR_PRACTICAS no puede consultar el checklist")
+        void generar_rolNoCoordinador_lanzaAccesoDenegado() {
+            CustomUserDetails actor = actor(Rol.DOCENTE_ASESOR, 10L);
 
             assertThatThrownBy(() -> service.generar(1L, actor))
                     .isInstanceOf(AccesoNoAutorizadoException.class);
+
+            verify(instanciaRepo, never()).findById(any());
+        }
+
+        @Test
+        @DisplayName("Practica no encontrada lanza RecursoNoEncontrado")
+        void generar_practicaNoExiste_lanzaRecursoNoEncontrado() {
+            when(instanciaRepo.findById(99L)).thenReturn(Optional.empty());
+            CustomUserDetails actor = actor(Rol.COORDINADOR_PRACTICAS, 10L);
+
+            assertThatThrownBy(() -> service.generar(99L, actor))
+                    .isInstanceOf(RecursoNoEncontradoException.class);
         }
     }
 
@@ -972,7 +1013,7 @@ class Sprint4Tests {
             when(programaRepo.findAll()).thenReturn(List.of());
             when(notaRepo.countByResultado(ResultadoPractica.APROBADO)).thenReturn(80L);
             when(notaRepo.countByResultado(ResultadoPractica.NO_APROBADO)).thenReturn(20L);
-            when(empresaRepo.countByEstado(EstadoEmpresa.APROBADA)).thenReturn(5L);
+            when(empresaRepo.countByEstado(EstadoEmpresa.ACTIVA)).thenReturn(5L);
 
             TableroGerencialResponse resp = service.consultar(actor);
 

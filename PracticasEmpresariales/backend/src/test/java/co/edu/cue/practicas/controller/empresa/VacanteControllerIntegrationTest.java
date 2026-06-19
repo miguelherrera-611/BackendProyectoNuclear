@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Pruebas de integración — VacanteController (GPE-152 / GPE-153)
- * Flujo completo: crear empresa → aprobar → crear vacante → aprobar/rechazar vacante
+ * Flujo completo: crear empresa → activar → crear vacante → activar/desactivar (aprobar/rechazar) vacante
  */
 @DisplayName("VacanteController — Pruebas de integración")
 class VacanteControllerIntegrationTest extends BaseIntegrationTest {
@@ -21,21 +21,9 @@ class VacanteControllerIntegrationTest extends BaseIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        // Login como coordinador de prácticas
-        String resp = mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                        {
-                            "correo": "coord.test@cue.edu.co",
-                            "password": "CoordTest2026!"
-                        }
-                        """))
-                .andReturn().getResponse().getContentAsString();
+        tokenCoordinador = obtenerToken("coord.test@cue.edu.co", "CoordTest2026!");
 
-        tokenCoordinador = objectMapper.readTree(resp)
-                .path("datos").path("token").asText();
-
-        // Crear empresa y aprobarla para tener empresaAprobadaId disponible en todos los tests
+        // Crear empresa y activarla para tener empresaAprobadaId disponible en todos los tests
         String empresaResp = mockMvc.perform(post("/api/v1/empresas")
                         .header("Authorization", bearer(tokenCoordinador))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -52,13 +40,13 @@ class VacanteControllerIntegrationTest extends BaseIntegrationTest {
         empresaAprobadaId = objectMapper.readTree(empresaResp)
                 .path("datos").path("id").asLong();
 
-        // Aprobar la empresa para que las vacantes puedan crearse
-        mockMvc.perform(patch("/api/v1/empresas/" + empresaAprobadaId + "/aprobar")
+        // Activar la empresa para que las vacantes puedan crearse
+        mockMvc.perform(patch("/api/v1/empresas/" + empresaAprobadaId + "/activar")
                 .header("Authorization", bearer(tokenCoordinador)));
     }
 
     @Test
-    @DisplayName("POST /vacantes — Crear vacante para empresa aprobada retorna 201")
+    @DisplayName("POST /vacantes — Crear vacante para empresa activa retorna 201")
     void crearVacante_empresaAprobada_retorna201() throws Exception {
         mockMvc.perform(post("/api/v1/vacantes")
                         .header("Authorization", bearer(tokenCoordinador))
@@ -117,8 +105,8 @@ class VacanteControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
-    @DisplayName("Flujo: crear vacante → rechazar → estado RECHAZADA con motivo")
-    void flujoRechazarVacante_retornaRechazada() throws Exception {
+    @DisplayName("Flujo: crear vacante → rechazar (legacy, delega en desactivar) → estado CERRADA")
+    void flujoRechazarVacante_retornaCerrada() throws Exception {
         String resp = mockMvc.perform(post("/api/v1/vacantes")
                         .header("Authorization", bearer(tokenCoordinador))
                         .contentType(MediaType.APPLICATION_JSON)
@@ -133,14 +121,13 @@ class VacanteControllerIntegrationTest extends BaseIntegrationTest {
 
         Long vacanteId = objectMapper.readTree(resp).path("datos").path("id").asLong();
 
-        // Rechazar (PATRÓN STATE: PENDIENTE → RECHAZADA)
+        // rechazar() es un alias legacy que delega en desactivarVacante() (PENDIENTE/DISPONIBLE → CERRADA)
         mockMvc.perform(patch("/api/v1/vacantes/" + vacanteId + "/rechazar")
                         .header("Authorization", bearer(tokenCoordinador))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"motivo\": \"No aplica al programa\"}"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.datos.estado").value("RECHAZADA"))
-                .andExpect(jsonPath("$.datos.motivoRechazo").value("No aplica al programa"));
+                .andExpect(jsonPath("$.datos.estado").value("CERRADA"));
     }
 
     @Test

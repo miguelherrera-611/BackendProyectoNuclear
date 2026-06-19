@@ -2,7 +2,10 @@ package co.edu.cue.practicas.service.auth;
 
 import co.edu.cue.practicas.audit.singleton.AuditoriaLogger;
 import co.edu.cue.practicas.dto.request.CambiarPasswordRequest;
+import co.edu.cue.practicas.dto.request.ConfirmarCambioCorreoRequest;
 import co.edu.cue.practicas.dto.request.LoginRequest;
+import co.edu.cue.practicas.dto.request.VerificarCodigoLoginRequest;
+import co.edu.cue.practicas.dto.response.LoginPendienteResponse;
 import co.edu.cue.practicas.dto.response.LoginResponse;
 import co.edu.cue.practicas.exception.AccesoNoAutorizadoException;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
@@ -12,10 +15,12 @@ import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.security.jwt.JwtUtil;
+import co.edu.cue.practicas.service.notificacion.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -25,45 +30,41 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
+
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 /**
- * Pruebas unitarias de AuthService.
+ * Pruebas unitarias de AuthService — flujo de login con verificación en 2 pasos (2FA por correo).
  *
- * @ExtendWith(MockitoExtension.class) activa Mockito para esta clase.
- * @Mock crea un objeto falso (mock) de cada dependencia — no se conecta a nada real.
- * @InjectMocks crea el AuthService real e inyecta los mocks como sus dependencias.
+ * Paso 1 — login(): valida credenciales y envía un código de 6 dígitos al correo (LoginPendienteResponse).
+ * Paso 2 — verificarCodigoLogin(): valida el código y entrega el JWT (LoginResponse).
  *
- * Patrón de cada test: ARRANGE → ACT → ASSERT
- *   ARRANGE: preparamos los datos y configuramos qué devuelven los mocks (when/thenReturn)
- *   ACT:     ejecutamos el método que queremos probar
- *   ASSERT:  verificamos que el resultado es el esperado (assertThat)
+ * Como el código generado es aleatorio e interno (no se expone en la respuesta),
+ * lo capturamos con un ArgumentCaptor sobre la llamada a emailService.enviarCodigoLogin().
  */
 @ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService — Pruebas unitarias")
 class AuthServiceTest {
 
-    // @Mock crea versiones falsas de cada dependencia
-    // Estas versiones no hacen nada por defecto; nosotros les decimos qué devolver
     @Mock private AuthenticationManager authenticationManager;
     @Mock private JwtUtil jwtUtil;
     @Mock private UsuarioRepository usuarioRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private AuditoriaLogger auditoriaLogger;
+    @Mock private EmailService emailService;
 
-    // @InjectMocks crea el AuthService REAL e inyecta los mocks anteriores
     @InjectMocks
     private AuthService authService;
 
-    // Datos de prueba reutilizados en varios tests
     private Usuario usuarioEjemplo;
     private CustomUserDetails userDetails;
 
     @BeforeEach
     void setUp() {
-        // Creamos un usuario de prueba que representa al DTI
         usuarioEjemplo = Usuario.builder()
                 .id(1L)
                 .nombre("Admin DTI Test")
@@ -74,68 +75,127 @@ class AuthServiceTest {
                 .primerIngreso(false)
                 .build();
 
-        // Envolvemos el usuario en CustomUserDetails (como lo hace Spring Security)
         userDetails = new CustomUserDetails(usuarioEjemplo);
     }
 
     // =================================================================
-    // TESTS DEL MÉTODO login()
+    // TESTS DEL MÉTODO login() — paso 1: envía código 2FA
     // =================================================================
 
     @Test
-    @DisplayName("Login exitoso debe retornar token y datos del usuario")
-    void loginExitosoDebeRetornarToken() {
-        // ARRANGE
+    @DisplayName("Login con credenciales válidas debe enviar código 2FA y retornar LoginPendienteResponse")
+    void loginExitosoDebeEnviarCodigo2FA() {
         LoginRequest request = new LoginRequest();
         request.setCorreo("dti@test.com");
         request.setPassword("Admin2026!");
 
-        // Configuramos el mock: cuando authenticationManager.authenticate() sea llamado,
-        // devolvemos un objeto Authentication con nuestro userDetails
         Authentication authMock = mock(Authentication.class);
         when(authMock.getPrincipal()).thenReturn(userDetails);
         when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
                 .thenReturn(authMock);
 
-        // Configuramos el mock de JwtUtil para que devuelva un token de prueba
-        when(jwtUtil.generarToken(userDetails)).thenReturn("token.jwt.prueba");
+        LoginPendienteResponse response = authService.login(request, "127.0.0.1");
 
-        // Configuramos el mock de usuarioRepository.save() para que no haga nada
-        when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioEjemplo);
-
-        // ACT
-        LoginResponse response = authService.login(request, "127.0.0.1");
-
-        // ASSERT
         assertThat(response).isNotNull();
-        assertThat(response.getToken()).isEqualTo("token.jwt.prueba");
         assertThat(response.getCorreo()).isEqualTo("dti@test.com");
-        assertThat(response.getRol()).isEqualTo(Rol.ADMIN_DTI);
-
-        // Verificamos que la bitácora fue llamada exactamente 1 vez
-        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
+        assertThat(response.getExpiresInSeconds()).isEqualTo(600);
+        verify(emailService).enviarCodigoLogin(eq("dti@test.com"), eq("Admin DTI Test"), any());
+        verify(auditoriaLogger, never()).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
     }
 
     @Test
-    @DisplayName("Login con credenciales incorrectas debe lanzar AccesoNoAutorizadoException")
+    @DisplayName("Login con credenciales incorrectas debe lanzar AccesoNoAutorizadoException y registrar el fallo")
     void loginConCredencialesInvalidasDebeLanzarExcepcion() {
-        // ARRANGE
         LoginRequest request = new LoginRequest();
         request.setCorreo("dti@test.com");
         request.setPassword("contraseña_incorrecta");
 
-        // Configuramos el mock para que simule credenciales incorrectas
         when(authenticationManager.authenticate(any()))
                 .thenThrow(new BadCredentialsException("Credenciales incorrectas"));
 
-        // ACT + ASSERT
-        // Verificamos que se lanza la excepción correcta con el mensaje esperado
         assertThatThrownBy(() -> authService.login(request, "127.0.0.1"))
                 .isInstanceOf(AccesoNoAutorizadoException.class)
                 .hasMessageContaining("Credenciales incorrectas");
 
-        // Verificamos que se registró el login fallido en la bitácora
         verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
+        verify(emailService, never()).enviarCodigoLogin(any(), any(), any());
+    }
+
+    // =================================================================
+    // TESTS DEL MÉTODO verificarCodigoLogin() — paso 2: entrega el JWT
+    // =================================================================
+
+    @Test
+    @DisplayName("Verificar código correcto debe retornar LoginResponse con token JWT")
+    void verificarCodigoLoginExitosoDebeRetornarToken() {
+        String codigo = solicitarLoginYCapturarCodigo();
+
+        when(usuarioRepository.findByCorreoAndActivoTrue("dti@test.com")).thenReturn(Optional.of(usuarioEjemplo));
+        when(usuarioRepository.save(any(Usuario.class))).thenReturn(usuarioEjemplo);
+        when(jwtUtil.generarToken(any(CustomUserDetails.class))).thenReturn("token.jwt.prueba");
+
+        LoginResponse response = authService.verificarCodigoLogin(
+                new VerificarCodigoLoginRequest("dti@test.com", codigo), "127.0.0.1");
+
+        assertThat(response).isNotNull();
+        assertThat(response.getToken()).isEqualTo("token.jwt.prueba");
+        assertThat(response.getCorreo()).isEqualTo("dti@test.com");
+        assertThat(response.getRol()).isEqualTo(Rol.ADMIN_DTI);
+        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
+    }
+
+    @Test
+    @DisplayName("Verificar código incorrecto debe lanzar AccesoNoAutorizadoException")
+    void verificarCodigoLoginConCodigoIncorrectoLanzaExcepcion() {
+        solicitarLoginYCapturarCodigo();
+        when(usuarioRepository.findByCorreoAndActivoTrue("dti@test.com")).thenReturn(Optional.of(usuarioEjemplo));
+
+        assertThatThrownBy(() -> authService.verificarCodigoLogin(
+                new VerificarCodigoLoginRequest("dti@test.com", "000000"), "127.0.0.1"))
+                .isInstanceOf(AccesoNoAutorizadoException.class)
+                .hasMessageContaining("incorrecto");
+
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Verificar código sin haber solicitado login antes debe lanzar excepción")
+    void verificarCodigoLoginSinCodigoPendienteLanzaExcepcion() {
+        when(usuarioRepository.findByCorreoAndActivoTrue("dti@test.com")).thenReturn(Optional.of(usuarioEjemplo));
+
+        assertThatThrownBy(() -> authService.verificarCodigoLogin(
+                new VerificarCodigoLoginRequest("dti@test.com", "123456"), "127.0.0.1"))
+                .isInstanceOf(OperacionNoPermitidaException.class)
+                .hasMessageContaining("código");
+    }
+
+    @Test
+    @DisplayName("Verificar código para un correo inexistente/inactivo debe lanzar AccesoNoAutorizadoException")
+    void verificarCodigoLoginUsuarioNoEncontradoLanzaExcepcion() {
+        when(usuarioRepository.findByCorreoAndActivoTrue("noexiste@test.com")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> authService.verificarCodigoLogin(
+                new VerificarCodigoLoginRequest("noexiste@test.com", "123456"), "127.0.0.1"))
+                .isInstanceOf(AccesoNoAutorizadoException.class);
+    }
+
+    /** Ejecuta login() y captura el código de 6 dígitos enviado por correo. */
+    private String solicitarLoginYCapturarCodigo() {
+        LoginRequest request = new LoginRequest();
+        request.setCorreo("dti@test.com");
+        request.setPassword("Admin2026!");
+
+        Authentication authMock = mock(Authentication.class);
+        when(authMock.getPrincipal()).thenReturn(userDetails);
+        when(authenticationManager.authenticate(any(UsernamePasswordAuthenticationToken.class)))
+                .thenReturn(authMock);
+
+        authService.login(request, "127.0.0.1");
+
+        ArgumentCaptor<String> codigoCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailService).enviarCodigoLogin(any(), any(), codigoCaptor.capture());
+        clearInvocations(authenticationManager, emailService);
+        return codigoCaptor.getValue();
     }
 
     // =================================================================
@@ -145,22 +205,18 @@ class AuthServiceTest {
     @Test
     @DisplayName("Cambio de contraseña exitoso cuando las contraseñas coinciden y la actual es correcta")
     void cambiarPasswordExitoso() {
-        // ARRANGE
         CambiarPasswordRequest request = new CambiarPasswordRequest();
         request.setPasswordActual("Admin2026!");
         request.setPasswordNueva("NuevaClave123!");
         request.setPasswordConfirmacion("NuevaClave123!");
 
-        // Simulamos que la contraseña actual sí coincide con el hash
         when(passwordEncoder.matches("Admin2026!", usuarioEjemplo.getPasswordHash())).thenReturn(true);
         when(passwordEncoder.encode("NuevaClave123!")).thenReturn("$nuevo_hash_bcrypt");
         when(usuarioRepository.save(any())).thenReturn(usuarioEjemplo);
 
-        // ACT — no lanza excepción = éxito
         assertThatCode(() -> authService.cambiarPassword(request, userDetails))
                 .doesNotThrowAnyException();
 
-        // ASSERT — verificamos que se guardó el usuario con la nueva contraseña
         verify(usuarioRepository, times(1)).save(any(Usuario.class));
         verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
     }
@@ -168,38 +224,100 @@ class AuthServiceTest {
     @Test
     @DisplayName("Cambio de contraseña debe fallar si las contraseñas nuevas no coinciden")
     void cambiarPasswordFallaSiConfirmacionNoCoincidie() {
-        // ARRANGE
         CambiarPasswordRequest request = new CambiarPasswordRequest();
         request.setPasswordActual("Admin2026!");
         request.setPasswordNueva("NuevaClave123!");
         request.setPasswordConfirmacion("ClaveDistinta!");
 
-        // ACT + ASSERT
         assertThatThrownBy(() -> authService.cambiarPassword(request, userDetails))
                 .isInstanceOf(OperacionNoPermitidaException.class)
                 .hasMessageContaining("no coinciden");
 
-        // Verificamos que NO se guardó nada en la BD al fallar la validación
         verify(usuarioRepository, never()).save(any());
     }
 
     @Test
     @DisplayName("Cambio de contraseña debe fallar si la contraseña actual es incorrecta")
     void cambiarPasswordFallaSiContrasenaActualIncorrecta() {
-        // ARRANGE
         CambiarPasswordRequest request = new CambiarPasswordRequest();
         request.setPasswordActual("ClaveActualEquivocada");
         request.setPasswordNueva("NuevaClave123!");
         request.setPasswordConfirmacion("NuevaClave123!");
-        // Simulamos que la contraseña actual NO coincide con el hash
         when(passwordEncoder.matches("ClaveActualEquivocada", usuarioEjemplo.getPasswordHash()))
                 .thenReturn(false);
 
-        // ACT + ASSERT
         assertThatThrownBy(() -> authService.cambiarPassword(request, userDetails))
                 .isInstanceOf(AccesoNoAutorizadoException.class)
                 .hasMessageContaining("contraseña actual");
 
         verify(usuarioRepository, never()).save(any());
+    }
+
+    // =================================================================
+    // TESTS DE solicitarCambioCorreo() / confirmarCambioCorreo() — 2FA cambio de correo
+    // =================================================================
+
+    @Test
+    @DisplayName("solicitarCambioCorreo debe enviar un código de verificación al correo actual")
+    void solicitarCambioCorreoEnviaCodigo() {
+        authService.solicitarCambioCorreo(userDetails);
+
+        verify(emailService).enviarCodigoVerificacionCorreo(eq("dti@test.com"), eq("Admin DTI Test"), any());
+    }
+
+    @Test
+    @DisplayName("confirmarCambioCorreo con código correcto debe actualizar el correo del usuario")
+    void confirmarCambioCorreoExitoso() {
+        String codigo = solicitarCambioCorreoYCapturarCodigo();
+        when(usuarioRepository.existsByCorreo("nuevo@test.com")).thenReturn(false);
+        when(usuarioRepository.save(any())).thenReturn(usuarioEjemplo);
+
+        authService.confirmarCambioCorreo(new ConfirmarCambioCorreoRequest(codigo, "nuevo@test.com"), userDetails);
+
+        assertThat(usuarioEjemplo.getCorreo()).isEqualTo("nuevo@test.com");
+        verify(usuarioRepository).save(usuarioEjemplo);
+        verify(auditoriaLogger, times(1)).registrar(any(BitacoraAuditoria.BitacoraAuditoriaBuilder.class));
+    }
+
+    @Test
+    @DisplayName("confirmarCambioCorreo con correo ya en uso debe lanzar excepción")
+    void confirmarCambioCorreoConCorreoDuplicadoLanzaExcepcion() {
+        String codigo = solicitarCambioCorreoYCapturarCodigo();
+        when(usuarioRepository.existsByCorreo("duplicado@test.com")).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.confirmarCambioCorreo(
+                new ConfirmarCambioCorreoRequest(codigo, "duplicado@test.com"), userDetails))
+                .isInstanceOf(OperacionNoPermitidaException.class)
+                .hasMessageContaining("ya está en uso");
+
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("confirmarCambioCorreo con código incorrecto debe lanzar AccesoNoAutorizadoException")
+    void confirmarCambioCorreoConCodigoIncorrectoLanzaExcepcion() {
+        solicitarCambioCorreoYCapturarCodigo();
+
+        assertThatThrownBy(() -> authService.confirmarCambioCorreo(
+                new ConfirmarCambioCorreoRequest("000000", "nuevo@test.com"), userDetails))
+                .isInstanceOf(AccesoNoAutorizadoException.class);
+
+        verify(usuarioRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("confirmarCambioCorreo sin solicitud previa debe lanzar excepción")
+    void confirmarCambioCorreoSinSolicitudPreviaLanzaExcepcion() {
+        assertThatThrownBy(() -> authService.confirmarCambioCorreo(
+                new ConfirmarCambioCorreoRequest("123456", "nuevo@test.com"), userDetails))
+                .isInstanceOf(OperacionNoPermitidaException.class);
+    }
+
+    private String solicitarCambioCorreoYCapturarCodigo() {
+        authService.solicitarCambioCorreo(userDetails);
+        ArgumentCaptor<String> codigoCaptor = ArgumentCaptor.forClass(String.class);
+        verify(emailService).enviarCodigoVerificacionCorreo(any(), any(), codigoCaptor.capture());
+        clearInvocations(emailService);
+        return codigoCaptor.getValue();
     }
 }

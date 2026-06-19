@@ -31,14 +31,18 @@ class UsuarioControllerIntegrationTest extends BaseIntegrationTest {
     @Test
     @DisplayName("POST /usuarios — DTI crea coordinador académico retorna 201")
     void crearUsuario_coordinadorAcademico_retorna201() throws Exception {
+        // COORDINACION_ACADEMICA exige un programaId valido (CrearUsuarioRequest)
+        Long programaId = crearProgramaDePrueba();
+
         String body = """
     {
         "nombre": "Coordinador Practicas Test",
         "correo": "coord.academica@cue.edu.co",
         "rol": "COORDINACION_ACADEMICA",
-        "etiquetaCargo": "COORDINACION_ACADEMICA"
+        "etiquetaCargo": "COORDINACION_ACADEMICA",
+        "programaId": %d
     }
-    """;
+    """.formatted(programaId);
 
         mockMvc.perform(post("/usuarios")
                         .header("Authorization", bearer(tokenDTI))
@@ -48,6 +52,29 @@ class UsuarioControllerIntegrationTest extends BaseIntegrationTest {
                 .andExpect(jsonPath("$.exitoso").value(true))
                 .andExpect(jsonPath("$.datos.correo").value("coord.academica@cue.edu.co"))
                 .andExpect(jsonPath("$.datos.rol").value("COORDINACION_ACADEMICA"));
+    }
+
+    /** Crea una Facultad y un Programa de prueba, retornando el id del programa. */
+    private Long crearProgramaDePrueba() throws Exception {
+        String facultadResp = mockMvc.perform(post("/facultades")
+                        .header("Authorization", bearer(tokenDTI))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"nombre\": \"Facultad de Ingenieria Test\"}"))
+                .andReturn().getResponse().getContentAsString();
+        Long facultadId = objectMapper.readTree(facultadResp).path("datos").path("id").asLong();
+
+        String programaResp = mockMvc.perform(post("/programas")
+                        .header("Authorization", bearer(tokenDTI))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                        {
+                            "nombre": "Ingenieria de Sistemas Test",
+                            "facultadId": %d,
+                            "numeroTotalPracticas": 2
+                        }
+                        """.formatted(facultadId)))
+                .andReturn().getResponse().getContentAsString();
+        return objectMapper.readTree(programaResp).path("datos").path("id").asLong();
     }
 
     @Test

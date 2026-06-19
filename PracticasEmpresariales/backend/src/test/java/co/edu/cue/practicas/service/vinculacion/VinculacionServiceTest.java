@@ -8,11 +8,12 @@ import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
 import co.edu.cue.practicas.model.entity.*;
 import co.edu.cue.practicas.model.enums.*;
+import co.edu.cue.practicas.repository.evaluacion.EvaluacionFinalRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.mapper.EstudianteMapper;
-import co.edu.cue.practicas.service.notificacion.EmailService;
+import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -21,6 +22,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -36,9 +38,11 @@ class VinculacionServiceTest {
 
     @Mock private InstanciaPracticaRepository instanciaPracticaRepository;
     @Mock private UsuarioRepository usuarioRepository;
+    @Mock private EvaluacionFinalRepository evaluacionFinalRepository;
     @Mock private EstudianteMapper mapper;
     @Mock private AuditoriaLogger auditoriaLogger;
     @Mock private ApplicationEventPublisher eventPublisher;
+    @Mock private EntityManager em;
 
     @InjectMocks
     private VinculacionService service;
@@ -56,13 +60,17 @@ class VinculacionServiceTest {
 
     @BeforeEach
     void setUp() {
+        // @InjectMocks usa inyección por constructor (RequiredArgsConstructor) y por eso
+        // nunca inyecta el campo "em" (@PersistenceContext, no es parte del constructor).
+        ReflectionTestUtils.setField(service, "em", em);
+
         coordinador = udConRol(Rol.COORDINADOR_PRACTICAS, 1L);
         noCoordinador = udConRol(Rol.ESTUDIANTE, 10L);
         docente = udConRol(Rol.DOCENTE_ASESOR, 5L);
         tutor = udConRolYCorreo(Rol.TUTOR_EMPRESARIAL, 6L, "tutor@corp.com");
 
         Empresa empresa = Empresa.builder().id(1L).razonSocial("TechCorp")
-                .correo("tech@corp.com").nombreContacto("Juan").estado(EstadoEmpresa.APROBADA).build();
+                .correo("tech@corp.com").nombreContacto("Juan").estado(EstadoEmpresa.ACTIVA).build();
 
         Usuario tutor = Usuario.builder().id(3L).rol(Rol.TUTOR_EMPRESARIAL)
                 .nombre("Tutor Test").correo("tutor@corp.com").passwordHash("h").activo(true).build();
@@ -99,7 +107,6 @@ class VinculacionServiceTest {
                 INICIO, FIN, true, true, true, null);
 
         when(instanciaPracticaRepository.findById(INSTANCIA_ID)).thenReturn(Optional.of(instanciaAsignada));
-        when(instanciaPracticaRepository.save(any())).thenReturn(instanciaAsignada);
         when(mapper.toInstanciaPracticaResponse(any())).thenReturn(responseEjemplo);
 
         InstanciaPracticaResponse resultado = service.confirmarVinculacion(INSTANCIA_ID, req, coordinador);
@@ -108,7 +115,8 @@ class VinculacionServiceTest {
         assertThat(instanciaAsignada.getEstado()).isEqualTo(EstadoPractica.EN_CURSO);
         assertThat(instanciaAsignada.getFechaInicio()).isEqualTo(INICIO);
         assertThat(instanciaAsignada.getFechaFin()).isEqualTo(FIN);
-        verify(instanciaPracticaRepository).save(instanciaAsignada);
+        // confirmarVinculacion() actualiza la entidad gestionada y hace em.flush() (mockeado),
+        // no llama a instanciaPracticaRepository.save() explicitamente.
         verify(eventPublisher).publishEvent(any());
     }
 
@@ -176,7 +184,6 @@ class VinculacionServiceTest {
 
         when(instanciaPracticaRepository.findById(INSTANCIA_ID)).thenReturn(Optional.of(instanciaAsignada));
         when(usuarioRepository.findById(5L)).thenReturn(Optional.of(docenteUsuario));
-        when(instanciaPracticaRepository.save(any())).thenReturn(instanciaAsignada);
         when(mapper.toInstanciaPracticaResponse(any())).thenReturn(responseEjemplo);
 
         service.confirmarVinculacion(INSTANCIA_ID, req, coordinador);

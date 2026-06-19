@@ -79,7 +79,7 @@ class AsignacionServiceTest {
 
         empresa = Empresa.builder()
                 .id(1L).razonSocial("TechCorp S.A.").nit("900.1")
-                .correo("tech@corp.com").nombreContacto("Luis").estado(EstadoEmpresa.APROBADA).build();
+                .correo("tech@corp.com").nombreContacto("Luis").estado(EstadoEmpresa.ACTIVA).build();
 
         vacante = Vacante.builder()
                 .id(VACANTE_ID).empresa(empresa).area("Desarrollo de Software")

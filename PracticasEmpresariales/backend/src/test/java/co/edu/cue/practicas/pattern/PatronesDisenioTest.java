@@ -43,7 +43,7 @@ class PatronesDisenioTest {
         assertNotNull(empresa);
         assertEquals("TechCo S.A.", empresa.getRazonSocial());
         assertEquals("900.123.456-7", empresa.getNit());
-        assertEquals(EstadoEmpresa "Merge branch 'origin/main' into main".PENDIENTE, empresa.getEstado()); // siempre inicia PENDIENTE
+        assertEquals(EstadoEmpresa.INACTIVA, empresa.getEstado()); // siempre inicia INACTIVA
         assertEquals(2, empresa.getAreasDisponibles().size());
     }
 
@@ -162,7 +162,7 @@ class PatronesDisenioTest {
         assertEquals("Tecnología", clon.getSector()); // sector sí se clona
         assertEquals("Armenia", clon.getMunicipio()); // municipio sí
         assertEquals("3001234567", clon.getTelefono()); // teléfono sí
-        assertEquals(EstadoEmpresa.PENDIENTE, clon.getEstado()); // siempre PENDIENTE
+        assertEquals(EstadoEmpresa.INACTIVA, clon.getEstado()); // siempre INACTIVA
         assertEquals(2, clon.getAreasDisponibles().size()); // áreas se clonan
     }
 

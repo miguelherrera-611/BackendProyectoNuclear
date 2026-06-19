@@ -11,7 +11,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * Pruebas de integración — EmpresaController (GPE-150)
- * Flujo completo con JWT real: login → crear empresa → aprobar → inactivar
+ * Flujo completo con JWT real: login → crear empresa → activar → inactivar
  */
 @DisplayName("EmpresaController — Pruebas de integración")
 class EmpresaControllerIntegrationTest extends BaseIntegrationTest {
@@ -20,18 +20,7 @@ class EmpresaControllerIntegrationTest extends BaseIntegrationTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        String resp = mockMvc.perform(post("/auth/login")
-                        .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                        {
-                            "correo": "coord.test@cue.edu.co",
-                            "password": "CoordTest2026!"
-                        }
-                        """))
-                .andReturn().getResponse().getContentAsString();
-
-        tokenCoordinador = objectMapper.readTree(resp)
-                .path("datos").path("token").asText();
+        tokenCoordinador = obtenerToken("coord.test@cue.edu.co", "CoordTest2026!");
     }
 
     @Test
@@ -58,7 +47,7 @@ class EmpresaControllerIntegrationTest extends BaseIntegrationTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.exitoso").value(true))
                 .andExpect(jsonPath("$.datos.razonSocial").value("TechCo S.A."))
-                .andExpect(jsonPath("$.datos.estado").value("PENDIENTE"));
+                .andExpect(jsonPath("$.datos.estado").value("INACTIVA"));
     }
 
     @Test
@@ -95,12 +84,12 @@ class EmpresaControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     // ═══════════════════════════════════════════════════
-    // Flujo completo: crear → aprobar → inactivar
+    // Flujo completo: crear → activar → inactivar
     // ═══════════════════════════════════════════════════
 
     @Test
-    @DisplayName("Flujo completo: crear empresa → aprobar → retorna APROBADA")
-    void flujoCompleto_crearYAprobar() throws Exception {
+    @DisplayName("Flujo completo: crear empresa → activar → retorna ACTIVA")
+    void flujoCompleto_crearYActivar() throws Exception {
         String body = """
             {
                 "razonSocial": "Empresa Flujo Test",
@@ -120,22 +109,22 @@ class EmpresaControllerIntegrationTest extends BaseIntegrationTest {
 
         Long id = objectMapper.readTree(resp).path("datos").path("id").asLong();
 
-        // Aprobar
-        mockMvc.perform(patch("/api/v1/empresas/" + id + "/aprobar")
+        // Activar
+        mockMvc.perform(patch("/api/v1/empresas/" + id + "/activar")
                         .header("Authorization", bearer(tokenCoordinador)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.datos.estado").value("APROBADA"));
+                .andExpect(jsonPath("$.datos.estado").value("ACTIVA"));
     }
 
     @Test
-    @DisplayName("Flujo: rechazar empresa con motivo → retorna RECHAZADA")
-    void flujoRechazar_conMotivo_retornaRechazada() throws Exception {
+    @DisplayName("Flujo: activar → inactivar → retorna INACTIVA")
+    void flujoActivarEInactivar_retornaInactiva() throws Exception {
         String body = """
             {
-                "razonSocial": "Empresa Rechazar",
+                "razonSocial": "Empresa Inactivar",
                 "nit": "555.666.777-8",
                 "nombreContacto": "Contacto",
-                "correo": "rechazar@empresa.com"
+                "correo": "inactivar@empresa.com"
             }
             """;
 
@@ -148,11 +137,41 @@ class EmpresaControllerIntegrationTest extends BaseIntegrationTest {
 
         Long id = objectMapper.readTree(resp).path("datos").path("id").asLong();
 
-        mockMvc.perform(patch("/api/v1/empresas/" + id + "/rechazar")
+        mockMvc.perform(patch("/api/v1/empresas/" + id + "/activar")
+                .header("Authorization", bearer(tokenCoordinador)));
+
+        mockMvc.perform(patch("/api/v1/empresas/" + id + "/inactivar")
+                        .header("Authorization", bearer(tokenCoordinador)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.datos.estado").value("INACTIVA"));
+    }
+
+    @Test
+    @DisplayName("Activar empresa ya ACTIVA retorna 409 (State inválido)")
+    void activarEmpresa_yaActiva_retorna409() throws Exception {
+        String body = """
+            {
+                "razonSocial": "Empresa Doble Activacion",
+                "nit": "222.333.444-5",
+                "nombreContacto": "Contacto",
+                "correo": "doble@empresa.com"
+            }
+            """;
+
+        String resp = mockMvc.perform(post("/api/v1/empresas")
                         .header("Authorization", bearer(tokenCoordinador))
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("{\"motivo\": \"No cumple requisitos legales\"}"))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.datos.estado").value("RECHAZADA"));
+                        .content(body))
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = objectMapper.readTree(resp).path("datos").path("id").asLong();
+
+        mockMvc.perform(patch("/api/v1/empresas/" + id + "/activar")
+                        .header("Authorization", bearer(tokenCoordinador)))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(patch("/api/v1/empresas/" + id + "/activar")
+                        .header("Authorization", bearer(tokenCoordinador)))
+                .andExpect(status().isConflict());
     }
 }

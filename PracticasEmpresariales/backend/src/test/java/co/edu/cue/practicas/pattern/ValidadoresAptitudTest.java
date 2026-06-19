@@ -253,16 +253,28 @@ class ValidadoresAptitudTest {
         }
 
         @Test
-        @DisplayName("cadena se detiene en el segundo eslabón si la HV no es válida")
-        void cadenaSeDetieneEnSegundoEslabonSinHv() {
-            // Catálogo OK, HV PENDIENTE → falla en ValidadorHojaDeVidaValida
+        @DisplayName("cadena se detiene en el segundo eslabón si la práctica anterior no está finalizada")
+        void cadenaSeDetieneEnSegundoEslabonSinPracticaAnteriorFinalizada() {
+            // La validación de HV fue eliminada de la cadena estándar (la Coordinación
+            // Académica puede marcar APTO sin importar el estado de la HV) — ver
+            // EstrategiaValidacionEstandar. El eslabón 2 ahora es ValidadorPracticaAnteriorFinalizada.
+            CatalogoPractica catalogo2 = CatalogoPractica.builder()
+                    .id(2L).programa(Programa.builder().id(1L).build())
+                    .numeroPractica(2).nombre("Práctica II")
+                    .materiaNucleo("PE").codigoMateria("PE-201")
+                    .numCortes(2).duracionSemanas(12).activo(true).build();
+
+            InstanciaPractica practica1EnCurso = InstanciaPractica.builder()
+                    .numeroPractica(1).estado(EstadoPractica.ASIGNADA_PENDIENTE_INICIO).build();
+            practica1EnCurso.iniciar(); // EN_CURSO, no FINALIZADA
+
             ContextoValidacion ctx = new ContextoValidacion(
-                    estudiante, catalogoActivo, Optional.of(hvPendiente()), Optional.empty());
+                    estudiante, catalogo2, Optional.of(hvValida()), Optional.of(practica1EnCurso));
 
             assertThatThrownBy(() -> new EstrategiaValidacionEstandar()
                     .construirCadena().validar(ctx))
                     .isInstanceOf(OperacionNoPermitidaException.class)
-                    .hasMessageContaining("VÁLIDA");
+                    .hasMessageContaining("Práctica 1");
         }
     }
 }
