@@ -2,6 +2,8 @@ package co.edu.cue.practicas.repository.expediente;
 
 import co.edu.cue.practicas.model.entity.InstanciaPractica;
 import co.edu.cue.practicas.model.enums.EstadoPractica;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -16,19 +18,25 @@ public interface InstanciaPracticaRepository extends JpaRepository<InstanciaPrac
     List<InstanciaPractica> findByExpediente_Id(Long expedienteId);
 
     List<InstanciaPractica> findAllByEstado(EstadoPractica estado);
+    Page<InstanciaPractica> findAllByEstado(EstadoPractica estado, Pageable pageable);
 
     List<InstanciaPractica> findAllByExpediente_Estudiante_Programa_Id(Long programaId);
 
     List<InstanciaPractica> findAllByEstadoAndExpediente_Estudiante_Programa_Id(EstadoPractica estado, Long programaId);
 
     List<InstanciaPractica> findAllByExpediente_Estudiante_Programa_Facultad_Id(Long facultadId);
+    Page<InstanciaPractica> findAllByExpediente_Estudiante_Programa_Facultad_Id(Long facultadId, Pageable pageable);
 
     List<InstanciaPractica> findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(EstadoPractica estado, Long facultadId);
+    Page<InstanciaPractica> findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(EstadoPractica estado, Long facultadId, Pageable pageable);
 
     List<InstanciaPractica> findByDocenteAsesor_IdAndEstadoNotIn(Long docenteAsesorId, List<EstadoPractica> estados);
+    Page<InstanciaPractica> findByDocenteAsesor_IdAndEstadoNotIn(Long docenteAsesorId, List<EstadoPractica> estados, Pageable pageable);
 
     List<InstanciaPractica> findByTutorEmpresarial_CorreoIgnoreCaseAndEstadoNotIn(
             String tutorCorreo, List<EstadoPractica> estados);
+    Page<InstanciaPractica> findByTutorEmpresarial_CorreoIgnoreCaseAndEstadoNotIn(
+            String tutorCorreo, List<EstadoPractica> estados, Pageable pageable);
 
     long countByEstado(EstadoPractica estado);
 

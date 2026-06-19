@@ -16,6 +16,7 @@ import type {
   TableroGerencialResponse,
   TipoEventoNotificacion,
   TipoExportacionReporte,
+  Pageable,
 } from '../types'
 
 export interface RegistrarEvaluacionRequest {
@@ -105,6 +106,11 @@ export const sprint4Service = {
   async listarEncuestasCoordinador() {
     const res = await api.get<ApiResponse<EncuestaCoordinadorResumen[]>>('/api/v1/encuestas-satisfaccion/coordinador/practicas')
     return res.data.datos ?? []
+  },
+
+  async listarEncuestasCoordinadorPaginado(page = 0, size = 20) {
+    const res = await api.get<ApiResponse<Pageable<EncuestaCoordinadorResumen>>>('/api/v1/encuestas-satisfaccion/coordinador/practicas/page', { params: { page, size } })
+    return res.data.datos!
   },
 
   async programarSustentacion(instanciaId: number, fecha: string, jurados: string[]) {

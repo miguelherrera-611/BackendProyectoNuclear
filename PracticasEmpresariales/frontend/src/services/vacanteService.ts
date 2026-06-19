@@ -1,5 +1,5 @@
 import api from './api'
-import { ApiResponse, VacanteResponse } from '../types'
+import { ApiResponse, Pageable, VacanteResponse } from '../types'
 
 interface CrearVacanteRequest {
   empresaId: number
@@ -13,14 +13,29 @@ export const vacanteService = {
     return res.data.datos ?? []
   },
 
+  async listarPaginado(page = 0, size = 20): Promise<Pageable<VacanteResponse>> {
+    const res = await api.get<ApiResponse<Pageable<VacanteResponse>>>('/api/v1/vacantes/page', { params: { page, size } })
+    return res.data.datos!
+  },
+
   async listarPendientes(): Promise<VacanteResponse[]> {
     const res = await api.get<ApiResponse<VacanteResponse[]>>('/api/v1/vacantes/pendientes')
     return res.data.datos ?? []
   },
 
+  async listarPendientesPaginado(page = 0, size = 20): Promise<Pageable<VacanteResponse>> {
+    const res = await api.get<ApiResponse<Pageable<VacanteResponse>>>('/api/v1/vacantes/pendientes/page', { params: { page, size } })
+    return res.data.datos!
+  },
+
   async listarDisponibles(): Promise<VacanteResponse[]> {
     const res = await api.get<ApiResponse<VacanteResponse[]>>('/api/v1/vacantes/disponibles')
     return res.data.datos ?? []
+  },
+
+  async listarDisponiblesPaginado(page = 0, size = 20): Promise<Pageable<VacanteResponse>> {
+    const res = await api.get<ApiResponse<Pageable<VacanteResponse>>>('/api/v1/vacantes/disponibles/page', { params: { page, size } })
+    return res.data.datos!
   },
 
   async listarPorEmpresa(empresaId: number): Promise<VacanteResponse[]> {

@@ -6,12 +6,15 @@ import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { Pagination } from '../../components/common/Table/Pagination'
 import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
 export default function ProgramasPage() {
   const { showToast } = useToast()
   const [programas, setProgramas]   = useState<ProgramaResponse[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<ProgramaResponse> | null>(null)
   const [facultades, setFacultades] = useState<FacultadResponse[]>([])
   const [busqueda, setBusqueda] = useState('')
   const [estadoFiltro, setEstadoFiltro] = useState<'todos' | 'activos' | 'inactivos'>('todos')
@@ -29,8 +32,11 @@ export default function ProgramasPage() {
 
   const cargar = () => {
     setLoading(true)
-    api.get<ApiResponse<Pageable<ProgramaResponse>>>('/programas?incluirInactivos=true&size=200')
-      .then(r => setProgramas(r.data.datos?.content ?? []))
+    api.get<ApiResponse<Pageable<ProgramaResponse>>>('/programas', { params: { incluirInactivos: true, page: pagina, size: 20 } })
+      .then(r => {
+        setProgramas(r.data.datos?.content ?? [])
+        setPageData(r.data.datos ?? null)
+      })
       .finally(() => setLoading(false))
   }
 
@@ -38,7 +44,7 @@ export default function ProgramasPage() {
     cargar()
     api.get<ApiResponse<Pageable<FacultadResponse>>>('/facultades?size=100')
       .then(r => setFacultades(r.data.datos?.content ?? []))
-  }, [])
+  }, [pagina])
 
   const programasFiltrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
@@ -159,6 +165,14 @@ export default function ProgramasPage() {
           </tr>
         ))}
       </Table>
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
 
       <ConfirmModal
         open={confirm.open}

@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import type { EncuestaCoordinadorResumen } from '../../types'
+import type { EncuestaCoordinadorResumen, Pageable } from '../../types'
 import { sprint4Service, type EnviarEncuestaRequest } from '../../services/sprint4Service'
 import { Button } from '../../components/common/Button/Button'
 import { Modal } from '../../components/common/Modal/Modal'
 import { Select } from '../../components/common/Select/Select'
 import { useToast } from '../../components/common/Notifications/Toast'
+import { Pagination } from '../../components/common/Table/Pagination'
 
 const TITULO_DEFAULT = 'Encuesta de Satisfaccion 2026-I'
 const PREGUNTAS_DEFAULT = [
@@ -59,6 +60,8 @@ function EstadoBadge({ enviada, completada }: { enviada: boolean; completada: bo
 export default function EncuestasCoordinadorPage() {
   const { showToast } = useToast()
   const [lista, setLista] = useState<EncuestaCoordinadorResumen[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<EncuestaCoordinadorResumen> | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [modal, setModal] = useState<ModalEnvio>(MODAL_VACIO)
@@ -74,11 +77,14 @@ export default function EncuestasCoordinadorPage() {
 
   const cargar = useCallback(() => {
     setLoading(true)
-    sprint4Service.listarEncuestasCoordinador()
-      .then(setLista)
+    sprint4Service.listarEncuestasCoordinadorPaginado(pagina)
+      .then(p => {
+        setLista(p.content)
+        setPageData(p)
+      })
       .catch(() => showToast('No se pudo cargar la lista de prácticas.', 'error'))
       .finally(() => setLoading(false))
-  }, [showToast])
+  }, [pagina, showToast])
 
   useEffect(() => { cargar() }, [cargar])
 
@@ -320,6 +326,13 @@ export default function EncuestasCoordinadorPage() {
         </div>
       )}
 
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
       {/* Modal de envío */}
       {modal.open && (
         <Modal

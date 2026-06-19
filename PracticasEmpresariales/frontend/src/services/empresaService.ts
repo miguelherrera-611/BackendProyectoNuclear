@@ -1,5 +1,5 @@
 import api from './api'
-import { ApiResponse, EmpresaResponse } from '../types'
+import { ApiResponse, EmpresaResponse, Pageable } from '../types'
 
 interface CrearEmpresaRequest {
   razonSocial: string
@@ -19,9 +19,19 @@ export const empresaService = {
     return res.data.datos ?? []
   },
 
+  async listarPaginado(page = 0, size = 20): Promise<Pageable<EmpresaResponse>> {
+    const res = await api.get<ApiResponse<Pageable<EmpresaResponse>>>('/api/v1/empresas/page', { params: { page, size } })
+    return res.data.datos!
+  },
+
   async listarActivas(): Promise<EmpresaResponse[]> {
     const res = await api.get<ApiResponse<EmpresaResponse[]>>('/api/v1/empresas/activas')
     return res.data.datos ?? []
+  },
+
+  async listarActivasPaginado(page = 0, size = 20): Promise<Pageable<EmpresaResponse>> {
+    const res = await api.get<ApiResponse<Pageable<EmpresaResponse>>>('/api/v1/empresas/activas/page', { params: { page, size } })
+    return res.data.datos!
   },
 
   async crear(data: CrearEmpresaRequest): Promise<EmpresaResponse> {

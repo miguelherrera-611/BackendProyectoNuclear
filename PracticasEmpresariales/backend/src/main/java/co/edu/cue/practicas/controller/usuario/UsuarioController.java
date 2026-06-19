@@ -50,11 +50,25 @@ public class UsuarioController {
         return ResponseEntity.ok(ApiResponse.ok("Docentes asesores activos.", usuarioService.listarDocentesActivos()));
     }
 
+    @GetMapping("/docentes/page")
+    public ResponseEntity<ApiResponse<Page<UsuarioResponse>>> listarDocentesPaginado(
+            @PageableDefault(size = 20, sort = "nombre") Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails actor) {
+        return ResponseEntity.ok(ApiResponse.ok("Docentes asesores activos.", usuarioService.listarDocentesActivos(pageable)));
+    }
+
     /** Lista todos los tutores empresariales activos (usuarios con rol TUTOR_EMPRESARIAL). */
     @GetMapping("/tutores")
     public ResponseEntity<ApiResponse<List<UsuarioResponse>>> listarTutores(
             @AuthenticationPrincipal CustomUserDetails actor) {
         return ResponseEntity.ok(ApiResponse.ok("Tutores empresariales activos.", usuarioService.listarTutoresActivos()));
+    }
+
+    @GetMapping("/tutores/page")
+    public ResponseEntity<ApiResponse<Page<UsuarioResponse>>> listarTutoresPaginado(
+            @PageableDefault(size = 20, sort = "nombre") Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails actor) {
+        return ResponseEntity.ok(ApiResponse.ok("Tutores empresariales activos.", usuarioService.listarTutoresActivos(pageable)));
     }
 
     @GetMapping("/{id}")

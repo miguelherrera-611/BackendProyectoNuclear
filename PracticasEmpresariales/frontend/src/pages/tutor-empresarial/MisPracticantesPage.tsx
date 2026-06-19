@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { InstanciaPracticaResponseV2 } from '../../types'
+import type { InstanciaPracticaResponseV2, Pageable } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 import { Select } from '../../components/common/Select/Select'
+import { Pagination } from '../../components/common/Table/Pagination'
 
 const ESTADOS_FILTRO = [
   { label: 'Todos los estados', value: '' },
@@ -22,17 +23,23 @@ const ESTADO_BADGE: Record<string, string> = {
 export default function TutorMisPracticantesPage() {
   const navigate = useNavigate()
   const [practicas, setPracticas] = useState<InstanciaPracticaResponseV2[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<InstanciaPracticaResponseV2> | null>(null)
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState('')
   const [busqueda, setBusqueda]   = useState('')
   const [estadoFiltro, setEstadoFiltro] = useState('')
 
   useEffect(() => {
-    seguimientoService.misPracticantes()
-      .then(setPracticas)
+    setLoading(true)
+    seguimientoService.misPracticantesPaginado(pagina)
+      .then(p => {
+        setPracticas(p.content)
+        setPageData(p)
+      })
       .catch(() => setError('No se pudieron cargar tus practicantes.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [pagina])
 
   const filtradas: InstanciaPracticaResponseV2[] = practicas.filter(p => {
     const coincideTexto = !busqueda ||
@@ -155,6 +162,14 @@ export default function TutorMisPracticantesPage() {
           ))}
         </div>
       )}
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
     </div>
   )
 }

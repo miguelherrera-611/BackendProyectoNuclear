@@ -8,6 +8,9 @@ import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.asignacion.AsignacionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -42,6 +45,14 @@ public class AsignacionController {
                 asignacionService.listarAsignaciones(estado, user)));
     }
 
+    @GetMapping("/page")
+    public ResponseEntity<ApiResponse<Page<InstanciaPracticaResponse>>> listarPaginado(
+            @RequestParam(required = false) String estado,
+            @PageableDefault(size = 20, sort = "creadoEn") Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails user) {
+        return ResponseEntity.ok(ApiResponse.ok("Asignaciones activas.",
+                asignacionService.listarAsignaciones(estado, user, pageable)));
+    }
     /** GPE-159 — Detalle de una asignación */
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<InstanciaPracticaResponse>> detalle(

@@ -4,6 +4,7 @@ import api from '../../services/api'
 import { ApiResponse, Pageable } from '../../types'
 import { Select } from '../../components/common/Select/Select'
 import { ListFilters } from '../../components/common/ListFilters'
+import { Pagination } from '../../components/common/Table/Pagination'
 
 const TIPO_ACCCION_BADGE: Partial<Record<TipoAccion, string>> = {
   LOGIN_EXITOSO:        'bg-green-100 text-green-800',
@@ -34,19 +35,25 @@ export default function AuditoriaPage() {
   const [busqueda, setBusqueda] = useState('')
   const [filtroAccion, setFiltroAccion] = useState('')
   const [filtroModulo, setFiltroModulo] = useState('')
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<BitacoraResponseExt> | null>(null)
 
   const cargar = () => {
     setLoading(true)
     const params = new URLSearchParams()
     if (filtroAccion) params.set('tipoAccion', filtroAccion)
-    params.set('size', '200')
+    params.set('page', String(pagina))
+    params.set('size', '20')
 
     api.get<ApiResponse<Pageable<BitacoraResponseExt>>>(`/auditoria?${params}`)
-      .then(r => setEntradas(r.data.datos?.content ?? []))
+      .then(r => {
+        setEntradas(r.data.datos?.content ?? [])
+        setPageData(r.data.datos ?? null)
+      })
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { cargar() }, [])
+  useEffect(() => { cargar() }, [pagina, filtroAccion])
 
   const modulosDisponibles = [...new Set(entradas.map(e => e.modulo))].sort()
 
@@ -71,6 +78,7 @@ export default function AuditoriaPage() {
     setBusqueda('')
     setFiltroAccion('')
     setFiltroModulo('')
+    setPagina(0)
   }
 
   return (
@@ -97,7 +105,7 @@ export default function AuditoriaPage() {
           label="Tipo de acción"
           className="w-auto"
           value={filtroAccion}
-          onChange={e => setFiltroAccion(e.target.value)}
+          onChange={e => { setFiltroAccion(e.target.value); setPagina(0) }}
         >
           <option value="">Todos los tipos</option>
           {[
@@ -165,6 +173,14 @@ export default function AuditoriaPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
     </div>
   )
 }

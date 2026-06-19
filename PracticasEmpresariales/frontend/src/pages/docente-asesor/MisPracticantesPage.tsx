@@ -1,24 +1,31 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { InstanciaPracticaResponseV2 } from '../../types'
+import type { InstanciaPracticaResponseV2, Pageable } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 import { Select } from '../../components/common/Select/Select'
 import { ListFilters } from '../../components/common/ListFilters'
+import { Pagination } from '../../components/common/Table/Pagination'
 
 export default function MisPracticantesPage() {
   const navigate = useNavigate()
   const [practicas, setPracticas] = useState<InstanciaPracticaResponseV2[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<InstanciaPracticaResponseV2> | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [estadoFiltro, setEstadoFiltro] = useState<'todos' | string>('todos')
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState('')
 
   useEffect(() => {
-    seguimientoService.misPracticantes()
-      .then(setPracticas)
+    setLoading(true)
+    seguimientoService.misPracticantesPaginado(pagina)
+      .then(p => {
+        setPracticas(p.content)
+        setPageData(p)
+      })
       .catch(() => setError('No se pudieron cargar tus practicantes.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [pagina])
 
   const practicasFiltradas = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
@@ -107,6 +114,14 @@ export default function MisPracticantesPage() {
           ))}
         </div>
       )}
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
     </div>
   )
 }

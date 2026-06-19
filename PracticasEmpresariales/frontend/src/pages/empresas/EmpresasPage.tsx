@@ -1,11 +1,12 @@
 import { useState, useEffect, useMemo } from 'react'
-import { EmpresaResponse, EstadoEmpresa } from '../../types'
+import { EmpresaResponse, EstadoEmpresa, Pageable } from '../../types'
 import { empresaService } from '../../services/empresaService'
 import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
 import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { Pagination } from '../../components/common/Table/Pagination'
 import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
@@ -22,6 +23,8 @@ const FORM_INICIAL = {
 export default function EmpresasPage() {
   const { showToast } = useToast()
   const [empresas, setEmpresas]     = useState<EmpresaResponse[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<EmpresaResponse> | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [estadoFiltro, setEstadoFiltro] = useState<'todas' | EstadoEmpresa>('todas')
   const [loading, setLoading]       = useState(true)
@@ -35,10 +38,15 @@ export default function EmpresasPage() {
 
   const cargar = () => {
     setLoading(true)
-    empresaService.listar().then(setEmpresas).finally(() => setLoading(false))
+    empresaService.listarPaginado(pagina)
+      .then(p => {
+        setEmpresas(p.content)
+        setPageData(p)
+      })
+      .finally(() => setLoading(false))
   }
 
-  useEffect(() => { cargar() }, [])
+  useEffect(() => { cargar() }, [pagina])
 
   const empresasFiltradas = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
@@ -155,6 +163,14 @@ export default function EmpresasPage() {
           </tr>
         ))}
       </Table>
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
 
       {modalCrear && (
         <Modal title="Nueva Empresa" size="lg" onClose={() => { setModalCrear(false); setErrorModal('') }}>

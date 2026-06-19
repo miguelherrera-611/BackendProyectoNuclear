@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useMemo } from 'react'
-import { VacanteResponse, EmpresaResponse, EstadoVacante } from '../../types'
+import { VacanteResponse, EmpresaResponse, EstadoVacante, Pageable } from '../../types'
 import { vacanteService } from '../../services/vacanteService'
 import { empresaService } from '../../services/empresaService'
 import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
@@ -7,6 +7,7 @@ import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { Pagination } from '../../components/common/Table/Pagination'
 import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
@@ -34,6 +35,8 @@ const FORM_INICIAL = { empresaId: 0, area: '', cuposTotales: 1 }
 export default function VacantesPage() {
   const { showToast } = useToast()
   const [vacantes, setVacantes]     = useState<VacanteResponse[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<VacanteResponse> | null>(null)
   const [empresas, setEmpresas]     = useState<EmpresaResponse[]>([])
   const [busqueda, setBusqueda]    = useState('')
   const [tab, setTab]               = useState<Tab>('todas')
@@ -48,10 +51,13 @@ export default function VacantesPage() {
 
   const cargar = useCallback(() => {
     setLoading(true)
-    vacanteService.listar()
-      .then(setVacantes)
+    vacanteService.listarPaginado(pagina)
+      .then(p => {
+        setVacantes(p.content)
+        setPageData(p)
+      })
       .finally(() => setLoading(false))
-  }, [])
+  }, [pagina])
 
   useEffect(() => { cargar() }, [cargar])
   useEffect(() => { empresaService.listarActivas().then(setEmpresas) }, [])
@@ -170,6 +176,14 @@ export default function VacantesPage() {
           </tr>
         ))}
       </Table>
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
 
       {modalCrear && (
         <Modal title="Nueva Vacante" onClose={() => { setModalCrear(false); setErrorModal('') }}>

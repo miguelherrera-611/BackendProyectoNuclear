@@ -1,5 +1,5 @@
 import api from './api'
-import { ApiResponse, InstanciaPracticaResponse } from '../types'
+import { ApiResponse, InstanciaPracticaResponse, Pageable } from '../types'
 
 interface CrearAsignacionRequest {
   estudianteId: number
@@ -19,6 +19,12 @@ export const asignacionService = {
     const params = estado ? { estado } : {}
     const res = await api.get<ApiResponse<InstanciaPracticaResponse[]>>('/api/asignaciones', { params })
     return res.data.datos ?? []
+  },
+
+  async listarPaginado(estado?: string, page = 0, size = 20): Promise<Pageable<InstanciaPracticaResponse>> {
+    const params = estado ? { estado, page, size } : { page, size }
+    const res = await api.get<ApiResponse<Pageable<InstanciaPracticaResponse>>>('/api/asignaciones/page', { params })
+    return res.data.datos!
   },
 
   async detalle(id: number): Promise<InstanciaPracticaResponse> {

@@ -7,6 +7,7 @@ import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { Pagination } from '../../components/common/Table/Pagination'
 import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
@@ -24,6 +25,8 @@ const FORM_INICIAL = {
 export default function PracticasPage() {
   const { showToast } = useToast()
   const [catalogos, setCatalogos]     = useState<CatalogoPracticaResponse[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<CatalogoPracticaResponse> | null>(null)
   const [programas, setProgramas]     = useState<ProgramaResponse[]>([])
   const [loading, setLoading]         = useState(true)
   const [saving, setSaving]           = useState(false)
@@ -38,14 +41,19 @@ export default function PracticasPage() {
 
   const cargar = () => {
     setLoading(true)
-    catalogoPracticaService.listar().then(setCatalogos).finally(() => setLoading(false))
+    catalogoPracticaService.listarPaginado(pagina)
+      .then(p => {
+        setCatalogos(p.content)
+        setPageData(p)
+      })
+      .finally(() => setLoading(false))
   }
 
   useEffect(() => {
     cargar()
     api.get<ApiResponse<Pageable<ProgramaResponse>>>('/programas?size=100')
       .then(r => setProgramas(r.data.datos?.content ?? []))
-  }, [])
+  }, [pagina])
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -192,6 +200,14 @@ export default function PracticasPage() {
           </tr>
         ))}
       </Table>
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
 
       {/* Modal: Crear */}
       {modalCrear && (

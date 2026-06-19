@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { InstanciaPracticaResponseV2, PlanPracticaResponse, EstadoPlan } from '../../types'
+import type { InstanciaPracticaResponseV2, PlanPracticaResponse, EstadoPlan, Pageable } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 import { planPracticaService } from '../../services/planPracticaService'
 import { ListFilters } from '../../components/common/ListFilters'
+import { Pagination } from '../../components/common/Table/Pagination'
 
 const PLAN_BADGE: Record<EstadoPlan, string> = {
   BORRADOR:         'bg-amber-100 text-amber-800',
@@ -27,13 +28,18 @@ interface PracticaConPlan extends InstanciaPracticaResponseV2 {
 export default function PlanEstudiantePage() {
   const navigate = useNavigate()
   const [practicas, setPracticas] = useState<PracticaConPlan[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<InstanciaPracticaResponseV2> | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState('')
 
   useEffect(() => {
-    seguimientoService.misPracticantes()
-      .then(async (lista) => {
+    setLoading(true)
+    seguimientoService.misPracticantesPaginado(pagina)
+      .then(async (data) => {
+        const lista = data.content
+        setPageData(data)
         setPracticas(lista.map(p => ({ ...p, loadingPlan: true })))
 
         const actualizadas = await Promise.all(
@@ -50,7 +56,7 @@ export default function PlanEstudiantePage() {
       })
       .catch(() => setError('No se pudieron cargar los planes.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [pagina])
 
   const practicasFiltradas = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
@@ -154,6 +160,14 @@ export default function PlanEstudiantePage() {
           ))}
         </div>
       )}
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
     </div>
   )
 }

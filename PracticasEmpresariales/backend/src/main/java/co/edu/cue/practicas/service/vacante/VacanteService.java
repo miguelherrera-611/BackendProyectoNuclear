@@ -17,6 +17,8 @@ import co.edu.cue.practicas.service.mapper.Dev3Mapper;
 import co.edu.cue.practicas.service.validator.EmpresaValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -82,9 +84,24 @@ public class VacanteService {
     @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
+    public Page<VacanteResponse> listarTodas(Pageable pageable) {
+        return vacanteRepository.findAll(pageable).map(mapper::toVacanteResponse);
+    }
+
+    @SoloLectura
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
+    @Transactional(readOnly = true)
     public List<VacanteResponse> listarPendientes() {
         return vacanteRepository.findByEstado(EstadoVacante.PENDIENTE)
                 .stream().map(mapper::toVacanteResponse).toList();
+    }
+
+    @SoloLectura
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
+    @Transactional(readOnly = true)
+    public Page<VacanteResponse> listarPendientes(Pageable pageable) {
+        return vacanteRepository.findByEstado(EstadoVacante.PENDIENTE, pageable)
+                .map(mapper::toVacanteResponse);
     }
 
     @SoloLectura
@@ -97,11 +114,28 @@ public class VacanteService {
     }
 
     @SoloLectura
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION,
+                          Rol.DOCENTE_ASESOR, Rol.TUTOR_EMPRESARIAL, Rol.ESTUDIANTE})
+    @Transactional(readOnly = true)
+    public Page<VacanteResponse> listarDisponibles(Pageable pageable) {
+        return vacanteRepository.findByEstado(EstadoVacante.DISPONIBLE, pageable)
+                .map(mapper::toVacanteResponse);
+    }
+
+    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public List<VacanteResponse> listarPorEmpresa(Long empresaId) {
         return vacanteRepository.findByEmpresaId(empresaId)
                 .stream().map(mapper::toVacanteResponse).toList();
+    }
+
+    @SoloLectura
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
+    @Transactional(readOnly = true)
+    public Page<VacanteResponse> listarPorEmpresa(Long empresaId, Pageable pageable) {
+        return vacanteRepository.findByEmpresaId(empresaId, pageable)
+                .map(mapper::toVacanteResponse);
     }
 
     // ── ACTIVAR — PATRÓN STATE ────────────────────────────────────────────

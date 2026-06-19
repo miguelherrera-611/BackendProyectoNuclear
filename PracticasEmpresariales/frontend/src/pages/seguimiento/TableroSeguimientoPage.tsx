@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { InstanciaPracticaResponseV2 } from '../../types'
+import type { InstanciaPracticaResponseV2, Pageable } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 import { useAuth } from '../../context/AuthContext'
 import { Select } from '../../components/common/Select/Select'
 import { ListFilters } from '../../components/common/ListFilters'
+import { Pagination } from '../../components/common/Table/Pagination'
 
 export default function TableroSeguimientoPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const esCoordinador = user?.rol === 'COORDINADOR_PRACTICAS'
   const [practicas, setPracticas] = useState<InstanciaPracticaResponseV2[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<InstanciaPracticaResponseV2> | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [filtroEmpresa, setFiltroEmpresa] = useState('')
   const [filtroDocente, setFiltroDocente] = useState('')
@@ -18,11 +21,15 @@ export default function TableroSeguimientoPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
-    seguimientoService.tableroGeneral()
-      .then(setPracticas)
+    setLoading(true)
+    seguimientoService.tableroGeneralPaginado(pagina)
+      .then(p => {
+        setPracticas(p.content)
+        setPageData(p)
+      })
       .catch(() => setError('No se pudo cargar el tablero de seguimiento.'))
       .finally(() => setLoading(false))
-  }, [])
+  }, [pagina])
 
   const filtradas = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
@@ -120,6 +127,14 @@ export default function TableroSeguimientoPage() {
           </tbody>
         </table>
       </div>
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
     </div>
   )
 }

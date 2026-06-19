@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react'
-import type { UsuarioResponse, EmpresaResponse } from '../../types'
+import type { UsuarioResponse, EmpresaResponse, Pageable } from '../../types'
 import { usuarioService } from '../../services/usuarioService'
 import { empresaService } from '../../services/empresaService'
 import { Select } from '../../components/common/Select/Select'
+import { Pagination } from '../../components/common/Table/Pagination'
 
 export default function TutoresPage() {
   const [tutores, setTutores] = useState<UsuarioResponse[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<UsuarioResponse> | null>(null)
   const [empresas, setEmpresas] = useState<EmpresaResponse[]>([])
   const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading] = useState(true)
@@ -17,14 +20,16 @@ export default function TutoresPage() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    setLoading(true)
     Promise.all([
-      usuarioService.listarTutores(),
+      usuarioService.listarTutoresPaginado(pagina),
       empresaService.listarActivas(),
     ]).then(([t, e]) => {
-      setTutores(t)
+      setTutores(t.content)
+      setPageData(t)
       setEmpresas(e)
     }).finally(() => setLoading(false))
-  }, [])
+  }, [pagina])
 
   const tutoresFiltrados = tutores.filter(t => {
     const texto = busqueda.toLowerCase()
@@ -144,6 +149,14 @@ export default function TutoresPage() {
               </div>
             ))}
           </div>
+
+          <Pagination
+            page={pagina}
+            totalPages={pageData?.totalPages ?? 0}
+            totalElements={pageData?.totalElements}
+            onPageChange={setPagina}
+            disabled={loading}
+          />
         </>
       )}
 

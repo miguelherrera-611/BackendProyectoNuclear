@@ -7,6 +7,9 @@ import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.vinculacion.VinculacionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
@@ -51,12 +54,28 @@ public class VinculacionController {
                 service.listarPracticasEnCurso(actor)));
     }
 
+    @GetMapping("/tablero/page")
+    public ResponseEntity<ApiResponse<Page<InstanciaPracticaResponse>>> tableroPaginado(
+            @PageableDefault(size = 20, sort = "creadoEn") Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails actor) {
+        return ResponseEntity.ok(ApiResponse.ok("Tablero de seguimiento.",
+                service.listarPracticasEnCurso(actor, pageable)));
+    }
+
     /** GPE-168 — Prácticas activas del docente asesor o tutor empresarial autenticado */
     @GetMapping("/mis-practicantes")
     public ResponseEntity<ApiResponse<List<InstanciaPracticaResponse>>> misPracticantes(
             @AuthenticationPrincipal CustomUserDetails actor) {
         return ResponseEntity.ok(ApiResponse.ok("Practicantes asignados.",
                 service.listarMisPracticantes(actor)));
+    }
+
+    @GetMapping("/mis-practicantes/page")
+    public ResponseEntity<ApiResponse<Page<InstanciaPracticaResponse>>> misPracticantesPaginado(
+            @PageableDefault(size = 20, sort = "creadoEn") Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails actor) {
+        return ResponseEntity.ok(ApiResponse.ok("Practicantes asignados.",
+                service.listarMisPracticantes(actor, pageable)));
     }
 
     /** GPE-132 — Práctica activa del estudiante autenticado */

@@ -1,6 +1,8 @@
 package co.edu.cue.practicas.repository.catalogo;
 
 import co.edu.cue.practicas.model.entity.CatalogoPractica;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -13,6 +15,7 @@ public interface CatalogoPracticaRepository extends JpaRepository<CatalogoPracti
     List<CatalogoPractica> findByPrograma_IdAndActivoTrue(Long programaId);
 
     List<CatalogoPractica> findByPrograma_Id(Long programaId);
+    Page<CatalogoPractica> findByPrograma_Id(Long programaId, Pageable pageable);
 
     Optional<CatalogoPractica> findByPrograma_IdAndNumeroPracticaAndActivoTrue(
             Long programaId, int numeroPractica);

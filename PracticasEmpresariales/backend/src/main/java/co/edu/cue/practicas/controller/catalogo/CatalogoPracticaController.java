@@ -7,6 +7,9 @@ import co.edu.cue.practicas.dto.response.CatalogoPracticaResponse;
 import co.edu.cue.practicas.service.catalogo.CatalogoPracticaService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -29,6 +32,11 @@ public class CatalogoPracticaController {
         return ResponseEntity.ok(ApiResponse.ok("Catálogos.", service.listarTodos()));
     }
 
+    @GetMapping("/page")
+    public ResponseEntity<ApiResponse<Page<CatalogoPracticaResponse>>> listarTodosPaginado(
+            @PageableDefault(size = 20, sort = "nombre") Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.ok("Catalogos.", service.listarTodos(pageable)));
+    }
     @PostMapping
     public ResponseEntity<ApiResponse<CatalogoPracticaResponse>> crear(
             @Valid @RequestBody CrearCatalogoPracticaRequest req) {
@@ -48,6 +56,13 @@ public class CatalogoPracticaController {
                 "Catálogo del programa.", service.listarPorPrograma(programaId)));
     }
 
+    @GetMapping("/programa/{programaId}/page")
+    public ResponseEntity<ApiResponse<Page<CatalogoPracticaResponse>>> listarPorProgramaPaginado(
+            @PathVariable Long programaId,
+            @PageableDefault(size = 20, sort = "numeroPractica") Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.ok(
+                "Catalogo del programa.", service.listarPorPrograma(programaId, pageable)));
+    }
     @GetMapping("/programa/{programaId}/activos")
     public ResponseEntity<ApiResponse<List<CatalogoPracticaResponse>>> listarActivosPorPrograma(
             @PathVariable Long programaId) {

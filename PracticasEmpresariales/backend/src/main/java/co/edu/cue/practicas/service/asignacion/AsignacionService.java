@@ -25,6 +25,8 @@ import co.edu.cue.practicas.service.mapper.EstudianteMapper;
 import co.edu.cue.practicas.service.notificacion.EmailService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -250,6 +252,33 @@ public class AsignacionService {
         }
 
         return instancias.stream().map(estudianteMapper::toInstanciaPracticaResponse).toList();
+    }
+
+    /** GPE-158 — Lista asignaciones paginadas filtradas por la facultad del coordinador */
+    @Transactional
+    public Page<InstanciaPracticaResponse> listarAsignaciones(String estadoStr, CustomUserDetails actor, Pageable pageable) {
+        if (actor == null || actor.getRol() != Rol.COORDINADOR_PRACTICAS)
+            throw new AccesoNoAutorizadoException("Solo el Coordinador de PrÃ¡cticas puede ver las asignaciones.");
+
+        Long facultadId = actor.getFacultadId();
+        Page<InstanciaPractica> instancias;
+
+        if (estadoStr != null && !estadoStr.isBlank()) {
+            try {
+                EstadoPractica estado = EstadoPractica.valueOf(estadoStr.toUpperCase());
+                instancias = facultadId != null
+                        ? instanciaRepository.findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(estado, facultadId, pageable)
+                        : instanciaRepository.findAllByEstado(estado, pageable);
+            } catch (IllegalArgumentException e) {
+                throw new IllegalArgumentException("Estado no vÃ¡lido: " + estadoStr);
+            }
+        } else {
+            instancias = facultadId != null
+                    ? instanciaRepository.findAllByExpediente_Estudiante_Programa_Facultad_Id(facultadId, pageable)
+                    : instanciaRepository.findAll(pageable);
+        }
+
+        return instancias.map(estudianteMapper::toInstanciaPracticaResponse);
     }
 
     /** GPE-159 — Detalle de una asignación */

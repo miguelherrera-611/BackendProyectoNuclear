@@ -9,6 +9,9 @@ import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.encuesta.EncuestaSatisfaccionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -38,6 +41,14 @@ public class EncuestaSatisfaccionController {
             @AuthenticationPrincipal CustomUserDetails actor) {
         return ResponseEntity.ok(ApiResponse.ok("Resumen de encuestas por practica.",
                 service.listarParaCoordinador(actor)));
+    }
+
+    @GetMapping("/coordinador/practicas/page")
+    public ResponseEntity<ApiResponse<Page<EncuestaCoordinadorResumen>>> listarParaCoordinadorPaginado(
+            @PageableDefault(size = 20, sort = "creadoEn") Pageable pageable,
+            @AuthenticationPrincipal CustomUserDetails actor) {
+        return ResponseEntity.ok(ApiResponse.ok("Resumen de encuestas por practica.",
+                service.listarParaCoordinador(actor, pageable)));
     }
 
     @GetMapping("/publica/{token}")

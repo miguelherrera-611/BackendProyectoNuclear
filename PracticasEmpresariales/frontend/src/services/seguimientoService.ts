@@ -1,5 +1,5 @@
 import api from './api'
-import { ApiResponse, SeguimientoSemanalResponse, InstanciaPracticaResponseV2 } from '../types'
+import { ApiResponse, Pageable, SeguimientoSemanalResponse, InstanciaPracticaResponseV2 } from '../types'
 
 interface CrearSeguimientoRequest {
   semana: number
@@ -46,9 +46,19 @@ export const seguimientoService = {
     return res.data.datos ?? []
   },
 
+  async tableroGeneralPaginado(page = 0, size = 20): Promise<Pageable<InstanciaPracticaResponseV2>> {
+    const res = await api.get<ApiResponse<Pageable<InstanciaPracticaResponseV2>>>('/api/v1/vinculaciones/tablero/page', { params: { page, size } })
+    return res.data.datos!
+  },
+
   async misPracticantes(): Promise<InstanciaPracticaResponseV2[]> {
     const res = await api.get<ApiResponse<InstanciaPracticaResponseV2[]>>('/api/v1/vinculaciones/mis-practicantes')
     return res.data.datos ?? []
+  },
+
+  async misPracticantesPaginado(page = 0, size = 20): Promise<Pageable<InstanciaPracticaResponseV2>> {
+    const res = await api.get<ApiResponse<Pageable<InstanciaPracticaResponseV2>>>('/api/v1/vinculaciones/mis-practicantes/page', { params: { page, size } })
+    return res.data.datos!
   },
 
   async miPractica(): Promise<InstanciaPracticaResponseV2> {

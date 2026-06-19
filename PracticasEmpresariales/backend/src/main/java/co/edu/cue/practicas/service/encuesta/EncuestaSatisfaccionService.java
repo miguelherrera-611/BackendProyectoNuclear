@@ -27,6 +27,8 @@ import co.edu.cue.practicas.service.notificacion.NotificacionConfigurableService
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -213,34 +215,46 @@ public class EncuestaSatisfaccionService {
         }
         java.util.List<InstanciaPractica> instancias = instanciaRepository.findAllByEstado(EstadoPractica.EN_CURSO);
 
-        return instancias.stream().map(i -> {
-            boolean evalDocente = evaluacionRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
-                    i.getId(), TipoEvaluacionFinal.DOCENTE_ASESOR, EstadoEvaluacionFinal.COMPLETADA);
-            boolean tutorEnviada = encuestaRepository.findByInstanciaPractica_IdAndTipo(
-                    i.getId(), TipoEncuesta.PARA_TUTOR).isPresent();
-            boolean tutorCompletada = encuestaRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
-                    i.getId(), TipoEncuesta.PARA_TUTOR, EstadoEncuesta.COMPLETADA);
-            boolean estudianteEnviada = encuestaRepository.findByInstanciaPractica_IdAndTipo(
-                    i.getId(), TipoEncuesta.PARA_ESTUDIANTE).isPresent();
-            boolean estudianteCompletada = encuestaRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
-                    i.getId(), TipoEncuesta.PARA_ESTUDIANTE, EstadoEncuesta.COMPLETADA);
-            return EncuestaCoordinadorResumen.builder()
-                    .instanciaId(i.getId())
-                    .nombrePractica(i.getNombre())
-                    .nombreEstudiante(i.getExpediente().getEstudiante().getNombre())
-                    .programaNombre(i.getExpediente().getEstudiante().getPrograma() != null
-                            ? i.getExpediente().getEstudiante().getPrograma().getNombre() : null)
-                    .nombreEmpresa(i.getEmpresa() != null ? i.getEmpresa().getRazonSocial() : null)
-                    .nombreDocenteAsesor(i.getDocenteAsesor() != null ? i.getDocenteAsesor().getNombre() : null)
-                    .tutorEmpresarialId(i.getTutorEmpresarial() != null ? i.getTutorEmpresarial().getId() : null)
-                    .nombreTutor(i.getTutorEmpresarial() != null ? i.getTutorEmpresarial().getNombre() : null)
-                    .evaluacionDocenteCompleta(evalDocente)
-                    .encuestaTutorEnviada(tutorEnviada)
-                    .encuestaTutorCompletada(tutorCompletada)
-                    .encuestaEstudianteEnviada(estudianteEnviada)
-                    .encuestaEstudianteCompletada(estudianteCompletada)
-                    .build();
-        }).toList();
+        return instancias.stream().map(this::resumenCoordinador).toList();
+    }
+
+    @Transactional
+    public Page<EncuestaCoordinadorResumen> listarParaCoordinador(CustomUserDetails actor, Pageable pageable) {
+        if (actor.getRol() != Rol.COORDINADOR_PRACTICAS) {
+            throw new AccesoNoAutorizadoException("Solo el coordinador puede ver este resumen.");
+        }
+
+        return instanciaRepository.findAllByEstado(EstadoPractica.EN_CURSO, pageable)
+                .map(this::resumenCoordinador);
+    }
+
+    private EncuestaCoordinadorResumen resumenCoordinador(InstanciaPractica i) {
+        boolean evalDocente = evaluacionRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
+                i.getId(), TipoEvaluacionFinal.DOCENTE_ASESOR, EstadoEvaluacionFinal.COMPLETADA);
+        boolean tutorEnviada = encuestaRepository.findByInstanciaPractica_IdAndTipo(
+                i.getId(), TipoEncuesta.PARA_TUTOR).isPresent();
+        boolean tutorCompletada = encuestaRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
+                i.getId(), TipoEncuesta.PARA_TUTOR, EstadoEncuesta.COMPLETADA);
+        boolean estudianteEnviada = encuestaRepository.findByInstanciaPractica_IdAndTipo(
+                i.getId(), TipoEncuesta.PARA_ESTUDIANTE).isPresent();
+        boolean estudianteCompletada = encuestaRepository.existsByInstanciaPractica_IdAndTipoAndEstado(
+                i.getId(), TipoEncuesta.PARA_ESTUDIANTE, EstadoEncuesta.COMPLETADA);
+        return EncuestaCoordinadorResumen.builder()
+                .instanciaId(i.getId())
+                .nombrePractica(i.getNombre())
+                .nombreEstudiante(i.getExpediente().getEstudiante().getNombre())
+                .programaNombre(i.getExpediente().getEstudiante().getPrograma() != null
+                        ? i.getExpediente().getEstudiante().getPrograma().getNombre() : null)
+                .nombreEmpresa(i.getEmpresa() != null ? i.getEmpresa().getRazonSocial() : null)
+                .nombreDocenteAsesor(i.getDocenteAsesor() != null ? i.getDocenteAsesor().getNombre() : null)
+                .tutorEmpresarialId(i.getTutorEmpresarial() != null ? i.getTutorEmpresarial().getId() : null)
+                .nombreTutor(i.getTutorEmpresarial() != null ? i.getTutorEmpresarial().getNombre() : null)
+                .evaluacionDocenteCompleta(evalDocente)
+                .encuestaTutorEnviada(tutorEnviada)
+                .encuestaTutorCompletada(tutorCompletada)
+                .encuestaEstudianteEnviada(estudianteEnviada)
+                .encuestaEstudianteCompletada(estudianteCompletada)
+                .build();
     }
 
     private Map<String, String> variables(InstanciaPractica instancia, String enlace) {

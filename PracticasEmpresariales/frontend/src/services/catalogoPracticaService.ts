@@ -1,5 +1,5 @@
 import api from './api'
-import type { ApiResponse, CatalogoPracticaResponse } from '../types'
+import type { ApiResponse, CatalogoPracticaResponse, Pageable } from '../types'
 
 interface CrearCatalogoRequest {
   programaId: number
@@ -16,6 +16,11 @@ export const catalogoPracticaService = {
   async listar(): Promise<CatalogoPracticaResponse[]> {
     const r = await api.get<ApiResponse<CatalogoPracticaResponse[]>>('/api/v1/catalogo-practicas')
     return r.data.datos ?? []
+  },
+
+  async listarPaginado(page = 0, size = 20): Promise<Pageable<CatalogoPracticaResponse>> {
+    const r = await api.get<ApiResponse<Pageable<CatalogoPracticaResponse>>>('/api/v1/catalogo-practicas/page', { params: { page, size } })
+    return r.data.datos!
   },
 
   async crear(data: CrearCatalogoRequest): Promise<CatalogoPracticaResponse> {

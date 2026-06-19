@@ -6,11 +6,14 @@ import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
 import { Select } from '../../components/common/Select/Select'
 import { ListFilters } from '../../components/common/ListFilters'
+import { Pagination } from '../../components/common/Table/Pagination'
 import { useToast } from '../../components/common/Notifications/Toast'
 
 export default function FacultadesPage() {
   const { showToast } = useToast()
   const [facultades, setFacultades]   = useState<FacultadResponse[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<FacultadResponse> | null>(null)
   const [busqueda, setBusqueda] = useState('')
   const [estadoFiltro, setEstadoFiltro] = useState<'todas' | 'activas' | 'inactivas'>('todas')
   const [loading, setLoading]         = useState(true)
@@ -26,12 +29,15 @@ export default function FacultadesPage() {
 
   const cargar = () => {
     setLoading(true)
-    api.get<ApiResponse<Pageable<FacultadResponse>>>('/facultades?incluirInactivas=true&size=200')
-      .then(r => setFacultades(r.data.datos?.content ?? []))
+    api.get<ApiResponse<Pageable<FacultadResponse>>>('/facultades', { params: { incluirInactivas: true, page: pagina, size: 20 } })
+      .then(r => {
+        setFacultades(r.data.datos?.content ?? [])
+        setPageData(r.data.datos ?? null)
+      })
       .finally(() => setLoading(false))
   }
 
-  useEffect(() => { cargar() }, [])
+  useEffect(() => { cargar() }, [pagina])
 
   const facultadesFiltradas = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
@@ -90,6 +96,14 @@ export default function FacultadesPage() {
           + Nueva Facultad
         </Button>
       </div>
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
 
       <ListFilters
         search={{

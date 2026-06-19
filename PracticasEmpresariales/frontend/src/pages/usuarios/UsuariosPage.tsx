@@ -9,6 +9,7 @@ import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { Pagination } from '../../components/common/Table/Pagination'
 import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
@@ -20,6 +21,8 @@ const ROL_OPTIONS: Rol[] = [
 export default function UsuariosPage() {
   const { showToast } = useToast()
   const [usuarios, setUsuarios]     = useState<UsuarioResponse[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<UsuarioResponse> | null>(null)
   const [facultades, setFacultades] = useState<FacultadResponse[]>([])
   const [programas, setProgramas]   = useState<ProgramaResponse[]>([])
   const [busqueda, setBusqueda]     = useState('')
@@ -38,7 +41,10 @@ export default function UsuariosPage() {
 
   const cargar = () => {
     setLoading(true)
-    usuarioService.listar(0, 200).then(p => setUsuarios(p.content)).finally(() => setLoading(false))
+    usuarioService.listar(pagina).then(p => {
+      setUsuarios(p.content)
+      setPageData(p)
+    }).finally(() => setLoading(false))
   }
 
   useEffect(() => {
@@ -47,7 +53,7 @@ export default function UsuariosPage() {
       .then(r => setFacultades(r.data.datos?.content ?? []))
     api.get<ApiResponse<Pageable<ProgramaResponse>>>('/programas?size=100')
       .then(r => setProgramas(r.data.datos?.content ?? []))
-  }, [])
+  }, [pagina])
 
   const usuariosFiltrados = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
@@ -185,6 +191,14 @@ export default function UsuariosPage() {
           </tr>
         ))}
       </Table>
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
 
       {modalAbierto && (
         <Modal title="Crear nuevo usuario" subtitle="La contraseña temporal se enviará al correo." size="lg"

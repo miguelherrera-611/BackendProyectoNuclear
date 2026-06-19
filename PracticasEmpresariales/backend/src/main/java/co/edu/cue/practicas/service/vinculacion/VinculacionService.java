@@ -23,6 +23,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 
@@ -141,9 +143,26 @@ public class VinculacionService {
     }
 
     @Transactional
+    public Page<InstanciaPracticaResponse> listarPracticasEnCurso(CustomUserDetails actor, Pageable pageable) {
+        if (actor.getRol() != Rol.COORDINADOR_PRACTICAS && actor.getRol() != Rol.DOCENTE_ASESOR
+                && actor.getRol() != Rol.ADMIN_DTI && actor.getRol() != Rol.DIRECCION)
+            throw new AccesoNoAutorizadoException("No tiene acceso al tablero de seguimiento.");
+
+        return instanciaPracticaRepository.findAllByEstado(EstadoPractica.EN_CURSO, pageable)
+                .map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId()));
+    }
+
+    @Transactional
     public List<InstanciaPracticaResponse> listarMisPracticantes(CustomUserDetails actor) {
         if (actor.getRol() == Rol.DOCENTE_ASESOR) return listarPracticasDeDocente(actor);
         if (actor.getRol() == Rol.TUTOR_EMPRESARIAL) return listarPracticasDeTutor(actor);
+        throw new AccesoNoAutorizadoException("Solo docente asesor o tutor empresarial pueden consultar sus practicantes.");
+    }
+
+    @Transactional
+    public Page<InstanciaPracticaResponse> listarMisPracticantes(CustomUserDetails actor, Pageable pageable) {
+        if (actor.getRol() == Rol.DOCENTE_ASESOR) return listarPracticasDeDocente(actor, pageable);
+        if (actor.getRol() == Rol.TUTOR_EMPRESARIAL) return listarPracticasDeTutor(actor, pageable);
         throw new AccesoNoAutorizadoException("Solo docente asesor o tutor empresarial pueden consultar sus practicantes.");
     }
 
@@ -159,6 +178,17 @@ public class VinculacionService {
     }
 
     @Transactional
+    public Page<InstanciaPracticaResponse> listarPracticasDeDocente(CustomUserDetails actor, Pageable pageable) {
+        if (actor.getRol() != Rol.DOCENTE_ASESOR)
+            throw new AccesoNoAutorizadoException("Solo el docente asesor puede consultar sus practicantes.");
+
+        return instanciaPracticaRepository
+                .findByDocenteAsesor_IdAndEstadoNotIn(actor.getId(),
+                        List.of(EstadoPractica.FINALIZADA, EstadoPractica.CANCELADA), pageable)
+                .map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId()));
+    }
+
+    @Transactional
     public List<InstanciaPracticaResponse> listarPracticasDeTutor(CustomUserDetails actor) {
         if (actor.getRol() != Rol.TUTOR_EMPRESARIAL)
             throw new AccesoNoAutorizadoException("Solo el tutor empresarial puede consultar sus practicantes.");
@@ -167,6 +197,17 @@ public class VinculacionService {
                 .findByTutorEmpresarial_CorreoIgnoreCaseAndEstadoNotIn(actor.getUsername(),
                         List.of(EstadoPractica.FINALIZADA, EstadoPractica.CANCELADA))
                 .stream().map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId())).toList();
+    }
+
+    @Transactional
+    public Page<InstanciaPracticaResponse> listarPracticasDeTutor(CustomUserDetails actor, Pageable pageable) {
+        if (actor.getRol() != Rol.TUTOR_EMPRESARIAL)
+            throw new AccesoNoAutorizadoException("Solo el tutor empresarial puede consultar sus practicantes.");
+
+        return instanciaPracticaRepository
+                .findByTutorEmpresarial_CorreoIgnoreCaseAndEstadoNotIn(actor.getUsername(),
+                        List.of(EstadoPractica.FINALIZADA, EstadoPractica.CANCELADA), pageable)
+                .map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId()));
     }
 
     @Transactional

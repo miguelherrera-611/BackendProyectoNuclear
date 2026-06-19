@@ -16,6 +16,8 @@ import co.edu.cue.practicas.service.mapper.Dev3Mapper;
 import co.edu.cue.practicas.service.validator.EmpresaValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -120,9 +122,24 @@ public class EmpresaService {
     @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
+    public Page<EmpresaResponse> listarTodas(Pageable pageable) {
+        return empresaRepository.findAll(pageable).map(mapper::toEmpresaResponse);
+    }
+
+    @SoloLectura
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
+    @Transactional(readOnly = true)
     public List<EmpresaResponse> listarActivas() {
         return empresaRepository.findByEstado(EstadoEmpresa.ACTIVA)
                 .stream().map(mapper::toEmpresaResponse).toList();
+    }
+
+    @SoloLectura
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
+    @Transactional(readOnly = true)
+    public Page<EmpresaResponse> listarActivas(Pageable pageable) {
+        return empresaRepository.findByEstado(EstadoEmpresa.ACTIVA, pageable)
+                .map(mapper::toEmpresaResponse);
     }
 
     // ── CAMBIOS DE ESTADO — registra observers (DIP) ─────────────────────

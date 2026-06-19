@@ -18,6 +18,8 @@ import co.edu.cue.practicas.security.annotation.SoloLectura;
 import co.edu.cue.practicas.service.mapper.EstudianteMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -76,10 +78,26 @@ public class CatalogoPracticaService {
     @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
     @Transactional(readOnly = true)
+    public Page<CatalogoPracticaResponse> listarTodos(Pageable pageable) {
+        return catalogoRepository.findAll(pageable)
+                .map(mapper::toCatalogoPracticaResponse);
+    }
+
+    @SoloLectura
+    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
+    @Transactional(readOnly = true)
     public List<CatalogoPracticaResponse> listarPorPrograma(Long programaId) {
         return catalogoRepository.findByPrograma_Id(programaId).stream()
                 .map(mapper::toCatalogoPracticaResponse)
                 .toList();
+    }
+
+    @SoloLectura
+    @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
+    @Transactional(readOnly = true)
+    public Page<CatalogoPracticaResponse> listarPorPrograma(Long programaId, Pageable pageable) {
+        return catalogoRepository.findByPrograma_Id(programaId, pageable)
+                .map(mapper::toCatalogoPracticaResponse);
     }
 
     @SoloLectura

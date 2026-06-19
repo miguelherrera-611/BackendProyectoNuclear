@@ -210,12 +210,26 @@ public class UsuarioService {
 
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
     @Transactional(readOnly = true)
+    public Page<UsuarioResponse> listarDocentesActivos(Pageable pageable) {
+        return usuarioRepository.findByRolAndActivoTrue(Rol.DOCENTE_ASESOR, pageable)
+                .map(UsuarioResponse::desde);
+    }
+
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
+    @Transactional(readOnly = true)
     public java.util.List<UsuarioResponse> listarTutoresActivos() {
         return usuarioRepository.findByRolAndActivoTrue(Rol.TUTOR_EMPRESARIAL,
                         org.springframework.data.domain.PageRequest.of(0, 500,
                                 org.springframework.data.domain.Sort.by("nombre")))
                 .map(UsuarioResponse::desde)
                 .getContent();
+    }
+
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
+    @Transactional(readOnly = true)
+    public Page<UsuarioResponse> listarTutoresActivos(Pageable pageable) {
+        return usuarioRepository.findByRolAndActivoTrue(Rol.TUTOR_EMPRESARIAL, pageable)
+                .map(UsuarioResponse::desde);
     }
 
     @RequiereRol(roles = {Rol.ADMIN_DTI})

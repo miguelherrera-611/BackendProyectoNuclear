@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import type { InstanciaPracticaResponseV2 } from '../../types'
+import type { InstanciaPracticaResponseV2, Pageable } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 import { sustentacionDocenteService } from '../../services/sustentacionDocenteService'
+import { Pagination } from '../../components/common/Table/Pagination'
 
 const TODAY = new Date().toISOString().split('T')[0]
 
@@ -177,6 +178,8 @@ function PracticaCard({
 
 export default function SustentacionesPage() {
   const [practicas, setPracticas]               = useState<InstanciaPracticaResponseV2[]>([])
+  const [pagina, setPagina]                     = useState(0)
+  const [pageData, setPageData]                 = useState<Pageable<InstanciaPracticaResponseV2> | null>(null)
   const [loading, setLoading]                   = useState(true)
   const [agendandoId, setAgendandoId]           = useState<number | null>(null)
   const [fechaSeleccionada, setFechaSeleccionada] = useState('')
@@ -187,10 +190,14 @@ export default function SustentacionesPage() {
   const [errorActa, setErrorActa]               = useState('')
 
   useEffect(() => {
-    seguimientoService.misPracticantes()
-      .then(lista => setPracticas(lista.filter(p => p.estado === 'EN_CURSO' || p.estado === 'FINALIZADA')))
+    setLoading(true)
+    seguimientoService.misPracticantesPaginado(pagina)
+      .then(data => {
+        setPracticas(data.content.filter(p => p.estado === 'EN_CURSO' || p.estado === 'FINALIZADA'))
+        setPageData(data)
+      })
       .finally(() => setLoading(false))
-  }, [])
+  }, [pagina])
 
   const enCurso     = practicas.filter(p => p.estado === 'EN_CURSO')
   const finalizadas = practicas.filter(p => p.estado === 'FINALIZADA')
@@ -310,6 +317,14 @@ export default function SustentacionesPage() {
           )}
         </>
       )}
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
     </div>
   )
 }

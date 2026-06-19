@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import type { InstanciaPracticaResponse, EstadoPractica, ChecklistItemResponse } from '../../types'
+import type { InstanciaPracticaResponse, EstadoPractica, ChecklistItemResponse, Pageable } from '../../types'
 import { asignacionService } from '../../services/asignacionService'
 import { sprint4Service } from '../../services/sprint4Service'
 import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
 import { Button } from '../../components/common/Button/Button'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { Pagination } from '../../components/common/Table/Pagination'
 import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
@@ -30,6 +31,8 @@ export default function AsignacionesPage() {
   const { showToast } = useToast()
   const [estado, setEstado]         = useState('')
   const [lista, setLista]           = useState<InstanciaPracticaResponse[]>([])
+  const [pagina, setPagina] = useState(0)
+  const [pageData, setPageData] = useState<Pageable<InstanciaPracticaResponse> | null>(null)
   const [busqueda, setBusqueda]     = useState('')
   const [loading, setLoading]       = useState(true)
   const [cancelandoId, setCanceladoId] = useState<number | null>(null)
@@ -49,8 +52,9 @@ export default function AsignacionesPage() {
   const cargar = async (filtroEstado = estado) => {
     setLoading(true)
     try {
-      const data = await asignacionService.listar(filtroEstado || undefined)
-      setLista(data)
+      const data = await asignacionService.listarPaginado(filtroEstado || undefined, pagina)
+      setLista(data.content)
+      setPageData(data)
     } catch {
       showToast('No se pudieron cargar las asignaciones.', 'error')
     } finally {
@@ -58,7 +62,7 @@ export default function AsignacionesPage() {
     }
   }
 
-  useEffect(() => { cargar(estado) }, [estado])
+  useEffect(() => { cargar(estado) }, [estado, pagina])
 
   const listaFiltrada = useMemo(() => {
     const texto = busqueda.trim().toLowerCase()
@@ -69,6 +73,11 @@ export default function AsignacionesPage() {
   }, [busqueda, lista])
 
   const limpiarFiltros = () => setBusqueda('')
+
+  const handleEstadoChange = (value: string) => {
+    setEstado(value)
+    setPagina(0)
+  }
 
   const handleCancelar = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -138,7 +147,7 @@ export default function AsignacionesPage() {
 
       <div className="card py-3 flex gap-4 items-end">
         <div className="w-full md:max-w-xs">
-          <Select label="Filtrar por estado" value={estado} onChange={e => setEstado(e.target.value)}>
+          <Select label="Filtrar por estado" value={estado} onChange={e => handleEstadoChange(e.target.value)}>
             {ESTADOS.map(s => <option key={s.value} value={s.value}>{s.label}</option>)}
           </Select>
         </div>
@@ -201,6 +210,14 @@ export default function AsignacionesPage() {
           </tr>
         ))}
       </Table>
+
+      <Pagination
+        page={pagina}
+        totalPages={pageData?.totalPages ?? 0}
+        totalElements={pageData?.totalElements}
+        onPageChange={setPagina}
+        disabled={loading}
+      />
 
       {modalCancelar.open && (
         <Modal title="Cancelar asignación"

@@ -7,6 +7,9 @@ import co.edu.cue.practicas.dto.response.VacanteResponse;
 import co.edu.cue.practicas.service.vacante.VacanteService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,9 +41,21 @@ public class VacanteController {
         return ResponseEntity.ok(ApiResponse.ok("Vacantes.", vacanteService.listarTodas()));
     }
 
+    @GetMapping("/page")
+    public ResponseEntity<ApiResponse<Page<VacanteResponse>>> listarPaginado(
+            @PageableDefault(size = 20, sort = "fechaPublicacion") Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.ok("Vacantes.", vacanteService.listarTodas(pageable)));
+    }
+
     @GetMapping("/pendientes")
     public ResponseEntity<ApiResponse<List<VacanteResponse>>> pendientes() {
         return ResponseEntity.ok(ApiResponse.ok("Pendientes.", vacanteService.listarPendientes()));
+    }
+
+    @GetMapping("/pendientes/page")
+    public ResponseEntity<ApiResponse<Page<VacanteResponse>>> pendientesPaginado(
+            @PageableDefault(size = 20, sort = "fechaPublicacion") Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.ok("Pendientes.", vacanteService.listarPendientes(pageable)));
     }
 
     @GetMapping("/disponibles")
@@ -48,9 +63,22 @@ public class VacanteController {
         return ResponseEntity.ok(ApiResponse.ok("Disponibles.", vacanteService.listarDisponibles()));
     }
 
+    @GetMapping("/disponibles/page")
+    public ResponseEntity<ApiResponse<Page<VacanteResponse>>> disponiblesPaginado(
+            @PageableDefault(size = 20, sort = "fechaPublicacion") Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.ok("Disponibles.", vacanteService.listarDisponibles(pageable)));
+    }
+
     @GetMapping("/empresa/{empresaId}")
     public ResponseEntity<ApiResponse<List<VacanteResponse>>> porEmpresa(@PathVariable Long empresaId) {
         return ResponseEntity.ok(ApiResponse.ok("Vacantes empresa.", vacanteService.listarPorEmpresa(empresaId)));
+    }
+
+    @GetMapping("/empresa/{empresaId}/page")
+    public ResponseEntity<ApiResponse<Page<VacanteResponse>>> porEmpresaPaginado(
+            @PathVariable Long empresaId,
+            @PageableDefault(size = 20, sort = "fechaPublicacion") Pageable pageable) {
+        return ResponseEntity.ok(ApiResponse.ok("Vacantes empresa.", vacanteService.listarPorEmpresa(empresaId, pageable)));
     }
 
     @PatchMapping("/{id}/activar")

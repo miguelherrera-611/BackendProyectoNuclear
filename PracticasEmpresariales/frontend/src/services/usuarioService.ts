@@ -36,6 +36,11 @@ export const usuarioService = {
     return res.data.datos ?? []
   },
 
+  async listarTutoresPaginado(page = 0, size = 20): Promise<Pageable<UsuarioResponse>> {
+    const res = await api.get<ApiResponse<Pageable<UsuarioResponse>>>('/usuarios/tutores/page', { params: { page, size } })
+    return res.data.datos!
+  },
+
   async obtener(id: number): Promise<UsuarioResponse> {
     const res = await api.get<ApiResponse<UsuarioResponse>>(`/usuarios/${id}`)
     return res.data.datos!
