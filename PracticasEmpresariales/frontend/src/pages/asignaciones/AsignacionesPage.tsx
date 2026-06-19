@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { InstanciaPracticaResponse, EstadoPractica, ChecklistItemResponse } from '../../types'
 import { asignacionService } from '../../services/asignacionService'
@@ -7,6 +7,7 @@ import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
 import { Button } from '../../components/common/Button/Button'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
 const ESTADOS: Array<{ label: string; value: string }> = [
@@ -29,6 +30,7 @@ export default function AsignacionesPage() {
   const { showToast } = useToast()
   const [estado, setEstado]         = useState('')
   const [lista, setLista]           = useState<InstanciaPracticaResponse[]>([])
+  const [busqueda, setBusqueda]     = useState('')
   const [loading, setLoading]       = useState(true)
   const [cancelandoId, setCanceladoId] = useState<number | null>(null)
   const [modalCancelar, setModalCancelar] = useState<{ open: boolean; instancia: InstanciaPracticaResponse | null }>({
@@ -57,6 +59,16 @@ export default function AsignacionesPage() {
   }
 
   useEffect(() => { cargar(estado) }, [estado])
+
+  const listaFiltrada = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return lista.filter(i => {
+      const coincideTexto = !texto || [i.nombre, i.razonSocialEmpresa, i.nombreDocenteAsesor, i.nombreTutorEmpresarial].some(valor => valor?.toLowerCase().includes(texto))
+      return coincideTexto
+    })
+  }, [busqueda, lista])
+
+  const limpiarFiltros = () => setBusqueda('')
 
   const handleCancelar = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -133,9 +145,20 @@ export default function AsignacionesPage() {
         <button className="btn-secondary self-end" onClick={() => cargar(estado)} disabled={loading}>Refrescar</button>
       </div>
 
-      <Table headers={HEADERS} loading={loading} empty={lista.length === 0}
-        emptyMessage="No hay asignaciones para mostrar." emptyIcon="🔗">
-        {lista.map(i => (
+      <ListFilters
+        search={{
+          label: 'Buscar asignación',
+          placeholder: 'Práctica, empresa, docente o tutor...',
+          value: busqueda,
+          onChange: setBusqueda,
+        }}
+        summary={`${listaFiltrada.length} de ${lista.length}`}
+        onClear={limpiarFiltros}
+      />
+
+      <Table headers={HEADERS} loading={loading} empty={listaFiltrada.length === 0}
+        emptyMessage={lista.length === 0 ? 'No hay asignaciones para mostrar.' : 'No hay asignaciones que coincidan con los filtros.'} emptyIcon="🔗">
+        {listaFiltrada.map(i => (
           <tr key={i.id} className="border-b border-gray-100 hover:bg-gray-50">
             <td className="px-4 py-3 text-gray-500 text-sm">#{i.id}</td>
             <td className="px-4 py-3">

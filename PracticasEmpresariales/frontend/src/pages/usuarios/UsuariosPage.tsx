@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { UsuarioResponse, Rol, EtiquetaCargo, EstadoCuenta, FacultadResponse, ProgramaResponse } from '../../types'
 import { usuarioService } from '../../services/usuarioService'
 import { ROL_LABELS } from '../../constants/roles'
@@ -9,6 +9,7 @@ import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
 const ROL_OPTIONS: Rol[] = [
@@ -21,6 +22,9 @@ export default function UsuariosPage() {
   const [usuarios, setUsuarios]     = useState<UsuarioResponse[]>([])
   const [facultades, setFacultades] = useState<FacultadResponse[]>([])
   const [programas, setProgramas]   = useState<ProgramaResponse[]>([])
+  const [busqueda, setBusqueda]     = useState('')
+  const [rolFiltro, setRolFiltro]   = useState<'todos' | Rol>('todos')
+  const [estadoFiltro, setEstadoFiltro] = useState<'todos' | 'activos' | 'inactivos'>('todos')
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
   const [modalAbierto, setModalAbierto] = useState(false)
@@ -34,7 +38,7 @@ export default function UsuariosPage() {
 
   const cargar = () => {
     setLoading(true)
-    usuarioService.listar().then(p => setUsuarios(p.content)).finally(() => setLoading(false))
+    usuarioService.listar(0, 200).then(p => setUsuarios(p.content)).finally(() => setLoading(false))
   }
 
   useEffect(() => {
@@ -44,6 +48,34 @@ export default function UsuariosPage() {
     api.get<ApiResponse<Pageable<ProgramaResponse>>>('/programas?size=100')
       .then(r => setProgramas(r.data.datos?.content ?? []))
   }, [])
+
+  const usuariosFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return usuarios.filter(u => {
+      const coincideTexto = !texto || [
+        u.nombre,
+        u.correo,
+        u.etiquetaCargo,
+        u.identificacion,
+        u.programaNombre,
+        u.facultadNombre,
+        ROL_LABELS[u.rol],
+      ].some(valor => valor?.toLowerCase().includes(texto))
+      const coincideRol = rolFiltro === 'todos' || u.rol === rolFiltro
+      const coincideEstado = estadoFiltro === 'todos'
+        ? true
+        : estadoFiltro === 'activos'
+          ? u.activo
+          : !u.activo
+      return coincideTexto && coincideRol && coincideEstado
+    })
+  }, [busqueda, estadoFiltro, rolFiltro, usuarios])
+
+  const limpiarFiltros = () => {
+    setBusqueda('')
+    setRolFiltro('todos')
+    setEstadoFiltro('todos')
+  }
 
   const handleRolChange = (rol: Rol) => {
     setForm({ ...form, rol, etiquetaCargo: '', facultadId: '', programaId: '',
@@ -107,9 +139,34 @@ export default function UsuariosPage() {
         <Button onClick={() => { setErrorModal(''); setModalAbierto(true) }}>+ Crear Usuario</Button>
       </div>
 
-      <Table headers={HEADERS} loading={loading} empty={usuarios.length === 0}
-        emptyMessage="No hay usuarios registrados." emptyIcon="👥">
-        {usuarios.map(u => (
+      <ListFilters
+        search={{
+          label: 'Buscar usuario',
+          placeholder: 'Nombre, correo, rol, cargo o programa...',
+          value: busqueda,
+          onChange: setBusqueda,
+        }}
+        summary={`${usuariosFiltrados.length} de ${usuarios.length}`}
+        onClear={limpiarFiltros}
+      >
+        <div className="w-full sm:w-56">
+          <Select label="Rol" value={rolFiltro} onChange={e => setRolFiltro(e.target.value as typeof rolFiltro)}>
+            <option value="todos">Todos</option>
+            {ROL_OPTIONS.map(r => <option key={r} value={r}>{ROL_LABELS[r]}</option>)}
+          </Select>
+        </div>
+        <div className="w-full sm:w-56">
+          <Select label="Estado" value={estadoFiltro} onChange={e => setEstadoFiltro(e.target.value as typeof estadoFiltro)}>
+            <option value="todos">Todos</option>
+            <option value="activos">Habilitados</option>
+            <option value="inactivos">Deshabilitados</option>
+          </Select>
+        </div>
+      </ListFilters>
+
+      <Table headers={HEADERS} loading={loading} empty={usuariosFiltrados.length === 0}
+        emptyMessage={usuarios.length === 0 ? 'No hay usuarios registrados.' : 'No hay usuarios que coincidan con los filtros.'} emptyIcon="👥">
+        {usuariosFiltrados.map(u => (
           <tr key={u.id} className="border-b border-gray-100 hover:bg-gray-50">
             <td className="px-4 py-3 font-medium text-gray-900">{u.nombre}</td>
             <td className="px-4 py-3 text-gray-500 text-xs">{u.correo}</td>

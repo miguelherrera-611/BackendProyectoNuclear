@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { VacanteResponse, EmpresaResponse, EstadoVacante } from '../../types'
 import { vacanteService } from '../../services/vacanteService'
 import { empresaService } from '../../services/empresaService'
@@ -7,6 +7,7 @@ import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
 type Tab = 'todas' | 'activas' | 'inactivas'
@@ -34,6 +35,7 @@ export default function VacantesPage() {
   const { showToast } = useToast()
   const [vacantes, setVacantes]     = useState<VacanteResponse[]>([])
   const [empresas, setEmpresas]     = useState<EmpresaResponse[]>([])
+  const [busqueda, setBusqueda]    = useState('')
   const [tab, setTab]               = useState<Tab>('todas')
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
@@ -57,6 +59,16 @@ export default function VacantesPage() {
   const vacantesTab = vacantes.filter(v =>
     tab === 'activas' ? esActiva(v) : tab === 'inactivas' ? esInactiva(v) : true
   )
+
+  const vacantesFiltradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return vacantesTab.filter(v => {
+      const coincideTexto = !texto || [v.razonSocialEmpresa, v.area].some(valor => valor?.toLowerCase().includes(texto))
+      return coincideTexto
+    })
+  }, [busqueda, vacantesTab])
+
+  const limpiarFiltros = () => setBusqueda('')
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -112,9 +124,20 @@ export default function VacantesPage() {
         <button className={tabClass('inactivas')} onClick={() => setTab('inactivas')}>Inactivas</button>
       </div>
 
-      <Table headers={HEADERS} loading={loading} empty={vacantesTab.length === 0}
-        emptyMessage="No hay vacantes en esta categoría." emptyIcon="💼">
-        {vacantesTab.map(v => (
+      <ListFilters
+        search={{
+          label: 'Buscar vacante',
+          placeholder: 'Empresa o área...',
+          value: busqueda,
+          onChange: setBusqueda,
+        }}
+        summary={`${vacantesFiltradas.length} de ${vacantesTab.length}`}
+        onClear={limpiarFiltros}
+      />
+
+      <Table headers={HEADERS} loading={loading} empty={vacantesFiltradas.length === 0}
+        emptyMessage={vacantesTab.length === 0 ? 'No hay vacantes en esta categoría.' : 'No hay vacantes que coincidan con los filtros.'} emptyIcon="💼">
+        {vacantesFiltradas.map(v => (
           <tr key={v.id} className="border-b border-gray-100 hover:bg-gray-50">
             <td className="px-4 py-3 font-medium text-gray-800">{v.razonSocialEmpresa}</td>
             <td className="px-4 py-3 text-gray-600">{v.area}</td>

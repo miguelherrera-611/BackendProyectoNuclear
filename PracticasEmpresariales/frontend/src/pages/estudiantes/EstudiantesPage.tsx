@@ -6,6 +6,7 @@ import { Button } from '../../components/common/Button/Button'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
 import { Pagination } from '../../components/common/Table/Pagination'
+import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 import { catalogoPracticaService } from '../../services/catalogoPracticaService'
 import type { CatalogoPracticaResponse } from '../../types'
@@ -19,6 +20,7 @@ const ESTADOS: Array<{ label: string; value: '' | EstadoEstudiante }> = [
 export default function EstudiantesPage() {
   const { showToast } = useToast()
   const [estado, setEstado]         = useState<'' | EstadoEstudiante>('APTO')
+  const [busqueda, setBusqueda]     = useState('')
   const [pageData, setPageData]     = useState<Pageable<UsuarioResponse> | null>(null)
   const [pagina, setPagina]         = useState(0)
   const [selectedIds, setSelectedIds] = useState<number[]>([])
@@ -34,6 +36,10 @@ export default function EstudiantesPage() {
   const [motivoNoApto, setMotivoNoApto] = useState('')
 
   const estudiantes = useMemo(() => pageData?.content ?? [], [pageData])
+  const estudiantesFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return estudiantes.filter(e => !texto || [e.nombre, e.correo, e.identificacion, e.programaNombre, e.facultadNombre].some(valor => valor?.toLowerCase().includes(texto)))
+  }, [busqueda, estudiantes])
 
   const cargar = async (estadoFiltro: '' | EstadoEstudiante = estado, page = pagina) => {
     setLoading(true)
@@ -53,6 +59,8 @@ export default function EstudiantesPage() {
 
   const toggleSelection = (id: number) =>
     setSelectedIds(curr => curr.includes(id) ? curr.filter(x => x !== id) : [...curr, id])
+
+  const limpiarFiltros = () => setBusqueda('')
 
   const abrirModalApto = async (e: UsuarioResponse) => {
     setModalApto({ open: true, id: e.id, nombre: e.nombre })
@@ -126,7 +134,16 @@ export default function EstudiantesPage() {
 
       {error && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">{error}</div>}
 
-      <div className="card py-3 flex gap-4 items-end flex-wrap">
+      <ListFilters
+        search={{
+          label: 'Buscar estudiante',
+          placeholder: 'Nombre, correo, identificación o programa...',
+          value: busqueda,
+          onChange: setBusqueda,
+        }}
+        summary={`${estudiantesFiltrados.length} de ${estudiantes.length}`}
+        onClear={limpiarFiltros}
+      >
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">Estado</label>
           <div className="flex gap-2">
@@ -141,11 +158,11 @@ export default function EstudiantesPage() {
           </div>
         </div>
         <button className="btn-secondary self-end" onClick={() => cargar(estado, pagina)} disabled={loading}>Refrescar</button>
-      </div>
+      </ListFilters>
 
-      <Table headers={HEADERS} loading={loading} empty={estudiantes.length === 0}
-        emptyMessage="No hay estudiantes para mostrar." emptyIcon="👨‍🎓">
-        {estudiantes.map(e => (
+      <Table headers={HEADERS} loading={loading} empty={estudiantesFiltrados.length === 0}
+        emptyMessage={estudiantes.length === 0 ? 'No hay estudiantes para mostrar.' : 'No hay estudiantes que coincidan con la búsqueda.'} emptyIcon="👨‍🎓">
+        {estudiantesFiltrados.map(e => (
           <tr key={e.id} className="border-b border-gray-100 hover:bg-gray-50">
             <td className="px-4 py-3">
               <input type="checkbox" checked={selectedIds.includes(e.id)} onChange={() => toggleSelection(e.id)}

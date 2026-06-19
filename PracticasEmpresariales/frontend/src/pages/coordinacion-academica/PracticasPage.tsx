@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { CatalogoPracticaResponse, ProgramaResponse, ApiResponse, Pageable } from '../../types'
 import { catalogoPracticaService } from '../../services/catalogoPracticaService'
 import api from '../../services/api'
@@ -7,6 +7,7 @@ import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
 const FORM_INICIAL = {
@@ -30,7 +31,9 @@ export default function PracticasPage() {
   const [modalEditar, setModalEditar] = useState<CatalogoPracticaResponse | null>(null)
   const [form, setForm]               = useState(FORM_INICIAL)
   const [formEditar, setFormEditar]   = useState<Partial<typeof FORM_INICIAL>>({})
+  const [busqueda, setBusqueda] = useState('')
   const [filtroPrograma, setFiltroPrograma] = useState('')
+  const [estadoFiltro, setEstadoFiltro] = useState<'todos' | 'activos' | 'inactivos'>('todos')
   const [errorModal, setErrorModal]   = useState('')
 
   const cargar = () => {
@@ -98,11 +101,27 @@ export default function PracticasPage() {
     setModalEditar(cat)
   }
 
-  const catalogosFiltrados = filtroPrograma
-    ? catalogos.filter(c => String(c.programaId) === filtroPrograma)
-    : catalogos
+  const catalogosFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return catalogos.filter(c => {
+      const coincideTexto = !texto || [c.nombre, c.codigoMateria, c.materiaNucleo, c.programaNombre].some(valor => valor?.toLowerCase().includes(texto))
+      const coincidePrograma = !filtroPrograma || String(c.programaId) === filtroPrograma
+      const coincideEstado = estadoFiltro === 'todos'
+        ? true
+        : estadoFiltro === 'activos'
+          ? c.activo
+          : !c.activo
+      return coincideTexto && coincidePrograma && coincideEstado
+    })
+  }, [busqueda, catalogos, estadoFiltro, filtroPrograma])
 
   const programasConCatalogos = programas.filter(p => catalogos.some(c => c.programaId === p.id))
+
+  const limpiarFiltros = () => {
+    setBusqueda('')
+    setFiltroPrograma('')
+    setEstadoFiltro('todos')
+  }
 
   const HEADERS = ['#', 'Nombre', 'Programa', 'Materia Núcleo', 'Cortes', 'Semanas', 'Estado', 'Acciones']
 
@@ -119,16 +138,31 @@ export default function PracticasPage() {
       </div>
 
       <div className="card py-3 flex gap-4 items-end flex-wrap">
-        <div className="flex-1 min-w-48">
-          <Select label="Filtrar por programa" value={filtroPrograma}
-            onChange={e => setFiltroPrograma(e.target.value)}>
-            <option value="">Todos los programas</option>
-            {programasConCatalogos.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
-          </Select>
-        </div>
-        <span className="text-sm text-gray-500 self-end pb-2">
-          {catalogosFiltrados.length} catálogo{catalogosFiltrados.length !== 1 ? 's' : ''}
-        </span>
+        <ListFilters
+          search={{
+            label: 'Buscar catálogo',
+            placeholder: 'Nombre, materia, código o programa...',
+            value: busqueda,
+            onChange: setBusqueda,
+          }}
+          summary={`${catalogosFiltrados.length} catálogo${catalogosFiltrados.length !== 1 ? 's' : ''}`}
+          onClear={limpiarFiltros}
+          className="w-full"
+        >
+          <div className="w-full sm:w-56">
+            <Select label="Programa" value={filtroPrograma} onChange={e => setFiltroPrograma(e.target.value)}>
+              <option value="">Todos los programas</option>
+              {programasConCatalogos.map(p => <option key={p.id} value={p.id}>{p.nombre}</option>)}
+            </Select>
+          </div>
+          <div className="w-full sm:w-48">
+            <Select label="Estado" value={estadoFiltro} onChange={e => setEstadoFiltro(e.target.value as typeof estadoFiltro)}>
+              <option value="todos">Todos</option>
+              <option value="activos">Activos</option>
+              <option value="inactivos">Inactivos</option>
+            </Select>
+          </div>
+        </ListFilters>
       </div>
 
       <Table headers={HEADERS} loading={loading} empty={catalogosFiltrados.length === 0}

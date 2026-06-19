@@ -1,10 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { EmpresaResponse, EstadoEmpresa } from '../../types'
 import { empresaService } from '../../services/empresaService'
 import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
 import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
+import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
 const BADGE: Record<EstadoEmpresa, string> = {
@@ -20,6 +22,8 @@ const FORM_INICIAL = {
 export default function EmpresasPage() {
   const { showToast } = useToast()
   const [empresas, setEmpresas]     = useState<EmpresaResponse[]>([])
+  const [busqueda, setBusqueda] = useState('')
+  const [estadoFiltro, setEstadoFiltro] = useState<'todas' | EstadoEmpresa>('todas')
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
   const [modalCrear, setModalCrear] = useState(false)
@@ -35,6 +39,20 @@ export default function EmpresasPage() {
   }
 
   useEffect(() => { cargar() }, [])
+
+  const empresasFiltradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return empresas.filter(e => {
+      const coincideTexto = !texto || [e.razonSocial, e.nit, e.sector, e.municipio, e.nombreContacto].some(valor => valor?.toLowerCase().includes(texto))
+      const coincideEstado = estadoFiltro === 'todas' || e.estado === estadoFiltro
+      return coincideTexto && coincideEstado
+    })
+  }, [busqueda, empresas, estadoFiltro])
+
+  const limpiarFiltros = () => {
+    setBusqueda('')
+    setEstadoFiltro('todas')
+  }
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -84,9 +102,28 @@ export default function EmpresasPage() {
         <Button onClick={() => { setErrorModal(''); setModalCrear(true) }}>+ Nueva Empresa</Button>
       </div>
 
-      <Table headers={HEADERS} loading={loading} empty={empresas.length === 0}
-        emptyMessage="No hay empresas registradas." emptyIcon="🏢">
-        {empresas.map(e => (
+      <ListFilters
+        search={{
+          label: 'Buscar empresa',
+          placeholder: 'Razón social, NIT, sector, municipio...',
+          value: busqueda,
+          onChange: setBusqueda,
+        }}
+        summary={`${empresasFiltradas.length} de ${empresas.length}`}
+        onClear={limpiarFiltros}
+      >
+        <div className="w-full sm:w-56">
+          <Select label="Estado" value={estadoFiltro} onChange={e => setEstadoFiltro(e.target.value as typeof estadoFiltro)}>
+            <option value="todas">Todas</option>
+            <option value="ACTIVA">Activas</option>
+            <option value="INACTIVA">Inactivas</option>
+          </Select>
+        </div>
+      </ListFilters>
+
+      <Table headers={HEADERS} loading={loading} empty={empresasFiltradas.length === 0}
+        emptyMessage={empresas.length === 0 ? 'No hay empresas registradas.' : 'No hay empresas que coincidan con los filtros.'} emptyIcon="🏢">
+        {empresasFiltradas.map(e => (
           <tr key={e.id} className="border-b border-gray-100 hover:bg-gray-50">
             <td className="px-4 py-3 font-medium text-gray-800">{e.razonSocial}</td>
             <td className="px-4 py-3 text-gray-600 text-sm">{e.nit}</td>

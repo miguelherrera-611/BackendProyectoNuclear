@@ -1,8 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { TipoAccion } from '../../types'
 import api from '../../services/api'
 import { ApiResponse, Pageable } from '../../types'
 import { Select } from '../../components/common/Select/Select'
+import { ListFilters } from '../../components/common/ListFilters'
 
 const TIPO_ACCCION_BADGE: Partial<Record<TipoAccion, string>> = {
   LOGIN_EXITOSO:        'bg-green-100 text-green-800',
@@ -30,6 +31,7 @@ interface BitacoraResponseExt {
 export default function AuditoriaPage() {
   const [entradas, setEntradas] = useState<BitacoraResponseExt[]>([])
   const [loading, setLoading] = useState(true)
+  const [busqueda, setBusqueda] = useState('')
   const [filtroAccion, setFiltroAccion] = useState('')
   const [filtroModulo, setFiltroModulo] = useState('')
 
@@ -48,9 +50,28 @@ export default function AuditoriaPage() {
 
   const modulosDisponibles = [...new Set(entradas.map(e => e.modulo))].sort()
 
-  const entradasFiltradas = filtroModulo
-    ? entradas.filter(e => e.modulo === filtroModulo)
-    : entradas
+  const entradasFiltradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return entradas.filter(e => {
+      const coincideModulo = !filtroModulo || e.modulo === filtroModulo
+      const coincideAccion = !filtroAccion || e.tipoAccion === filtroAccion
+      const coincideTexto = !texto || [
+        e.nombreUsuario,
+        e.rolUsuario,
+        e.etiquetaCargoUsuario,
+        e.modulo,
+        e.tipoAccion,
+        e.ipOrigen,
+      ].some(valor => valor?.toLowerCase().includes(texto))
+      return coincideModulo && coincideAccion && coincideTexto
+    })
+  }, [busqueda, entradas, filtroAccion, filtroModulo])
+
+  const limpiarFiltros = () => {
+    setBusqueda('')
+    setFiltroAccion('')
+    setFiltroModulo('')
+  }
 
   return (
     <div className="space-y-6">
@@ -62,12 +83,21 @@ export default function AuditoriaPage() {
       </div>
 
       {/* Filtros */}
-      <div className="card flex gap-4 flex-wrap items-end">
+      <ListFilters
+        search={{
+          label: 'Buscar en auditoría',
+          placeholder: 'Usuario, rol, módulo, acción o IP...',
+          value: busqueda,
+          onChange: setBusqueda,
+        }}
+        summary={`${entradasFiltradas.length} de ${entradas.length}`}
+        onClear={limpiarFiltros}
+      >
         <Select
           label="Tipo de acción"
           className="w-auto"
           value={filtroAccion}
-          onChange={e => { setFiltroAccion(e.target.value); setFiltroModulo('') }}
+          onChange={e => setFiltroAccion(e.target.value)}
         >
           <option value="">Todos los tipos</option>
           {[
@@ -92,8 +122,7 @@ export default function AuditoriaPage() {
             <option key={m} value={m}>{m}</option>
           ))}
         </Select>
-        <button className="btn-primary" onClick={cargar}>Buscar</button>
-      </div>
+      </ListFilters>
 
       {/* Tabla */}
       <div className="card overflow-x-auto p-0">

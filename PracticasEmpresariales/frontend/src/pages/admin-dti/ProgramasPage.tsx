@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { FacultadResponse, ProgramaResponse, ApiResponse, Pageable } from '../../types'
 import api from '../../services/api'
 import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
@@ -6,12 +6,15 @@ import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
 import { Select } from '../../components/common/Select/Select'
 import { Table } from '../../components/common/Table/Table'
+import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
 export default function ProgramasPage() {
   const { showToast } = useToast()
   const [programas, setProgramas]   = useState<ProgramaResponse[]>([])
   const [facultades, setFacultades] = useState<FacultadResponse[]>([])
+  const [busqueda, setBusqueda] = useState('')
+  const [estadoFiltro, setEstadoFiltro] = useState<'todos' | 'activos' | 'inactivos'>('todos')
   const [loading, setLoading]       = useState(true)
   const [saving, setSaving]         = useState(false)
   const [modalCrear, setModalCrear] = useState(false)
@@ -26,7 +29,7 @@ export default function ProgramasPage() {
 
   const cargar = () => {
     setLoading(true)
-    api.get<ApiResponse<Pageable<ProgramaResponse>>>('/programas?incluirInactivos=true')
+    api.get<ApiResponse<Pageable<ProgramaResponse>>>('/programas?incluirInactivos=true&size=200')
       .then(r => setProgramas(r.data.datos?.content ?? []))
       .finally(() => setLoading(false))
   }
@@ -36,6 +39,24 @@ export default function ProgramasPage() {
     api.get<ApiResponse<Pageable<FacultadResponse>>>('/facultades?size=100')
       .then(r => setFacultades(r.data.datos?.content ?? []))
   }, [])
+
+  const programasFiltrados = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return programas.filter(p => {
+      const coincideTexto = !texto || [p.nombre, p.descripcion, p.facultadNombre].some(valor => valor?.toLowerCase().includes(texto))
+      const coincideEstado = estadoFiltro === 'todos'
+        ? true
+        : estadoFiltro === 'activos'
+          ? p.activo
+          : !p.activo
+      return coincideTexto && coincideEstado
+    })
+  }, [busqueda, estadoFiltro, programas])
+
+  const limpiarFiltros = () => {
+    setBusqueda('')
+    setEstadoFiltro('todos')
+  }
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -78,14 +99,33 @@ export default function ProgramasPage() {
         </Button>
       </div>
 
+      <ListFilters
+        search={{
+          label: 'Buscar programa',
+          placeholder: 'Nombre, descripción o facultad...',
+          value: busqueda,
+          onChange: setBusqueda,
+        }}
+        summary={`${programasFiltrados.length} de ${programas.length}`}
+        onClear={limpiarFiltros}
+      >
+        <div className="w-full sm:w-56">
+          <Select label="Estado" value={estadoFiltro} onChange={e => setEstadoFiltro(e.target.value as typeof estadoFiltro)}>
+            <option value="todos">Todos</option>
+            <option value="activos">Activos</option>
+            <option value="inactivos">Inactivos</option>
+          </Select>
+        </div>
+      </ListFilters>
+
       <Table
         headers={HEADERS}
         loading={loading}
-        empty={programas.length === 0}
-        emptyMessage="No hay programas registrados."
+        empty={programasFiltrados.length === 0}
+        emptyMessage={programas.length === 0 ? 'No hay programas registrados.' : 'No hay programas que coincidan con los filtros.'}
         emptyIcon="📚"
       >
-        {programas.map(p => (
+        {programasFiltrados.map(p => (
           <tr key={p.id} className="border-b border-gray-100 hover:bg-gray-50">
             <td className="px-4 py-3">
               <div className="font-medium text-gray-900">{p.nombre}</div>

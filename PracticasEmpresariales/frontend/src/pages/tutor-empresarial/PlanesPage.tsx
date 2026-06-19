@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { InstanciaPracticaResponseV2, PlanPracticaResponse, EstadoPlan } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 import { planPracticaService } from '../../services/planPracticaService'
+import { ListFilters } from '../../components/common/ListFilters'
 
 const PLAN_BADGE: Record<EstadoPlan, string> = {
   BORRADOR:         'bg-amber-100 text-amber-800',
@@ -26,6 +27,7 @@ interface PracticaConPlan extends InstanciaPracticaResponseV2 {
 export default function PlanEstudiantePage() {
   const navigate = useNavigate()
   const [practicas, setPracticas] = useState<PracticaConPlan[]>([])
+  const [busqueda, setBusqueda] = useState('')
   const [loading, setLoading]     = useState(true)
   const [error, setError]         = useState('')
 
@@ -50,6 +52,11 @@ export default function PlanEstudiantePage() {
       .finally(() => setLoading(false))
   }, [])
 
+  const practicasFiltradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return practicas.filter(p => !texto || [p.nombre, p.nombreEstudiante, p.razonSocialEmpresa, p.plan?.documentoNombre].some(valor => valor?.toLowerCase().includes(texto)))
+  }, [busqueda, practicas])
+
   return (
     <div className="space-y-6">
       <div>
@@ -63,18 +70,32 @@ export default function PlanEstudiantePage() {
         <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm">{error}</div>
       )}
 
+      {!loading && practicas.length > 0 && (
+        <ListFilters
+          search={{
+            label: 'Buscar plan',
+            placeholder: 'Estudiante, empresa o documento...',
+            value: busqueda,
+            onChange: setBusqueda,
+          }}
+          summary={`${practicasFiltradas.length} de ${practicas.length}`}
+        />
+      )}
+
       {loading ? (
         <div className="flex justify-center py-16">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-cue-primary" />
         </div>
-      ) : practicas.length === 0 ? (
+      ) : practicasFiltradas.length === 0 ? (
         <div className="card text-center py-16">
           <div className="text-gray-300 text-5xl mb-3">📋</div>
-          <p className="text-gray-500 text-sm">No tienes practicantes asignados.</p>
+          <p className="text-gray-500 text-sm">
+            {practicas.length === 0 ? 'No tienes practicantes asignados.' : 'No hay planes que coincidan con la búsqueda.'}
+          </p>
         </div>
       ) : (
         <div className="space-y-3">
-          {practicas.map(p => (
+          {practicasFiltradas.map(p => (
             <div key={p.id} className="card flex items-start justify-between gap-4">
               <div className="flex-1 min-w-0">
 

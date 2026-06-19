@@ -1,15 +1,17 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { InstanciaPracticaResponseV2 } from '../../types'
 import { seguimientoService } from '../../services/seguimientoService'
 import { useAuth } from '../../context/AuthContext'
 import { Select } from '../../components/common/Select/Select'
+import { ListFilters } from '../../components/common/ListFilters'
 
 export default function TableroSeguimientoPage() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const esCoordinador = user?.rol === 'COORDINADOR_PRACTICAS'
   const [practicas, setPracticas] = useState<InstanciaPracticaResponseV2[]>([])
+  const [busqueda, setBusqueda] = useState('')
   const [filtroEmpresa, setFiltroEmpresa] = useState('')
   const [filtroDocente, setFiltroDocente] = useState('')
   const [loading, setLoading] = useState(true)
@@ -22,11 +24,15 @@ export default function TableroSeguimientoPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const filtradas = practicas.filter(p => {
-    const porEmpresa = !filtroEmpresa || (p.razonSocialEmpresa ?? '').toLowerCase().includes(filtroEmpresa.toLowerCase())
-    const porDocente = !filtroDocente || (p.nombreDocenteAsesor ?? '').toLowerCase().includes(filtroDocente.toLowerCase())
-    return porEmpresa && porDocente
-  })
+  const filtradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return practicas.filter(p => {
+      const porEmpresa = !filtroEmpresa || (p.razonSocialEmpresa ?? '').toLowerCase().includes(filtroEmpresa.toLowerCase())
+      const porDocente = !filtroDocente || (p.nombreDocenteAsesor ?? '').toLowerCase().includes(filtroDocente.toLowerCase())
+      const coincideTexto = !texto || [p.nombre, p.nombreEstudiante, p.razonSocialEmpresa, p.nombreDocenteAsesor, p.nombreTutorEmpresarial].some(valor => valor?.toLowerCase().includes(texto))
+      return porEmpresa && porDocente && coincideTexto
+    })
+  }, [busqueda, filtroDocente, filtroEmpresa, practicas])
 
   return (
     <div className="space-y-6">
@@ -37,7 +43,16 @@ export default function TableroSeguimientoPage() {
 
       {error && <div className="card border-red-200 bg-red-50 text-red-700 text-sm">{error}</div>}
 
-      <div className="card flex gap-4 items-end flex-wrap">
+      <ListFilters
+        search={{
+          label: 'Buscar práctica',
+          placeholder: 'Práctica, estudiante, empresa, tutor o docente...',
+          value: busqueda,
+          onChange: setBusqueda,
+        }}
+        summary={`${filtradas.length} resultado${filtradas.length !== 1 ? 's' : ''}`}
+        className="card"
+      >
         <div className="flex-1 min-w-48">
           <Select label="Empresa" value={filtroEmpresa} onChange={e => setFiltroEmpresa(e.target.value)}>
             <option value="">Todas las empresas</option>
@@ -54,8 +69,7 @@ export default function TableroSeguimientoPage() {
             ))}
           </Select>
         </div>
-        <span className="text-sm text-gray-500 self-end pb-2">{filtradas.length} resultado{filtradas.length !== 1 ? 's' : ''}</span>
-      </div>
+      </ListFilters>
 
       <div className="card overflow-x-auto p-0">
         <table className="w-full text-sm">

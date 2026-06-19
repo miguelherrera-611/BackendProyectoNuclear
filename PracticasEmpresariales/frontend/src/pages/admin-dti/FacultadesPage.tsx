@@ -1,14 +1,18 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { FacultadResponse, ApiResponse, Pageable } from '../../types'
 import api from '../../services/api'
 import { Modal, ConfirmModal } from '../../components/common/Modal/Modal'
 import { Button } from '../../components/common/Button/Button'
 import { Input } from '../../components/common/Input/Input'
+import { Select } from '../../components/common/Select/Select'
+import { ListFilters } from '../../components/common/ListFilters'
 import { useToast } from '../../components/common/Notifications/Toast'
 
 export default function FacultadesPage() {
   const { showToast } = useToast()
   const [facultades, setFacultades]   = useState<FacultadResponse[]>([])
+  const [busqueda, setBusqueda] = useState('')
+  const [estadoFiltro, setEstadoFiltro] = useState<'todas' | 'activas' | 'inactivas'>('todas')
   const [loading, setLoading]         = useState(true)
   const [saving, setSaving]           = useState(false)
   const [modalCrear, setModalCrear]   = useState(false)
@@ -22,12 +26,30 @@ export default function FacultadesPage() {
 
   const cargar = () => {
     setLoading(true)
-    api.get<ApiResponse<Pageable<FacultadResponse>>>('/facultades?incluirInactivas=true')
+    api.get<ApiResponse<Pageable<FacultadResponse>>>('/facultades?incluirInactivas=true&size=200')
       .then(r => setFacultades(r.data.datos?.content ?? []))
       .finally(() => setLoading(false))
   }
 
   useEffect(() => { cargar() }, [])
+
+  const facultadesFiltradas = useMemo(() => {
+    const texto = busqueda.trim().toLowerCase()
+    return facultades.filter(f => {
+      const coincideTexto = !texto || [f.nombre, f.descripcion].some(valor => valor?.toLowerCase().includes(texto))
+      const coincideEstado = estadoFiltro === 'todas'
+        ? true
+        : estadoFiltro === 'activas'
+          ? f.activa
+          : !f.activa
+      return coincideTexto && coincideEstado
+    })
+  }, [busqueda, facultades, estadoFiltro])
+
+  const limpiarFiltros = () => {
+    setBusqueda('')
+    setEstadoFiltro('todas')
+  }
 
   const handleCrear = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -69,21 +91,42 @@ export default function FacultadesPage() {
         </Button>
       </div>
 
+      <ListFilters
+        search={{
+          label: 'Buscar facultad',
+          placeholder: 'Nombre o descripción...',
+          value: busqueda,
+          onChange: setBusqueda,
+        }}
+        summary={`${facultadesFiltradas.length} de ${facultades.length}`}
+        onClear={limpiarFiltros}
+      >
+        <div className="w-full sm:w-56">
+          <Select label="Estado" value={estadoFiltro} onChange={e => setEstadoFiltro(e.target.value as typeof estadoFiltro)}>
+            <option value="todas">Todas</option>
+            <option value="activas">Activas</option>
+            <option value="inactivas">Inactivas</option>
+          </Select>
+        </div>
+      </ListFilters>
+
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {loading ? (
           <div className="col-span-3 flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-cue-primary" />
           </div>
-        ) : facultades.length === 0 ? (
+        ) : facultadesFiltradas.length === 0 ? (
           <div className="col-span-3 card text-center py-16">
             <div className="text-gray-300 text-5xl mb-3">🏛️</div>
-            <p className="text-gray-400 text-sm">No hay facultades registradas.</p>
+            <p className="text-gray-400 text-sm">
+              {facultades.length === 0 ? 'No hay facultades registradas.' : 'No hay facultades que coincidan con los filtros.'}
+            </p>
             <button className="mt-3 text-cue-primary text-sm font-medium hover:underline"
               onClick={() => setModalCrear(true)}>
               Crear la primera
             </button>
           </div>
-        ) : facultades.map(f => (
+        ) : facultadesFiltradas.map(f => (
           <div
             key={f.id}
             className="card hover:shadow-md transition-shadow cursor-pointer"

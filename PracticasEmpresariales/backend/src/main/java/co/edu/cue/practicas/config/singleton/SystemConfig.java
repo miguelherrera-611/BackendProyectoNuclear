@@ -55,7 +55,7 @@ public class SystemConfig {
     private long mailRetryDelayMs;
 
     // API Key de SendGrid usada para autenticar las peticiones HTTP a /v3/mail/send
-    @Value("${sendgrid.api-key}")
+    @Value("${sendgrid.api-key:}")
     private String sendgridApiKey;
 
     public String getNombreSistema() { return nombreSistema; }
