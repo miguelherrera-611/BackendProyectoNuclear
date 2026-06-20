@@ -45,6 +45,7 @@ public class NotaFinalCoordinadorService {
         }
         InstanciaPractica instancia = instanciaRepository.findById(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Practica no encontrada."));
+        validarInstanciaEnFacultadDelCoordinador(instancia, actor);
         if (instancia.esInmutable()) {
             throw new OperacionNoPermitidaException("La practica esta cerrada e inmutable.");
         }
@@ -68,12 +69,28 @@ public class NotaFinalCoordinadorService {
         if (actor.getRol() != Rol.COORDINADOR_PRACTICAS) {
             throw new AccesoNoAutorizadoException("Solo el coordinador consulta referencias de cierre.");
         }
+        InstanciaPractica instancia = instanciaRepository.findById(instanciaId)
+                .orElseThrow(() -> new RecursoNoEncontradoException("Practica no encontrada."));
+        validarInstanciaEnFacultadDelCoordinador(instancia, actor);
         return Map.of(
                 "docente", evaluacionRepository.findByInstanciaPractica_IdAndTipo(instanciaId, TipoEvaluacionFinal.DOCENTE_ASESOR)
                         .map(EvaluacionFinalResponse::desde).orElse(null),
                 "tutor", evaluacionRepository.findByInstanciaPractica_IdAndTipo(instanciaId, TipoEvaluacionFinal.TUTOR_EMPRESARIAL)
                         .map(EvaluacionFinalResponse::desde).orElse(null)
         );
+    }
+
+    private void validarInstanciaEnFacultadDelCoordinador(InstanciaPractica instancia, CustomUserDetails actor) {
+        var estudiante = instancia.getExpediente() != null ? instancia.getExpediente().getEstudiante() : null;
+        Long facultadEstudiante = estudiante != null
+                && estudiante.getPrograma() != null
+                && estudiante.getPrograma().getFacultad() != null
+                ? estudiante.getPrograma().getFacultad().getId()
+                : null;
+
+        if (actor.getFacultadId() == null || !actor.getFacultadId().equals(facultadEstudiante)) {
+            throw new AccesoNoAutorizadoException("No tiene acceso a practicas de otra facultad.");
+        }
     }
 
 }

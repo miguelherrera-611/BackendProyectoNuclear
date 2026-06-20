@@ -40,8 +40,10 @@ public class EstudianteController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<UsuarioResponse>> obtener(@PathVariable Long id) {
-        return ResponseEntity.ok(ApiResponse.ok("Estudiante obtenido.", service.obtenerPorId(id)));
+    public ResponseEntity<ApiResponse<UsuarioResponse>> obtener(
+            @PathVariable Long id,
+            @AuthenticationPrincipal CustomUserDetails usuario) {
+        return ResponseEntity.ok(ApiResponse.ok("Estudiante obtenido.", service.obtenerPorId(id, usuario)));
     }
 
     @PatchMapping("/{id}/marcar-apto")

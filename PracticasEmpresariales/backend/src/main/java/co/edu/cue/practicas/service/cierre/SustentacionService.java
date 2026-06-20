@@ -27,6 +27,7 @@ public class SustentacionService {
     public SustentacionResponse programar(Long instanciaId, RegistrarSustentacionRequest req, CustomUserDetails actor) {
         validarCoordinador(actor);
         InstanciaPractica instancia = buscarInstancia(instanciaId);
+        validarInstanciaEnFacultadDelCoordinador(instancia, actor);
         if (instancia.getFechaInicio() != null && req.getFecha().isBefore(instancia.getFechaInicio())) {
             throw new OperacionNoPermitidaException("La fecha de sustentacion debe ser posterior al inicio de practica.");
         }
@@ -40,6 +41,8 @@ public class SustentacionService {
     @Transactional
     public SustentacionResponse registrarResultado(Long instanciaId, RegistrarResultadoSustentacionRequest req, CustomUserDetails actor) {
         validarCoordinador(actor);
+        InstanciaPractica instancia = buscarInstancia(instanciaId);
+        validarInstanciaEnFacultadDelCoordinador(instancia, actor);
         SustentacionPractica sustentacion = sustentacionRepository.findByInstanciaPractica_Id(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Sustentacion no programada."));
         sustentacion.registrarResultado(req.getResultado(), req.getActaUrl(), req.isActaFirmada());
@@ -58,6 +61,19 @@ public class SustentacionService {
     private void validarCoordinador(CustomUserDetails actor) {
         if (actor.getRol() != Rol.COORDINADOR_PRACTICAS) {
             throw new AccesoNoAutorizadoException("Solo Coordinacion del programa gestiona sustentaciones.");
+        }
+    }
+
+    private void validarInstanciaEnFacultadDelCoordinador(InstanciaPractica instancia, CustomUserDetails actor) {
+        var estudiante = instancia.getExpediente() != null ? instancia.getExpediente().getEstudiante() : null;
+        Long facultadEstudiante = estudiante != null
+                && estudiante.getPrograma() != null
+                && estudiante.getPrograma().getFacultad() != null
+                ? estudiante.getPrograma().getFacultad().getId()
+                : null;
+
+        if (actor.getFacultadId() == null || !actor.getFacultadId().equals(facultadEstudiante)) {
+            throw new AccesoNoAutorizadoException("No tiene acceso a practicas de otra facultad.");
         }
     }
 

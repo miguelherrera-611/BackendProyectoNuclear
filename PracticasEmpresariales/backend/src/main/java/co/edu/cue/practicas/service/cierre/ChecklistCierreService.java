@@ -49,6 +49,7 @@ public class ChecklistCierreService {
             throw new AccesoNoAutorizadoException("Solo el Coordinador de Prácticas puede consultar el checklist de cierre.");
         var instancia = instanciaRepository.findById(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Practica no encontrada."));
+        validarInstanciaEnFacultadDelCoordinador(instancia, actor);
         Long programaId = instancia.getExpediente().getEstudiante().getPrograma().getId();
         Set<String> requisitos = requisitosConfigurados(programaId);
         Map<String, ChecklistItemResponse> base = new LinkedHashMap<>();
@@ -80,6 +81,20 @@ public class ChecklistCierreService {
                 .items(items)
                 .puedeEjecutarCierre(completo)
                 .build();
+    }
+
+    private void validarInstanciaEnFacultadDelCoordinador(co.edu.cue.practicas.model.entity.InstanciaPractica instancia,
+                                                          CustomUserDetails actor) {
+        var estudiante = instancia.getExpediente() != null ? instancia.getExpediente().getEstudiante() : null;
+        Long facultadEstudiante = estudiante != null
+                && estudiante.getPrograma() != null
+                && estudiante.getPrograma().getFacultad() != null
+                ? estudiante.getPrograma().getFacultad().getId()
+                : null;
+
+        if (actor.getFacultadId() == null || !actor.getFacultadId().equals(facultadEstudiante)) {
+            throw new AccesoNoAutorizadoException("No tiene acceso a practicas de otra facultad.");
+        }
     }
 
     private ChecklistItemResponse item(String codigo, String nombre, boolean completo, String accion) {

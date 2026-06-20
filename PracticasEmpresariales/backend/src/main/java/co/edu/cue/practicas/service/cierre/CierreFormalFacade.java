@@ -55,6 +55,7 @@ public class CierreFormalFacade {
         }
         InstanciaPractica instancia = instanciaRepository.findById(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Practica no encontrada."));
+        validarInstanciaEnFacultadDelCoordinador(instancia, actor);
         if (instancia.getEstado() != EstadoPractica.EN_CURSO) {
             throw new OperacionNoPermitidaException("Solo una practica EN_CURSO puede cerrarse formalmente.");
         }
@@ -154,6 +155,19 @@ public class CierreFormalFacade {
                             coordinacion.getCorreo(),
                             coordinacion.getNombre(),
                             vars));
+        }
+    }
+
+    private void validarInstanciaEnFacultadDelCoordinador(InstanciaPractica instancia, CustomUserDetails actor) {
+        var estudiante = instancia.getExpediente() != null ? instancia.getExpediente().getEstudiante() : null;
+        Long facultadEstudiante = estudiante != null
+                && estudiante.getPrograma() != null
+                && estudiante.getPrograma().getFacultad() != null
+                ? estudiante.getPrograma().getFacultad().getId()
+                : null;
+
+        if (actor.getFacultadId() == null || !actor.getFacultadId().equals(facultadEstudiante)) {
+            throw new AccesoNoAutorizadoException("No tiene acceso a practicas de otra facultad.");
         }
     }
 

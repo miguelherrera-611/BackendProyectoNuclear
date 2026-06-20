@@ -53,6 +53,7 @@ public class EncuestaSatisfaccionService {
             throw new AccesoNoAutorizadoException("Solo Coordinacion envia encuestas al tutor.");
         }
         InstanciaPractica instancia = buscarInstancia(instanciaId);
+        validarInstanciaEnFacultadDelCoordinador(instancia, actor);
         validarEvaluacionDocenteCompleta(instanciaId);
         Usuario tutor = usuarioRepository.findById(req.getTutorEmpresarialId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Tutor empresarial no encontrado."));
@@ -82,6 +83,7 @@ public class EncuestaSatisfaccionService {
             throw new AccesoNoAutorizadoException("Solo Coordinacion envia encuestas al estudiante.");
         }
         InstanciaPractica instancia = buscarInstancia(instanciaId);
+        validarInstanciaEnFacultadDelCoordinador(instancia, actor);
         validarEvaluacionDocenteCompleta(instanciaId);
         Usuario estudiante = instancia.getExpediente().getEstudiante();
         EncuestaSatisfaccion encuesta = encuestaRepository.findByInstanciaPractica_IdAndTipo(instanciaId, TipoEncuesta.PARA_ESTUDIANTE)
@@ -213,7 +215,9 @@ public class EncuestaSatisfaccionService {
         if (actor.getRol() != Rol.COORDINADOR_PRACTICAS) {
             throw new AccesoNoAutorizadoException("Solo el coordinador puede ver este resumen.");
         }
-        java.util.List<InstanciaPractica> instancias = instanciaRepository.findAllByEstado(EstadoPractica.EN_CURSO);
+        java.util.List<InstanciaPractica> instancias = instanciaRepository
+                .findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(
+                        EstadoPractica.EN_CURSO, actor.getFacultadId());
 
         return instancias.stream().map(this::resumenCoordinador).toList();
     }
@@ -224,8 +228,23 @@ public class EncuestaSatisfaccionService {
             throw new AccesoNoAutorizadoException("Solo el coordinador puede ver este resumen.");
         }
 
-        return instanciaRepository.findAllByEstado(EstadoPractica.EN_CURSO, pageable)
+        return instanciaRepository
+                .findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(
+                        EstadoPractica.EN_CURSO, actor.getFacultadId(), pageable)
                 .map(this::resumenCoordinador);
+    }
+
+    private void validarInstanciaEnFacultadDelCoordinador(InstanciaPractica instancia, CustomUserDetails actor) {
+        Usuario estudiante = instancia.getExpediente() != null ? instancia.getExpediente().getEstudiante() : null;
+        Long facultadEstudiante = estudiante != null
+                && estudiante.getPrograma() != null
+                && estudiante.getPrograma().getFacultad() != null
+                ? estudiante.getPrograma().getFacultad().getId()
+                : null;
+
+        if (actor.getFacultadId() == null || !actor.getFacultadId().equals(facultadEstudiante)) {
+            throw new AccesoNoAutorizadoException("No tiene acceso a practicas de otra facultad.");
+        }
     }
 
     private EncuestaCoordinadorResumen resumenCoordinador(InstanciaPractica i) {
