@@ -159,18 +159,12 @@ export default function EstudiantesValidacionPage() {
       </div>
 
       <div className="card py-3 flex gap-4 items-end flex-wrap">
-        <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">Estado</label>
-          <div className="flex gap-2">
+        <div className="w-full sm:w-64">
+          <Select label="Estado" value={estado} onChange={e => setEstado(e.target.value as '' | EstadoEstudiante)}>
             {ESTADOS.map(s => (
-              <button key={s.label} type="button" onClick={() => setEstado(s.value)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
-                  estado === s.value ? 'bg-cue-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}>
-                {s.label}
-              </button>
+              <option key={s.label} value={s.value}>{s.label}</option>
             ))}
-          </div>
+          </Select>
         </div>
         <div className="flex-1 min-w-48">
           <label className="block text-xs font-medium text-gray-600 mb-1">Buscar</label>
