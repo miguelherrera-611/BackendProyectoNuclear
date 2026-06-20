@@ -129,13 +129,13 @@ class UsuarioServiceTest {
     }
 
     @Test
-    @DisplayName("crearUsuario COORDINACION_ACADEMICA sin etiquetaCargo debe lanzar excepción")
-    void crearUsuarioCoordinacionSinEtiquetaLanzaExcepcion() {
+    @DisplayName("crearUsuario COORDINADOR_PRACTICAS sin etiquetaCargo debe lanzar excepción")
+    void crearUsuarioCoordinadorPracticasSinEtiquetaLanzaExcepcion() {
         // ARRANGE
         CrearUsuarioRequest request = new CrearUsuarioRequest();
-        request.setNombre("Coordinadora");
+        request.setNombre("Coordinador");
         request.setCorreo("coord@test.com");
-        request.setRol(Rol.COORDINACION_ACADEMICA);
+        request.setRol(Rol.COORDINADOR_PRACTICAS);
         // etiquetaCargo = null — regla de negocio: obligatorio para este rol
 
         when(usuarioRepository.existsByCorreo("coord@test.com")).thenReturn(false);

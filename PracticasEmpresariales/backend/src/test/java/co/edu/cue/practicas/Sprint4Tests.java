@@ -46,15 +46,19 @@ class Sprint4Tests {
 
     // ─── Utilidades comunes ───────────────────────────────────────
 
+    private static final Long FACULTAD_ID = 100L;
+
     private CustomUserDetails actor(Rol rol, Long programaId) {
         CustomUserDetails actor = mock(CustomUserDetails.class);
         lenient().when(actor.getRol()).thenReturn(rol);
         lenient().when(actor.getProgramaId()).thenReturn(programaId);
+        lenient().when(actor.getFacultadId()).thenReturn(FACULTAD_ID);
         return actor;
     }
 
     private InstanciaPractica instanciaEnCurso(Long instanciaId, Long programaId) {
-        Programa programa = Programa.builder().id(programaId).nombre("Ingenieria").build();
+        Facultad facultad = Facultad.builder().id(FACULTAD_ID).nombre("Facultad de Ingenieria").build();
+        Programa programa = Programa.builder().id(programaId).nombre("Ingenieria").facultad(facultad).build();
         Usuario estudiante = Usuario.builder().id(1L).nombre("Estudiante Test")
                 .correo("est@cue.edu.co").programa(programa).build();
         ExpedienteEstudiante expediente = ExpedienteEstudiante.builder()
@@ -961,20 +965,22 @@ class Sprint4Tests {
         @InjectMocks private ReporteEstadoProcesoService service;
 
         @Test
-        @DisplayName("Coordinador no puede ver reportes de otro programa")
-        void construir_coordinadorOtroPrograma_lanzaAccesoDenegado() {
+        @DisplayName("Coordinador no puede ver reportes de otra facultad")
+        void construir_coordinadorOtraFacultad_lanzaAccesoDenegado() {
             CustomUserDetails actor = actor(Rol.COORDINADOR_PRACTICAS, 10L);
+            when(actor.getFacultadId()).thenReturn(50L);
             ReporteEstadoProcesoRequest req = new ReporteEstadoProcesoRequest();
-            req.setProgramaId(99L);
+            req.setFacultadId(99L);
 
             assertThatThrownBy(() -> service.construir(req, actor))
                     .isInstanceOf(AccesoNoAutorizadoException.class);
         }
 
         @Test
-        @DisplayName("Coordinador sin programa asignado lanza acceso denegado")
-        void construir_coordinadorSinPrograma_lanzaAccesoDenegado() {
+        @DisplayName("Coordinador sin facultad asignada lanza acceso denegado")
+        void construir_coordinadorSinFacultad_lanzaAccesoDenegado() {
             CustomUserDetails actor = actor(Rol.COORDINADOR_PRACTICAS, null);
+            when(actor.getFacultadId()).thenReturn(null);
             ReporteEstadoProcesoRequest req = new ReporteEstadoProcesoRequest();
 
             assertThatThrownBy(() -> service.construir(req, actor))

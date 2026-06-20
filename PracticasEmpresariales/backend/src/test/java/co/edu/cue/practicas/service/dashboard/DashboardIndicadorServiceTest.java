@@ -103,14 +103,15 @@ class DashboardIndicadorServiceTest {
     @Test
     @DisplayName("Coordinador de Prácticas recibe sus 4 indicadores clave")
     void indicadoresCoordinadorPracticasDevuelveCuatroIndicadores() {
-        Long programaId = 5L;
-        CustomUserDetails coord = udConRolYPrograma(Rol.COORDINADOR_PRACTICAS, 3L, programaId);
+        Long facultadId = 5L;
+        CustomUserDetails coord = udConRolYFacultad(Rol.COORDINADOR_PRACTICAS, 3L, facultadId);
 
-        when(usuarioRepository.countEstudiantesAptosDisponibles(
-                eq(Rol.ESTUDIANTE), eq(EstadoEstudiante.APTO), eq(programaId), anyList()))
+        when(usuarioRepository.countEstudiantesAptosDisponiblesPorFacultad(
+                eq(Rol.ESTUDIANTE), eq(EstadoEstudiante.APTO), eq(facultadId), anyList()))
                 .thenReturn(6L);
         stubContarVacantesDisponibles(3L);
-        when(instanciaPracticaRepository.countByEstado(EstadoPractica.EN_CURSO)).thenReturn(10L);
+        when(instanciaPracticaRepository.countByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(
+                EstadoPractica.EN_CURSO, facultadId)).thenReturn(10L);
         when(planPracticaRepository.countByEstadoIn(anyList())).thenReturn(2L);
 
         DashboardIndicadores indicadores = service.obtenerIndicadores(coord);
@@ -122,17 +123,19 @@ class DashboardIndicadorServiceTest {
     }
 
     @Test
-    @DisplayName("Coordinador sin programaId retorna 0 en estudiantesAptoDisponibles")
-    void indicadoresCoordinadorSinProgramaDevuelveCero() {
-        CustomUserDetails coordSinPrograma = udConRol(Rol.COORDINADOR_PRACTICAS, 3L);
+    @DisplayName("Coordinador sin facultad asignada retorna 0 en estudiantesAptoDisponibles y practicasEnCurso")
+    void indicadoresCoordinadorSinFacultadDevuelveCero() {
+        CustomUserDetails coordSinFacultad = udConRol(Rol.COORDINADOR_PRACTICAS, 3L);
         stubContarVacantesDisponibles(0L);
-        when(instanciaPracticaRepository.countByEstado(EstadoPractica.EN_CURSO)).thenReturn(0L);
         when(planPracticaRepository.countByEstadoIn(anyList())).thenReturn(0L);
 
-        DashboardIndicadores indicadores = service.obtenerIndicadores(coordSinPrograma);
+        DashboardIndicadores indicadores = service.obtenerIndicadores(coordSinFacultad);
 
         assertThat(indicadores.estudiantesAptoDisponibles()).isEqualTo(0L);
-        verify(usuarioRepository, never()).countEstudiantesAptosDisponibles(any(), any(), any(), any());
+        assertThat(indicadores.practicasEnCurso()).isEqualTo(0L);
+        verify(usuarioRepository, never()).countEstudiantesAptosDisponiblesPorFacultad(any(), any(), any(), any());
+        verify(instanciaPracticaRepository, never())
+                .countByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(any(), any());
     }
 
     // =================================================================
@@ -268,11 +271,11 @@ class DashboardIndicadorServiceTest {
                 .passwordHash("hash").rol(rol).activo(true).build());
     }
 
-    private CustomUserDetails udConRolYPrograma(Rol rol, Long id, Long programaId) {
-        Programa programa = Programa.builder().id(programaId).nombre("Ing. Sistemas").activo(true).build();
+    private CustomUserDetails udConRolYFacultad(Rol rol, Long id, Long facultadId) {
+        Facultad facultad = Facultad.builder().id(facultadId).nombre("Facultad de Ingeniería").build();
         return new CustomUserDetails(Usuario.builder()
                 .id(id).nombre("Test " + rol).correo("test@cue.edu.co")
-                .passwordHash("hash").rol(rol).activo(true).programa(programa).build());
+                .passwordHash("hash").rol(rol).activo(true).facultad(facultad).build());
     }
 
     @SuppressWarnings("unchecked")

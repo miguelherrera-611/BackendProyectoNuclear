@@ -53,6 +53,7 @@ class VinculacionServiceTest {
     private CustomUserDetails tutor;
     private InstanciaPractica instanciaAsignada;
     private InstanciaPracticaResponse responseEjemplo;
+    private Facultad facultad;
 
     private static final Long INSTANCIA_ID = 1L;
     private static final LocalDate INICIO = LocalDate.now();
@@ -64,7 +65,10 @@ class VinculacionServiceTest {
         // nunca inyecta el campo "em" (@PersistenceContext, no es parte del constructor).
         ReflectionTestUtils.setField(service, "em", em);
 
+        facultad = Facultad.builder().id(1L).nombre("Facultad de Ingeniería").build();
+
         coordinador = udConRol(Rol.COORDINADOR_PRACTICAS, 1L);
+        coordinador.getUsuario().setFacultad(facultad);
         noCoordinador = udConRol(Rol.ESTUDIANTE, 10L);
         docente = udConRol(Rol.DOCENTE_ASESOR, 5L);
         tutor = udConRolYCorreo(Rol.TUTOR_EMPRESARIAL, 6L, "tutor@corp.com");
@@ -75,9 +79,11 @@ class VinculacionServiceTest {
         Usuario tutor = Usuario.builder().id(3L).rol(Rol.TUTOR_EMPRESARIAL)
                 .nombre("Tutor Test").correo("tutor@corp.com").passwordHash("h").activo(true).build();
 
+        Programa programa = Programa.builder().id(1L).nombre("Ing. Sistemas").activo(true).facultad(facultad).build();
+
         Usuario estudianteUsuario = Usuario.builder()
                 .id(10L).nombre("Est Test").correo("est@cue.edu.co")
-                .passwordHash("h").rol(Rol.ESTUDIANTE).activo(true).build();
+                .passwordHash("h").rol(Rol.ESTUDIANTE).programa(programa).activo(true).build();
 
         ExpedienteEstudiante expediente = ExpedienteEstudiante.builder()
                 .id(1L).estudiante(estudianteUsuario).build();
@@ -266,13 +272,15 @@ class VinculacionServiceTest {
     void listarPracticasEnCursoExitoso() {
         List<InstanciaPractica> practicas = List.of(instanciaAsignada);
         instanciaAsignada.iniciar(); // → EN_CURSO
-        when(instanciaPracticaRepository.findAllByEstado(EstadoPractica.EN_CURSO)).thenReturn(practicas);
+        when(instanciaPracticaRepository.findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(
+                EstadoPractica.EN_CURSO, facultad.getId())).thenReturn(practicas);
         when(mapper.toInstanciaPracticaResponse(any())).thenReturn(responseEjemplo);
 
         List<InstanciaPracticaResponse> resultado = service.listarPracticasEnCurso(coordinador);
 
         assertThat(resultado).hasSize(1);
-        verify(instanciaPracticaRepository).findAllByEstado(EstadoPractica.EN_CURSO);
+        verify(instanciaPracticaRepository).findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(
+                EstadoPractica.EN_CURSO, facultad.getId());
     }
 
     @Test

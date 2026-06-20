@@ -141,8 +141,8 @@ class AuthControllerIntegrationTest extends BaseIntegrationTest {
     // ═══════════════════════════════════════════════════
 
     @Test
-    @DisplayName("POST /auth/cambiar-password — Sin token retorna 403")
-    void cambiarPassword_sinToken_retorna403() throws Exception {
+    @DisplayName("POST /auth/cambiar-password — Sin token retorna 401")
+    void cambiarPassword_sinToken_retorna401() throws Exception {
         String body = """
             {
                 "passwordActual": "TestAdmin2026!",
@@ -154,6 +154,6 @@ class AuthControllerIntegrationTest extends BaseIntegrationTest {
         mockMvc.perform(post("/auth/cambiar-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(body))
-                .andExpect(status().isInternalServerError());
+                .andExpect(status().isUnauthorized());
     }
 }

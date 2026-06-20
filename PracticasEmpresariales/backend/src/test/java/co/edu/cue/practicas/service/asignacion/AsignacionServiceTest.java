@@ -58,6 +58,8 @@ class AsignacionServiceTest {
     private ExpedienteEstudiante expediente;
     private CatalogoPractica catalogo;
     private InstanciaPracticaResponse responseEjemplo;
+    private Facultad facultad;
+    private Programa programa;
 
     private static final Long ESTUDIANTE_ID = 10L;
     private static final Long VACANTE_ID = 20L;
@@ -66,10 +68,13 @@ class AsignacionServiceTest {
 
     @BeforeEach
     void setUp() {
+        facultad = Facultad.builder().id(1L).nombre("Facultad de Ingeniería").build();
+
         coordinador = udConRol(Rol.COORDINADOR_PRACTICAS);
+        coordinador.getUsuario().setFacultad(facultad);
         noCoordinador = udConRol(Rol.ESTUDIANTE);
 
-        Programa programa = Programa.builder().id(1L).nombre("Ing. Sistemas").activo(true).build();
+        programa = Programa.builder().id(1L).nombre("Ing. Sistemas").activo(true).facultad(facultad).build();
 
         estudiante = Usuario.builder()
                 .id(ESTUDIANTE_ID).nombre("Ana García").correo("ana@cue.edu.co")
@@ -135,7 +140,7 @@ class AsignacionServiceTest {
         when(usuarioRepository.findById(ESTUDIANTE_ID)).thenReturn(Optional.of(estudiante));
 
         assertThatThrownBy(() -> service.asignar(reqAsignacion(ESTUDIANTE_ID, VACANTE_ID, CATALOGO_ID), coordinador))
-                .isInstanceOf(IllegalArgumentException.class);
+                .isInstanceOf(OperacionNoPermitidaException.class);
     }
 
     @Test
@@ -145,7 +150,7 @@ class AsignacionServiceTest {
         when(usuarioRepository.findById(ESTUDIANTE_ID)).thenReturn(Optional.of(estudiante));
 
         assertThatThrownBy(() -> service.asignar(reqAsignacion(ESTUDIANTE_ID, VACANTE_ID, CATALOGO_ID), coordinador))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(OperacionNoPermitidaException.class)
                 .hasMessageContaining("APTO");
     }
 
@@ -160,7 +165,7 @@ class AsignacionServiceTest {
         when(vacanteRepository.findById(VACANTE_ID)).thenReturn(Optional.of(vacante));
 
         assertThatThrownBy(() -> service.asignar(reqAsignacion(ESTUDIANTE_ID, VACANTE_ID, CATALOGO_ID), coordinador))
-                .isInstanceOf(IllegalArgumentException.class)
+                .isInstanceOf(OperacionNoPermitidaException.class)
                 .hasMessageContaining("practicantes");
     }
 
@@ -296,10 +301,11 @@ class AsignacionServiceTest {
     // =================================================================
 
     @Test
-    @DisplayName("listarAsignaciones() sin filtro debe retornar todas las instancias")
+    @DisplayName("listarAsignaciones() sin filtro debe retornar todas las instancias de la facultad del coordinador")
     void listarAsignacionesSinFiltroRetornaTodas() {
         List<InstanciaPractica> instancias = List.of(instanciaAsignada(), instanciaAsignada());
-        when(instanciaRepository.findAll()).thenReturn(instancias);
+        when(instanciaRepository.findAllByExpediente_Estudiante_Programa_Facultad_Id(facultad.getId()))
+                .thenReturn(instancias);
         when(estudianteMapper.toInstanciaPracticaResponse(any())).thenReturn(responseEjemplo);
 
         List<InstanciaPracticaResponse> resultado = service.listarAsignaciones(null, coordinador);
@@ -308,13 +314,15 @@ class AsignacionServiceTest {
     }
 
     @Test
-    @DisplayName("listarAsignaciones() con filtro de estado válido usa findAllByEstado")
+    @DisplayName("listarAsignaciones() con filtro de estado válido usa findAllByEstadoAndFacultad")
     void listarAsignacionesConFiltroEstadoValido() {
-        when(instanciaRepository.findAllByEstado(EstadoPractica.EN_CURSO)).thenReturn(List.of());
+        when(instanciaRepository.findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(
+                EstadoPractica.EN_CURSO, facultad.getId())).thenReturn(List.of());
 
         service.listarAsignaciones("EN_CURSO", coordinador);
 
-        verify(instanciaRepository).findAllByEstado(EstadoPractica.EN_CURSO);
+        verify(instanciaRepository).findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(
+                EstadoPractica.EN_CURSO, facultad.getId());
         verify(instanciaRepository, never()).findAll();
     }
 
@@ -384,13 +392,14 @@ class AsignacionServiceTest {
                 .materiaNucleo("Práctica").codigoMateria("PE-101")
                 .numCortes(3).duracionSemanas(16)
                 .estado(EstadoPractica.ASIGNADA_PENDIENTE_INICIO)
-                .empresa(empresa).catalogoPracticaId(CATALOGO_ID).build();
+                .empresa(empresa).catalogoPracticaId(CATALOGO_ID)
+                .expediente(expediente).build();
     }
 
     private Usuario.UsuarioBuilder estudianteBuilder() {
         return Usuario.builder()
                 .id(ESTUDIANTE_ID).nombre("Ana García").correo("ana@cue.edu.co")
-                .passwordHash("hash").rol(Rol.ESTUDIANTE).activo(true);
+                .passwordHash("hash").rol(Rol.ESTUDIANTE).programa(programa).activo(true);
     }
 
     private CustomUserDetails udConRol(Rol rol) {
