@@ -60,6 +60,9 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
     Page<Usuario> findByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndActivoTrue(
             Rol rol, EstadoEstudiante estadoEstudiante, Pageable pageable);
 
+    Page<Usuario> findByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndPrograma_Facultad_IdAndActivoTrue(
+            Rol rol, EstadoEstudiante estadoEstudiante, Long facultadId, Pageable pageable);
+
     long countByRolAndEstadoEstudianteAndActivoTrue(Rol rol, EstadoEstudiante estadoEstudiante);
 
     long countByRolAndEstadoEstudianteAndEnviadoAlProcesoFalseAndActivoTrue(
@@ -89,9 +92,32 @@ public interface UsuarioRepository extends JpaRepository<Usuario, Long> {
             @Param("programaId") Long programaId,
             @Param("estadosFinales") java.util.List<EstadoPractica> estadosFinales);
 
+    @Query("""
+            SELECT COUNT(u)
+            FROM Usuario u
+            WHERE u.rol = :rol
+              AND u.estadoEstudiante = :estado
+              AND u.enviadoAlProceso = true
+              AND u.activo = true
+              AND u.programa.facultad.id = :facultadId
+              AND NOT EXISTS (
+                  SELECT i
+                  FROM InstanciaPractica i
+                  WHERE i.expediente.estudiante = u
+                    AND i.estado NOT IN :estadosFinales
+              )
+            """)
+    long countEstudiantesAptosDisponiblesPorFacultad(
+            @Param("rol") Rol rol,
+            @Param("estado") EstadoEstudiante estado,
+            @Param("facultadId") Long facultadId,
+            @Param("estadosFinales") java.util.List<EstadoPractica> estadosFinales);
+
     boolean existsByIdentificacion(String identificacion);
 
     Page<Usuario> findByFacultad_IdAndActivoTrue(Long facultadId, Pageable pageable);
+
+    boolean existsByRolAndFacultad_IdAndActivoTrue(Rol rol, Long facultadId);
 
     List<Usuario> findByRolAndFacultad_IdAndActivoTrue(Rol rol, Long facultadId);
 

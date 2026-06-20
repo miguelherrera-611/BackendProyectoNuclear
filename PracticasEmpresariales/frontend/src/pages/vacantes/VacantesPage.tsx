@@ -112,9 +112,6 @@ export default function VacantesPage() {
     }
   }
 
-  const tabClass = (t: Tab) =>
-    `px-4 py-2 text-sm font-medium rounded-lg transition-colors ${tab === t ? 'bg-cue-primary text-white' : 'text-gray-600 hover:bg-gray-100'}`
-
   const HEADERS = ['Empresa', 'Área', 'Cupos', 'Publicación', 'Estado', 'Acciones']
 
   return (
@@ -122,12 +119,6 @@ export default function VacantesPage() {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Vacantes</h1>
         <Button onClick={() => { setErrorModal(''); setModalCrear(true) }}>+ Nueva Vacante</Button>
-      </div>
-
-      <div className="flex gap-2">
-        <button className={tabClass('todas')}    onClick={() => setTab('todas')}>Todas</button>
-        <button className={tabClass('activas')}  onClick={() => setTab('activas')}>Activas</button>
-        <button className={tabClass('inactivas')} onClick={() => setTab('inactivas')}>Inactivas</button>
       </div>
 
       <ListFilters
@@ -139,7 +130,15 @@ export default function VacantesPage() {
         }}
         summary={`${vacantesFiltradas.length} de ${vacantesTab.length}`}
         onClear={limpiarFiltros}
-      />
+      >
+        <div className="w-full sm:w-56">
+          <Select label="Estado" value={tab} onChange={e => setTab(e.target.value as Tab)}>
+            <option value="todas">Todas</option>
+            <option value="activas">Activas</option>
+            <option value="inactivas">Inactivas</option>
+          </Select>
+        </div>
+      </ListFilters>
 
       <Table headers={HEADERS} loading={loading} empty={vacantesFiltradas.length === 0}
         emptyMessage={vacantesTab.length === 0 ? 'No hay vacantes en esta categoría.' : 'No hay vacantes que coincidan con los filtros.'} emptyIcon="💼">

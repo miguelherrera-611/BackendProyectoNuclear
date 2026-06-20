@@ -171,8 +171,8 @@ public class EstudianteService extends PlantillaValidacionAptitud {
                         Rol.ESTUDIANTE, facultadId, pageable);
             }
             case COORDINADOR_PRACTICAS ->
-                usuarioRepository.findByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndActivoTrue(
-                        Rol.ESTUDIANTE, EstadoEstudiante.APTO, pageable);
+                usuarioRepository.findByRolAndEstadoEstudianteAndEnviadoAlProcesoTrueAndPrograma_Facultad_IdAndActivoTrue(
+                        Rol.ESTUDIANTE, EstadoEstudiante.APTO, usuario.getFacultadId(), pageable);
             default -> usuarioRepository.findByRol(Rol.ESTUDIANTE, pageable);
         };
 
@@ -182,8 +182,12 @@ public class EstudianteService extends PlantillaValidacionAptitud {
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS,
             Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
-    public UsuarioResponse obtenerPorId(Long id) {
-        return UsuarioResponse.desde(buscarEstudianteOFallar(id));
+    public UsuarioResponse obtenerPorId(Long id, CustomUserDetails actor) {
+        Usuario estudiante = buscarEstudianteOFallar(id);
+        if (actor.getRol() == Rol.COORDINADOR_PRACTICAS) {
+            validarEstudianteEnFacultadDelCoordinador(estudiante, actor);
+        }
+        return UsuarioResponse.desde(estudiante);
     }
 
     private Usuario buscarEstudianteOFallar(Long id) {
@@ -191,5 +195,15 @@ public class EstudianteService extends PlantillaValidacionAptitud {
                 .filter(u -> Rol.ESTUDIANTE.equals(u.getRol()))
                 .orElseThrow(() -> new RecursoNoEncontradoException(
                         "Estudiante no encontrado con id: " + id));
+    }
+
+    private void validarEstudianteEnFacultadDelCoordinador(Usuario estudiante, CustomUserDetails actor) {
+        Long facultadEstudiante = estudiante.getPrograma() != null && estudiante.getPrograma().getFacultad() != null
+                ? estudiante.getPrograma().getFacultad().getId()
+                : null;
+        if (actor.getFacultadId() == null || !actor.getFacultadId().equals(facultadEstudiante)) {
+            throw new co.edu.cue.practicas.exception.AccesoNoAutorizadoException(
+                    "El estudiante no pertenece a la facultad asignada al coordinador.");
+        }
     }
 }

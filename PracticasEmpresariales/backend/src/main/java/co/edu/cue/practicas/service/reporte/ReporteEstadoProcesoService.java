@@ -34,6 +34,9 @@ public class ReporteEstadoProcesoService {
         estados.put("APTO_DISPONIBLE", programaScope != null
                 ? usuarioRepository.countEstudiantesAptosDisponibles(Rol.ESTUDIANTE, EstadoEstudiante.APTO, programaScope,
                 List.of(EstadoPractica.FINALIZADA, EstadoPractica.CANCELADA))
+                : facultadScope != null
+                ? usuarioRepository.countEstudiantesAptosDisponiblesPorFacultad(Rol.ESTUDIANTE, EstadoEstudiante.APTO, facultadScope,
+                List.of(EstadoPractica.FINALIZADA, EstadoPractica.CANCELADA))
                 : contarEstudiantes(EstadoEstudiante.APTO, programaScope, facultadScope, true));
         estados.put("EN_CURSO", contarPracticas(EstadoPractica.EN_CURSO, programaScope, facultadScope, req.getSemestreAcademico()));
         estados.put("FINALIZADO", contarPracticas(EstadoPractica.FINALIZADA, programaScope, facultadScope, req.getSemestreAcademico()));
@@ -50,21 +53,23 @@ public class ReporteEstadoProcesoService {
     }
 
     private Long resolverProgramaScope(ReporteEstadoProcesoRequest req, CustomUserDetails actor) {
-        // SPRINT 4 - Decorator: agrega filtro de programa al reporte base cuando el actor es coordinador.
         if (actor.getRol() == Rol.COORDINADOR_PRACTICAS) {
-            if (actor.getProgramaId() == null) {
-                throw new AccesoNoAutorizadoException("El coordinador no tiene programa asignado.");
-            }
-            if (req.getProgramaId() != null && !req.getProgramaId().equals(actor.getProgramaId())) {
-                throw new AccesoNoAutorizadoException("El coordinador no puede ver reportes de otros programas.");
-            }
-            return actor.getProgramaId();
+            return null;
         }
         return req.getProgramaId();
     }
 
     private Long resolverFacultadScope(ReporteEstadoProcesoRequest req, CustomUserDetails actor) {
         // SPRINT 4 - Decorator: agrega filtro de facultad al reporte base para Coordinacion Academica.
+        if (actor.getRol() == Rol.COORDINADOR_PRACTICAS) {
+            if (actor.getFacultadId() == null) {
+                throw new AccesoNoAutorizadoException("El coordinador no tiene facultad asignada.");
+            }
+            if (req.getFacultadId() != null && !req.getFacultadId().equals(actor.getFacultadId())) {
+                throw new AccesoNoAutorizadoException("El coordinador no puede ver reportes de otra facultad.");
+            }
+            return actor.getFacultadId();
+        }
         if (actor.getRol() == Rol.COORDINACION_ACADEMICA) {
             if (actor.getFacultadId() == null) {
                 throw new AccesoNoAutorizadoException("La Coordinacion Academica no tiene facultad asignada.");

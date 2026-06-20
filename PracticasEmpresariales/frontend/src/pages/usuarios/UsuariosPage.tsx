@@ -212,10 +212,10 @@ export default function UsuariosPage() {
                 <option value="">Seleccionar...</option>
                 {ROL_OPTIONS.map(r => <option key={r} value={r}>{ROL_LABELS[r]}</option>)}
               </Select>
-              {form.rol === 'COORDINACION_ACADEMICA' && (
+              {form.rol === 'COORDINADOR_PRACTICAS' && (
                 <Select label="Cargo" required value={form.etiquetaCargo} onChange={e => setForm({ ...form, etiquetaCargo: e.target.value as EtiquetaCargo })}>
                   <option value="">Seleccionar...</option>
-                  <option value="COORDINACION_ACADEMICA">Coordinación Académica</option>
+                  <option value="COORDINACION_ACADEMICA">Coordinación</option>
                   <option value="SECRETARIA">Secretaría</option>
                 </Select>
               )}

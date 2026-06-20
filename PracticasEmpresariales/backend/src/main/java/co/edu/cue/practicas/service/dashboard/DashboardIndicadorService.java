@@ -80,13 +80,13 @@ public class DashboardIndicadorService {
     }
 
     private DashboardIndicadores indicadoresCoordinadorPracticas(CustomUserDetails userDetails) {
-        Long programaId = userDetails.getProgramaId();
-        long estudiantesAptosDisponibles = programaId == null
+        Long facultadId = userDetails.getFacultadId();
+        long estudiantesAptosDisponibles = facultadId == null
                 ? 0L
-                : usuarioRepository.countEstudiantesAptosDisponibles(
+                : usuarioRepository.countEstudiantesAptosDisponiblesPorFacultad(
                         Rol.ESTUDIANTE,
                         EstadoEstudiante.APTO,
-                        programaId,
+                        facultadId,
                         ESTADOS_FINALES);
 
         long planesPendientes = planPracticaRepository.countByEstadoIn(
@@ -95,7 +95,9 @@ public class DashboardIndicadorService {
         return DashboardIndicadores.builder()
                 .estudiantesAptoDisponibles(estudiantesAptosDisponibles)
                 .vacantesDisponibles(contarVacantesDisponibles())
-                .practicasEnCurso(instanciaPracticaRepository.countByEstado(EstadoPractica.EN_CURSO))
+                .practicasEnCurso(facultadId == null ? 0L
+                        : instanciaPracticaRepository.countByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(
+                                EstadoPractica.EN_CURSO, facultadId))
                 .planesPendientesAprobacion(planesPendientes)
                 .build();
     }

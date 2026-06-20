@@ -58,6 +58,7 @@ public class AsignacionService {
 
         Usuario estudiante = usuarioRepository.findById(req.getEstudianteId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Estudiante no encontrado."));
+        validarEstudianteEnFacultadDelCoordinador(estudiante, actor);
 
         if (!estudiante.isEnviadoAlProceso() || estudiante.getEstadoEstudiante() == null)
             throw new OperacionNoPermitidaException("El estudiante no ha sido enviado al proceso o no tiene estado definido.");
@@ -151,6 +152,7 @@ public class AsignacionService {
 
         InstanciaPractica instancia = instanciaRepository.findById(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Instancia de práctica no encontrada."));
+        validarInstanciaEnFacultadDelCoordinador(instancia, actor);
 
         // No se puede cancelar una práctica EN_CURSO o FINALIZADA
         if (instancia.getEstado() == EstadoPractica.EN_CURSO
@@ -292,7 +294,26 @@ public class AsignacionService {
             throw new AccesoNoAutorizadoException("Solo el Coordinador de Prácticas puede ver el detalle de asignaciones.");
         InstanciaPractica instancia = instanciaRepository.findById(id)
                 .orElseThrow(() -> new RecursoNoEncontradoException("Asignación no encontrada."));
+        validarInstanciaEnFacultadDelCoordinador(instancia, actor);
         return estudianteMapper.toInstanciaPracticaResponse(instancia);
+    }
+
+    private void validarEstudianteEnFacultadDelCoordinador(Usuario estudiante, CustomUserDetails actor) {
+        Long facultadActor = actor.getFacultadId();
+        Long facultadEstudiante = estudiante.getPrograma() != null && estudiante.getPrograma().getFacultad() != null
+                ? estudiante.getPrograma().getFacultad().getId()
+                : null;
+        if (facultadActor == null || !facultadActor.equals(facultadEstudiante)) {
+            throw new AccesoNoAutorizadoException("El estudiante no pertenece a la facultad asignada al coordinador.");
+        }
+    }
+
+    private void validarInstanciaEnFacultadDelCoordinador(InstanciaPractica instancia, CustomUserDetails actor) {
+        Usuario estudiante = instancia.getExpediente() != null ? instancia.getExpediente().getEstudiante() : null;
+        if (estudiante == null) {
+            throw new AccesoNoAutorizadoException("La práctica no tiene estudiante asociado.");
+        }
+        validarEstudianteEnFacultadDelCoordinador(estudiante, actor);
     }
 
     private CatalogoPractica determinarCatalogo(CrearAsignacionRequest req, Usuario estudiante, ExpedienteEstudiante expediente) {

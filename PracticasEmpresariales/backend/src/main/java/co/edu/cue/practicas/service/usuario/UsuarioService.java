@@ -69,8 +69,8 @@ public class UsuarioService {
             throw new OperacionNoPermitidaException("El correo ya esta registrado en el sistema.");
         }
 
-        if (Rol.COORDINACION_ACADEMICA.equals(request.getRol()) && request.getEtiquetaCargo() == null) {
-            throw new OperacionNoPermitidaException("La etiqueta de cargo es obligatoria para el rol Coordinacion Academica.");
+        if (Rol.COORDINADOR_PRACTICAS.equals(request.getRol()) && request.getEtiquetaCargo() == null) {
+            throw new OperacionNoPermitidaException("La etiqueta de cargo es obligatoria para el rol Coordinador de Practicas.");
         }
 
         if (Rol.COORDINACION_ACADEMICA.equals(request.getRol()) && request.getProgramaId() == null) {
@@ -89,7 +89,13 @@ public class UsuarioService {
         }
 
         Facultad facultad = resolverFacultad(request);
-        Programa programa = resolverPrograma(request);
+        Programa programa = Rol.COORDINADOR_PRACTICAS.equals(request.getRol())
+                ? null
+                : resolverPrograma(request);
+
+        if (Rol.COORDINADOR_PRACTICAS.equals(request.getRol())) {
+            validarCoordinadorPracticasPorFacultad(request.getFacultadId());
+        }
 
         // Para COORDINACION_ACADEMICA, la facultad se deriva del programa asignado
         if (Rol.COORDINACION_ACADEMICA.equals(request.getRol()) && facultad == null && programa != null) {
@@ -103,7 +109,7 @@ public class UsuarioService {
                 .passwordHash(passwordEncoder.encode(passwordTemporal))
                 .telefono(request.getTelefono())
                 .rol(request.getRol())
-                .etiquetaCargo(request.getEtiquetaCargo())
+                .etiquetaCargo(Rol.COORDINADOR_PRACTICAS.equals(request.getRol()) ? request.getEtiquetaCargo() : null)
                 .facultad(facultad)
                 .programa(programa)
                 .activo(true)
@@ -274,6 +280,13 @@ public class UsuarioService {
         if (request.getProgramaId() == null) return null;
         return programaRepository.findById(request.getProgramaId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Programa no encontrado: " + request.getProgramaId()));
+    }
+
+    private void validarCoordinadorPracticasPorFacultad(Long facultadId) {
+        if (usuarioRepository.existsByRolAndFacultad_IdAndActivoTrue(Rol.COORDINADOR_PRACTICAS, facultadId)) {
+            throw new OperacionNoPermitidaException(
+                    "Ya existe un Coordinador de Practicas activo para esta facultad.");
+        }
     }
 
     private String generarPasswordTemporal() {

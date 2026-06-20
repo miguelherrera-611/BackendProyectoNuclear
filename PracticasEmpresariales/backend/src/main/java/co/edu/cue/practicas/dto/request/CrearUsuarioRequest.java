@@ -21,7 +21,7 @@ public class CrearUsuarioRequest {
     private Rol rol;
 
     /**
-     * Obligatorio cuando rol = COORDINACION_ACADEMICA.
+     * Obligatorio cuando rol = COORDINADOR_PRACTICAS.
      * Ignorado para los demás roles.
      */
     private EtiquetaCargo etiquetaCargo;

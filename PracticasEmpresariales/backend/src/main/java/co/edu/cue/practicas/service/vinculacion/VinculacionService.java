@@ -63,6 +63,7 @@ public class VinculacionService {
 
         InstanciaPractica instancia = instanciaPracticaRepository.findById(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException(MSG_INSTANCIA_NO_ENCONTRADA));
+        validarInstanciaEnFacultadDelCoordinador(instancia, actor);
 
         if (req.docenteAsesorId() != null && instancia.getDocenteAsesor() == null) {
             Usuario docente = usuarioRepository.findById(req.docenteAsesorId())
@@ -109,6 +110,10 @@ public class VinculacionService {
         InstanciaPractica instancia = instanciaPracticaRepository.findById(instanciaId)
                 .orElseThrow(() -> new RecursoNoEncontradoException(MSG_INSTANCIA_NO_ENCONTRADA));
 
+        if (actor.getRol() == Rol.COORDINADOR_PRACTICAS) {
+            validarInstanciaEnFacultadDelCoordinador(instancia, actor);
+        }
+
         switch (tipoFirma.toUpperCase()) {
             case "TUTOR" -> {
                 if (actor.getRol() != Rol.TUTOR_EMPRESARIAL && actor.getRol() != Rol.COORDINADOR_PRACTICAS)
@@ -138,6 +143,13 @@ public class VinculacionService {
                 && actor.getRol() != Rol.ADMIN_DTI && actor.getRol() != Rol.DIRECCION)
             throw new AccesoNoAutorizadoException("No tiene acceso al tablero de seguimiento.");
 
+        if (actor.getRol() == Rol.COORDINADOR_PRACTICAS) {
+            return instanciaPracticaRepository
+                    .findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(
+                            EstadoPractica.EN_CURSO, actor.getFacultadId())
+                    .stream().map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId())).toList();
+        }
+
         return instanciaPracticaRepository.findAllByEstado(EstadoPractica.EN_CURSO)
                 .stream().map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId())).toList();
     }
@@ -147,6 +159,13 @@ public class VinculacionService {
         if (actor.getRol() != Rol.COORDINADOR_PRACTICAS && actor.getRol() != Rol.DOCENTE_ASESOR
                 && actor.getRol() != Rol.ADMIN_DTI && actor.getRol() != Rol.DIRECCION)
             throw new AccesoNoAutorizadoException("No tiene acceso al tablero de seguimiento.");
+
+        if (actor.getRol() == Rol.COORDINADOR_PRACTICAS) {
+            return instanciaPracticaRepository
+                    .findAllByEstadoAndExpediente_Estudiante_Programa_Facultad_Id(
+                            EstadoPractica.EN_CURSO, actor.getFacultadId(), pageable)
+                    .map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId()));
+        }
 
         return instanciaPracticaRepository.findAllByEstado(EstadoPractica.EN_CURSO, pageable)
                 .map(i -> conEvaluacion(mapper.toInstanciaPracticaResponse(i), i.getId()));
@@ -233,7 +252,11 @@ public class VinculacionService {
 
     private void verificarAccesoInstancia(InstanciaPractica instancia, CustomUserDetails actor) {
         Rol rol = actor.getRol();
-        if (rol == Rol.COORDINADOR_PRACTICAS || rol == Rol.ADMIN_DTI || rol == Rol.DIRECCION) return;
+        if (rol == Rol.ADMIN_DTI || rol == Rol.DIRECCION) return;
+        if (rol == Rol.COORDINADOR_PRACTICAS) {
+            validarInstanciaEnFacultadDelCoordinador(instancia, actor);
+            return;
+        }
         if (rol == Rol.DOCENTE_ASESOR) {
             if (instancia.getDocenteAsesor() == null || !instancia.getDocenteAsesor().getId().equals(actor.getId()))
                 throw new AccesoNoAutorizadoException("No tiene acceso a esta instancia de practica.");
@@ -251,6 +274,19 @@ public class VinculacionService {
             return;
         }
         throw new AccesoNoAutorizadoException("No tiene permiso para consultar esta practica.");
+    }
+
+    private void validarInstanciaEnFacultadDelCoordinador(InstanciaPractica instancia, CustomUserDetails actor) {
+        Usuario estudiante = instancia.getExpediente() != null ? instancia.getExpediente().getEstudiante() : null;
+        Long facultadEstudiante = estudiante != null
+                && estudiante.getPrograma() != null
+                && estudiante.getPrograma().getFacultad() != null
+                ? estudiante.getPrograma().getFacultad().getId()
+                : null;
+
+        if (actor.getFacultadId() == null || !actor.getFacultadId().equals(facultadEstudiante)) {
+            throw new AccesoNoAutorizadoException("No tiene acceso a practicas de otra facultad.");
+        }
     }
 
     /** Enriquece la respuesta indicando si el docente ya registró su evaluación final. */
