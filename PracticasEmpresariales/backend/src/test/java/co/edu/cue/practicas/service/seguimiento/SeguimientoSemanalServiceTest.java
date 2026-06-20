@@ -282,49 +282,6 @@ class SeguimientoSemanalServiceTest {
     }
 
     // =================================================================
-    // aprobar() — conservado para compatibilidad con registros anteriores
-    // =================================================================
-
-    @Test
-    @DisplayName("aprobar() exitoso desde PENDIENTE (registro antiguo) debe cambiar estado a APROBADO")
-    void aprobarSeguimientoExitoso() {
-        seguimientoPendiente.setEstado(EstadoSeguimiento.PENDIENTE);
-        when(seguimientoRepository.findById(SEG_ID)).thenReturn(Optional.of(seguimientoPendiente));
-        when(seguimientoRepository.save(any())).thenReturn(seguimientoPendiente);
-
-        SeguimientoSemanalResponse resultado = service.aprobar(SEG_ID, docenteDetails);
-
-        assertThat(seguimientoPendiente.getEstado()).isEqualTo(EstadoSeguimiento.APROBADO);
-        assertThat(seguimientoPendiente.getRevisadoPorId()).isEqualTo(DOCENTE_ID);
-    }
-
-    @Test
-    @DisplayName("aprobar() debe bloquear si el actor no es DOCENTE_ASESOR")
-    void aprobarSeguimientoRolNoDocenteLanzaAccesoNoAutorizado() {
-        assertThatThrownBy(() -> service.aprobar(SEG_ID, estudianteDetails))
-                .isInstanceOf(AccesoNoAutorizadoException.class);
-    }
-
-    @Test
-    @DisplayName("aprobar() debe bloquear si el docente no está asignado a esa práctica — OCL soloCalificaSusEstudiantes")
-    void aprobarSeguimientoDocenteNoAsignadoLanzaAccesoNoAutorizado() {
-        when(seguimientoRepository.findById(SEG_ID)).thenReturn(Optional.of(seguimientoPendiente));
-
-        assertThatThrownBy(() -> service.aprobar(SEG_ID, otroDocente))
-                .isInstanceOf(AccesoNoAutorizadoException.class)
-                .hasMessageContaining("docente asesor asignado");
-    }
-
-    @Test
-    @DisplayName("aprobar() debe lanzar 404 si el seguimiento no existe")
-    void aprobarSeguimientoNoEncontradoLanza404() {
-        when(seguimientoRepository.findById(99L)).thenReturn(Optional.empty());
-
-        assertThatThrownBy(() -> service.aprobar(99L, docenteDetails))
-                .isInstanceOf(RecursoNoEncontradoException.class);
-    }
-
-    // =================================================================
     // rechazar() — DOCENTE con observación obligatoria
     // =================================================================
 

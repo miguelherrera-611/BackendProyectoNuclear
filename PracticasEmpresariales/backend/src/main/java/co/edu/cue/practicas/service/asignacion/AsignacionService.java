@@ -157,6 +157,10 @@ public class AsignacionService {
                 || instancia.getEstado() == EstadoPractica.FINALIZADA)
             throw new OperacionNoPermitidaException("No se puede cancelar una práctica que ya está en curso o finalizada.");
 
+        // La práctica ya fue cancelada previamente: evita liberar el cupo dos veces
+        if (instancia.getEstado() == EstadoPractica.CANCELADA)
+            throw new OperacionNoPermitidaException("La práctica ya fue cancelada previamente.");
+
         // Cambiamos el estado a CANCELADA
         instancia.cancelar();
         instanciaRepository.save(instancia);

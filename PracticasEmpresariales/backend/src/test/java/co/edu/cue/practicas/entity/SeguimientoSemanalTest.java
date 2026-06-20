@@ -169,30 +169,4 @@ class SeguimientoSemanalTest {
         assertThat(rechazado.esEditable()).isTrue(); // RECHAZADO
     }
 
-    // =================================================================
-    // aprobar() — conservado para compatibilidad con registros anteriores
-    // =================================================================
-
-    @Test
-    @DisplayName("aprobar() desde PENDIENTE (registro antiguo) debe cambiar a APROBADO")
-    void aprobarDesdePendienteExitoso() {
-        seguimiento.setEstado(EstadoSeguimiento.PENDIENTE);
-        Long docenteId = 20L;
-        seguimiento.aprobar(docenteId);
-
-        assertThat(seguimiento.getEstado()).isEqualTo(EstadoSeguimiento.APROBADO);
-        assertThat(seguimiento.getRevisadoPorId()).isEqualTo(docenteId);
-        assertThat(seguimiento.getRevisadoEn()).isNotNull();
-    }
-
-    @Test
-    @DisplayName("aprobar() desde APROBADO debe lanzar excepción")
-    void aprobarDesdeAprobadoLanzaExcepcion() {
-        seguimiento.setEstado(EstadoSeguimiento.PENDIENTE);
-        seguimiento.aprobar(20L);
-
-        assertThatThrownBy(() -> seguimiento.aprobar(20L))
-                .isInstanceOf(OperacionNoPermitidaException.class)
-                .hasMessageContaining("PENDIENTE");
-    }
 }

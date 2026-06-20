@@ -139,23 +139,6 @@ public class SeguimientoSemanalService {
     }
 
     @Transactional
-    public SeguimientoSemanalResponse aprobar(Long seguimientoId, CustomUserDetails actor) {
-        if (actor.getRol() != Rol.DOCENTE_ASESOR)
-            throw new AccesoNoAutorizadoException("Solo el docente asesor puede aprobar seguimientos.");
-
-        SeguimientoSemanal seguimiento = buscarSeguimiento(seguimientoId);
-        verificarDocenteAsignado(seguimiento, actor.getId());
-
-        seguimiento.aprobar(actor.getId());
-        seguimientoRepository.save(seguimiento);
-
-        registrarAuditoria(actor, TipoAccion.CAMBIO_ESTADO, seguimientoId, "SeguimientoSemanal",
-                "{\"estado\":\"APROBADO\",\"semana\":" + seguimiento.getSemana() + "}");
-        notificarEstadoSeguimiento(seguimiento, "aprobado");
-        return SeguimientoSemanalResponse.desde(seguimiento);
-    }
-
-    @Transactional
     public SeguimientoSemanalResponse rechazar(Long seguimientoId, ObservacionDocenteRequest req, CustomUserDetails actor) {
         if (actor.getRol() != Rol.DOCENTE_ASESOR)
             throw new AccesoNoAutorizadoException("Solo el docente asesor puede rechazar seguimientos.");

@@ -8,6 +8,7 @@ import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.service.seguimiento.PlanPracticaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -34,7 +35,7 @@ public class PlanPracticaController {
             @RequestParam(value = "cronograma", required = false) String cronograma,
             @RequestPart(value = "documento", required = false) MultipartFile documento,
             @AuthenticationPrincipal CustomUserDetails actor) {
-        return ResponseEntity.ok(ApiResponse.ok("Plan de práctica guardado.",
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.ok("Plan de práctica guardado.",
                 service.crearOActualizarPlan(instanciaId, new CrearPlanRequest(objetivos, cronograma), documento, actor)));
     }
 

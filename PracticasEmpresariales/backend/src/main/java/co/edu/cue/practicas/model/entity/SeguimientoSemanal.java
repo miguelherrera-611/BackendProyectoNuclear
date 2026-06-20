@@ -10,7 +10,7 @@ import java.time.LocalDateTime;
 /**
  * GPE-168 / GPE-170 — Seguimiento semanal del estudiante.
  *
- * PATRON STATE: encapsula transiciones PENDIENTE → APROBADO / RECHAZADO.
+ * PATRON STATE: encapsula transiciones ENVIADO → REVISADO / RECHAZADO.
  * PATRON PROXY: semanas anteriores ya revisadas son inmutables para el estudiante.
  * PATRON DECORATOR (conceptual): entrada base + evidencias + observaciones docente.
  *
@@ -105,15 +105,6 @@ public class SeguimientoSemanal {
             throw new OperacionNoPermitidaException("Solo se puede rechazar un seguimiento en estado ENVIADO.");
         this.estado = EstadoSeguimiento.RECHAZADO;
         this.observacionesDocente = observaciones;
-        this.revisadoPorId = docenteId;
-        this.revisadoEn = LocalDateTime.now();
-    }
-
-    /** Conservado para compatibilidad con registros anteriores (PENDIENTE → APROBADO). */
-    public void aprobar(Long docenteId) {
-        if (this.estado != EstadoSeguimiento.PENDIENTE)
-            throw new OperacionNoPermitidaException("Solo se puede aprobar un seguimiento en estado PENDIENTE.");
-        this.estado = EstadoSeguimiento.APROBADO;
         this.revisadoPorId = docenteId;
         this.revisadoEn = LocalDateTime.now();
     }

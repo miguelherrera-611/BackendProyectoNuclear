@@ -117,6 +117,7 @@ public class PlanPracticaService {
         return PlanPracticaResponse.desde(plan);
     }
 
+    @Transactional(readOnly = true)
     public ResponseEntity<Resource> descargarDocumento(Long planId, CustomUserDetails actor) {
         PlanPractica plan = buscarPlan(planId);
         verificarAccesoLectura(plan.getInstanciaPractica().getId(), actor);
