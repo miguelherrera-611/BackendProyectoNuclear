@@ -69,8 +69,8 @@ public class UsuarioService {
             throw new OperacionNoPermitidaException("El correo ya esta registrado en el sistema.");
         }
 
-        if (Rol.COORDINACION_ACADEMICA.equals(request.getRol()) && request.getEtiquetaCargo() == null) {
-            throw new OperacionNoPermitidaException("La etiqueta de cargo es obligatoria para el rol Coordinacion Academica.");
+        if (Rol.COORDINADOR_PRACTICAS.equals(request.getRol()) && request.getEtiquetaCargo() == null) {
+            throw new OperacionNoPermitidaException("La etiqueta de cargo es obligatoria para el rol Coordinador de Practicas.");
         }
 
         if (Rol.COORDINACION_ACADEMICA.equals(request.getRol()) && request.getProgramaId() == null) {
@@ -109,7 +109,7 @@ public class UsuarioService {
                 .passwordHash(passwordEncoder.encode(passwordTemporal))
                 .telefono(request.getTelefono())
                 .rol(request.getRol())
-                .etiquetaCargo(request.getEtiquetaCargo())
+                .etiquetaCargo(Rol.COORDINADOR_PRACTICAS.equals(request.getRol()) ? request.getEtiquetaCargo() : null)
                 .facultad(facultad)
                 .programa(programa)
                 .activo(true)
