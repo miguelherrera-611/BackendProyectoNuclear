@@ -17,7 +17,6 @@ import co.edu.cue.practicas.repository.expediente.HojaDeVidaRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.security.annotation.RequiereRol;
-import co.edu.cue.practicas.security.annotation.SoloLectura;
 import co.edu.cue.practicas.service.mapper.EstudianteMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -71,7 +70,6 @@ public class ExpedienteService {
      * PROXY CACHÉ: almacena el expediente completo en caché para reducir
      * consultas a BD. Se invalida automáticamente cuando se sube una nueva HV.
      */
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS,
                           Rol.ADMIN_DTI, Rol.DOCENTE_ASESOR, Rol.TUTOR_EMPRESARIAL, Rol.ESTUDIANTE})
     @Transactional(readOnly = true)
@@ -135,7 +133,6 @@ public class ExpedienteService {
         return mapper.toHojaDeVidaResponse(hv);
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS,
                           Rol.ADMIN_DTI, Rol.ESTUDIANTE})
     @Transactional(readOnly = true)

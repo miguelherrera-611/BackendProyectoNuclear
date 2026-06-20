@@ -11,7 +11,6 @@ import co.edu.cue.practicas.model.enums.Rol;
 import co.edu.cue.practicas.pattern.builder.VacanteDirector;
 import co.edu.cue.practicas.repository.vacante.VacanteRepository;
 import co.edu.cue.practicas.security.annotation.RequiereRol;
-import co.edu.cue.practicas.security.annotation.SoloLectura;
 import co.edu.cue.practicas.service.empresa.EmpresaService;
 import co.edu.cue.practicas.service.mapper.Dev3Mapper;
 import co.edu.cue.practicas.service.validator.EmpresaValidator;
@@ -66,14 +65,12 @@ public class VacanteService {
 
     // ── LEER ──────────────────────────────────────────────────────────────
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public VacanteResponse obtenerPorId(Long id) {
         return mapper.toVacanteResponse(buscarOFallar(id));
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public List<VacanteResponse> listarTodas() {
@@ -81,14 +78,12 @@ public class VacanteService {
                 .map(mapper::toVacanteResponse).toList();
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public Page<VacanteResponse> listarTodas(Pageable pageable) {
         return vacanteRepository.findAll(pageable).map(mapper::toVacanteResponse);
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public List<VacanteResponse> listarPendientes() {
@@ -96,7 +91,6 @@ public class VacanteService {
                 .stream().map(mapper::toVacanteResponse).toList();
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public Page<VacanteResponse> listarPendientes(Pageable pageable) {
@@ -104,7 +98,6 @@ public class VacanteService {
                 .map(mapper::toVacanteResponse);
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION,
                           Rol.DOCENTE_ASESOR, Rol.TUTOR_EMPRESARIAL, Rol.ESTUDIANTE})
     @Transactional(readOnly = true)
@@ -113,7 +106,6 @@ public class VacanteService {
                 .stream().map(mapper::toVacanteResponse).toList();
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION,
                           Rol.DOCENTE_ASESOR, Rol.TUTOR_EMPRESARIAL, Rol.ESTUDIANTE})
     @Transactional(readOnly = true)
@@ -122,7 +114,6 @@ public class VacanteService {
                 .map(mapper::toVacanteResponse);
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public List<VacanteResponse> listarPorEmpresa(Long empresaId) {
@@ -130,7 +121,6 @@ public class VacanteService {
                 .stream().map(mapper::toVacanteResponse).toList();
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public Page<VacanteResponse> listarPorEmpresa(Long empresaId, Pageable pageable) {

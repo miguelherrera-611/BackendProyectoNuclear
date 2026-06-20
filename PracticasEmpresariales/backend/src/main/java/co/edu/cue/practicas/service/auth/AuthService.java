@@ -25,6 +25,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -66,6 +67,14 @@ public class AuthService {
     private static final int EXPIRACION_MINUTOS = 10;
 
     /**
+     * Solo para entornos de prueba (Postman/QA): expone el código 2FA en la
+     * respuesta de /auth/login para permitir automatizar el login.
+     * Debe permanecer en false en producción.
+     */
+    @Value("${app.test.expose-codigo-2fa:false}")
+    private boolean exponerCodigo2FA;
+
+    /**
      * Paso 1 del login con 2FA: valida credenciales y envía código de 6 dígitos al correo.
      * El JWT solo se entrega en el paso 2 tras verificar el código.
      *
@@ -93,6 +102,7 @@ public class AuthService {
                     .correo(usuario.getCorreo())
                     .mensaje("Se ha enviado un código de verificación a tu correo electrónico.")
                     .expiresInSeconds(EXPIRACION_MINUTOS * 60)
+                    .codigoDebug(exponerCodigo2FA ? codigo : null)
                     .build();
 
         } catch (BadCredentialsException | DisabledException e) {

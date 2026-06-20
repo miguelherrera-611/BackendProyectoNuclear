@@ -14,7 +14,6 @@ import co.edu.cue.practicas.repository.catalogo.CatalogoPracticaRepository;
 import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.programa.ProgramaRepository;
 import co.edu.cue.practicas.security.annotation.RequiereRol;
-import co.edu.cue.practicas.security.annotation.SoloLectura;
 import co.edu.cue.practicas.service.mapper.EstudianteMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -66,7 +65,6 @@ public class CatalogoPracticaService {
 
     // ── LEER ─────────────────────────────────────────────────────────────────
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
     @Transactional(readOnly = true)
     public List<CatalogoPracticaResponse> listarTodos() {
@@ -75,7 +73,6 @@ public class CatalogoPracticaService {
                 .toList();
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
     @Transactional(readOnly = true)
     public Page<CatalogoPracticaResponse> listarTodos(Pageable pageable) {
@@ -83,7 +80,6 @@ public class CatalogoPracticaService {
                 .map(mapper::toCatalogoPracticaResponse);
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
     @Transactional(readOnly = true)
     public List<CatalogoPracticaResponse> listarPorPrograma(Long programaId) {
@@ -92,7 +88,6 @@ public class CatalogoPracticaService {
                 .toList();
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
     @Transactional(readOnly = true)
     public Page<CatalogoPracticaResponse> listarPorPrograma(Long programaId, Pageable pageable) {
@@ -100,7 +95,6 @@ public class CatalogoPracticaService {
                 .map(mapper::toCatalogoPracticaResponse);
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
     @Transactional(readOnly = true)
     public List<CatalogoPracticaResponse> listarActivosPorPrograma(Long programaId) {
@@ -109,7 +103,6 @@ public class CatalogoPracticaService {
                 .toList();
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI})
     @Transactional(readOnly = true)
     public CatalogoPracticaResponse obtenerPorId(Long id) {

@@ -20,7 +20,6 @@ import co.edu.cue.practicas.repository.expediente.InstanciaPracticaRepository;
 import co.edu.cue.practicas.repository.usuario.UsuarioRepository;
 import co.edu.cue.practicas.security.CustomUserDetails;
 import co.edu.cue.practicas.security.annotation.RequiereRol;
-import co.edu.cue.practicas.security.annotation.SoloLectura;
 import co.edu.cue.practicas.service.catalogo.CatalogoPracticaService;
 import co.edu.cue.practicas.service.mapper.EstudianteMapper;
 import co.edu.cue.practicas.service.validator.EstudianteValidator;
@@ -154,7 +153,6 @@ public class EstudianteService extends PlantillaValidacionAptitud {
         return estudiantes.stream().map(UsuarioResponse::desde).toList();
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS,
             Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
@@ -181,7 +179,6 @@ public class EstudianteService extends PlantillaValidacionAptitud {
         return resultados.map(UsuarioResponse::desde);
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINACION_ACADEMICA, Rol.COORDINADOR_PRACTICAS,
             Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)

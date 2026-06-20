@@ -60,16 +60,16 @@ public class AsignacionService {
                 .orElseThrow(() -> new RecursoNoEncontradoException("Estudiante no encontrado."));
 
         if (!estudiante.isEnviadoAlProceso() || estudiante.getEstadoEstudiante() == null)
-            throw new IllegalArgumentException("El estudiante no ha sido enviado al proceso o no tiene estado definido.");
+            throw new OperacionNoPermitidaException("El estudiante no ha sido enviado al proceso o no tiene estado definido.");
 
         if (!estudiante.getEstadoEstudiante().name().equals("APTO"))
-            throw new IllegalArgumentException("Solo estudiantes en estado APTO pueden asignarse.");
+            throw new OperacionNoPermitidaException("Solo estudiantes en estado APTO pueden asignarse.");
 
         Vacante vacante = vacanteRepository.findById(req.getVacanteId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Vacante no encontrada."));
 
         if (!vacante.puedeAceptarPracticante())
-            throw new IllegalArgumentException("La vacante no acepta más practicantes.");
+            throw new OperacionNoPermitidaException("La vacante no acepta más practicantes.");
 
         ExpedienteEstudiante expediente = expedienteRepository.findByEstudiante_Id(estudiante.getId())
                 .orElseThrow(() -> new RecursoNoEncontradoException("Expediente del estudiante no encontrado."));

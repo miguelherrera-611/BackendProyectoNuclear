@@ -11,7 +11,6 @@ import co.edu.cue.practicas.pattern.builder.EmpresaBuilder;
 import co.edu.cue.practicas.pattern.prototype.EmpresaPlantilla;
 import co.edu.cue.practicas.repository.empresa.EmpresaRepository;
 import co.edu.cue.practicas.security.annotation.RequiereRol;
-import co.edu.cue.practicas.security.annotation.SoloLectura;
 import co.edu.cue.practicas.service.mapper.Dev3Mapper;
 import co.edu.cue.practicas.service.validator.EmpresaValidator;
 import lombok.RequiredArgsConstructor;
@@ -104,14 +103,12 @@ public class EmpresaService {
 
     // ── LEER ──────────────────────────────────────────────────────────────
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public EmpresaResponse obtenerPorId(Long id) {
         return mapper.toEmpresaResponse(buscarOFallar(id));
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public List<EmpresaResponse> listarTodas() {
@@ -119,14 +116,12 @@ public class EmpresaService {
                 .map(mapper::toEmpresaResponse).toList();
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public Page<EmpresaResponse> listarTodas(Pageable pageable) {
         return empresaRepository.findAll(pageable).map(mapper::toEmpresaResponse);
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public List<EmpresaResponse> listarActivas() {
@@ -134,7 +129,6 @@ public class EmpresaService {
                 .stream().map(mapper::toEmpresaResponse).toList();
     }
 
-    @SoloLectura
     @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS, Rol.ADMIN_DTI, Rol.DIRECCION})
     @Transactional(readOnly = true)
     public Page<EmpresaResponse> listarActivas(Pageable pageable) {
