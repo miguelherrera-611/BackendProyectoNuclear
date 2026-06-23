@@ -20,6 +20,8 @@ export default function FacultadesPage() {
   const [saving, setSaving]           = useState(false)
   const [modalCrear, setModalCrear]   = useState(false)
   const [form, setForm]               = useState({ nombre: '', descripcion: '' })
+  const [modalEditar, setModalEditar] = useState<FacultadResponse | null>(null)
+  const [formEditar, setFormEditar]   = useState({ nombre: '', descripcion: '' })
   const [errorModal, setErrorModal]   = useState('')
   const [confirm, setConfirm] = useState<{ open: boolean; id: number; nombre: string; accion: 'activar' | 'desactivar' }>({
     open: false, id: 0, nombre: '', accion: 'desactivar',
@@ -70,6 +72,31 @@ export default function FacultadesPage() {
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
       setErrorModal(msg ?? 'Error al crear la facultad.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const abrirEditar = (f: FacultadResponse) => {
+    setFormEditar({ nombre: f.nombre, descripcion: f.descripcion ?? '' })
+    setErrorModal('')
+    setModalEditar(f)
+  }
+
+  const handleEditar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!modalEditar) return
+    setErrorModal('')
+    setSaving(true)
+    try {
+      await api.put(`/facultades/${modalEditar.id}`, formEditar)
+      setModalEditar(null)
+      if (panel?.id === modalEditar.id) setPanel(null)
+      cargar()
+      showToast('Facultad actualizada correctamente.')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
+      setErrorModal(msg ?? 'Error al editar la facultad.')
     } finally {
       setSaving(false)
     }
@@ -159,6 +186,13 @@ export default function FacultadesPage() {
               <p className="text-sm text-gray-600">
                 <span className="font-semibold text-cue-primary">{f.numeroProgramas}</span> programas
               </p>
+              <div className="flex items-center gap-3">
+              <button
+                onClick={e => { e.stopPropagation(); abrirEditar(f) }}
+                className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
+              >
+                Editar
+              </button>
               {f.activa ? (
                 <button
                   onClick={e => {
@@ -184,6 +218,7 @@ export default function FacultadesPage() {
                   Activar
                 </button>
               )}
+              </div>
             </div>
           </div>
         ))}
@@ -281,6 +316,40 @@ export default function FacultadesPage() {
               </Button>
               <Button className="flex-1" type="submit" loading={saving}>
                 Crear
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
+      {/* Modal: Editar */}
+      {modalEditar && (
+        <Modal title="Editar Facultad" onClose={() => setModalEditar(null)}>
+          {errorModal && (
+            <div className="bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{errorModal}</div>
+          )}
+          <form onSubmit={handleEditar} className="space-y-4">
+            <Input
+              label="Nombre"
+              required
+              value={formEditar.nombre}
+              onChange={e => setFormEditar({ ...formEditar, nombre: e.target.value })}
+            />
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+              <textarea
+                className="input-field"
+                rows={3}
+                value={formEditar.descripcion}
+                onChange={e => setFormEditar({ ...formEditar, descripcion: e.target.value })}
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="secondary" className="flex-1" type="button" onClick={() => setModalEditar(null)}>
+                Cancelar
+              </Button>
+              <Button className="flex-1" type="submit" loading={saving}>
+                Guardar Cambios
               </Button>
             </div>
           </form>

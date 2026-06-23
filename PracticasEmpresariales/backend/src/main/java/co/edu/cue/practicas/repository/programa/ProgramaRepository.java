@@ -16,4 +16,6 @@ public interface ProgramaRepository extends JpaRepository<Programa, Long> {
     List<Programa> findByFacultad_IdAndActivoTrue(Long facultadId);
 
     boolean existsByNombreIgnoreCaseAndFacultad_Id(String nombre, Long facultadId);
+
+    boolean existsByNombreIgnoreCaseAndFacultad_IdAndIdNot(String nombre, Long facultadId, Long id);
 }

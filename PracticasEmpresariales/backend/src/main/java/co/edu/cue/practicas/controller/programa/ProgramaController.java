@@ -1,6 +1,7 @@
 package co.edu.cue.practicas.controller.programa;
 
 import co.edu.cue.practicas.dto.request.CrearProgramaRequest;
+import co.edu.cue.practicas.dto.request.EditarProgramaRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.ProgramaResponse;
 import co.edu.cue.practicas.security.CustomUserDetails;
@@ -52,6 +53,16 @@ public class ProgramaController {
     @GetMapping("/{id}")
     public ResponseEntity<ApiResponse<ProgramaResponse>> obtener(@PathVariable Long id) {
         return ResponseEntity.ok(ApiResponse.ok(programaService.obtenerPorId(id)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<ProgramaResponse>> editar(
+            @PathVariable Long id,
+            @Valid @RequestBody EditarProgramaRequest request,
+            @AuthenticationPrincipal CustomUserDetails userDetails) {
+
+        return ResponseEntity.ok(ApiResponse.ok("Programa actualizado",
+                programaService.editarPrograma(id, request, userDetails)));
     }
 
     @PatchMapping("/{id}/desactivar")

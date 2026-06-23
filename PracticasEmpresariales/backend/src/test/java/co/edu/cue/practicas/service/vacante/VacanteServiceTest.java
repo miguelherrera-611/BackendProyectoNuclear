@@ -106,6 +106,59 @@ class VacanteServiceTest {
     }
 
     // ═══════════════════════════════════════════════════════════════════
+    // editarVacante
+    // ═══════════════════════════════════════════════════════════════════
+
+    @Test
+    @DisplayName("editarVacante exitoso debe actualizar area y cuposTotales")
+    void editarVacanteExitoso() {
+        co.edu.cue.practicas.dto.request.EditarVacanteRequest req =
+                new co.edu.cue.practicas.dto.request.EditarVacanteRequest("QA", 5);
+
+        when(vacanteRepository.findById(1L)).thenReturn(Optional.of(vacanteDisponible));
+        when(vacanteRepository.save(any())).thenReturn(vacanteDisponible);
+        when(mapper.toVacanteResponse(any())).thenReturn(vacanteResponseMock);
+
+        vacanteService.editarVacante(1L, req);
+
+        assertThat(vacanteDisponible.getArea()).isEqualTo("QA");
+        assertThat(vacanteDisponible.getCuposTotales()).isEqualTo(5);
+        verify(vacanteRepository).save(vacanteDisponible);
+    }
+
+    @Test
+    @DisplayName("editarVacante con cuposTotales menores a los ocupados debe lanzar excepción")
+    void editarVacanteCuposMenoresAOcupadosLanzaExcepcion() {
+        vacanteDisponible.ocuparCupo();
+        vacanteDisponible.ocuparCupo(); // 2 cupos ocupados de 2 totales
+
+        co.edu.cue.practicas.dto.request.EditarVacanteRequest req =
+                new co.edu.cue.practicas.dto.request.EditarVacanteRequest("QA", 1);
+
+        when(vacanteRepository.findById(1L)).thenReturn(Optional.of(vacanteDisponible));
+
+        assertThatThrownBy(() -> vacanteService.editarVacante(1L, req))
+                .isInstanceOf(OperacionNoPermitidaException.class)
+                .hasMessageContaining("ocupados");
+
+        verify(vacanteRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("editarVacante con id inexistente debe lanzar 404")
+    void editarVacanteNoExisteLanza404() {
+        co.edu.cue.practicas.dto.request.EditarVacanteRequest req =
+                new co.edu.cue.practicas.dto.request.EditarVacanteRequest("QA", 1);
+
+        when(vacanteRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> vacanteService.editarVacante(99L, req))
+                .isInstanceOf(RecursoNoEncontradoException.class);
+
+        verify(vacanteRepository, never()).save(any());
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
     // Lecturas
     // ═══════════════════════════════════════════════════════════════════
 

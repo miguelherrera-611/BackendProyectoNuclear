@@ -13,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface EmpresaRepository extends JpaRepository<Empresa, Long> {
     boolean existsByNit(String nit);
+    boolean existsByNitAndIdNot(String nit, Long id);
     Optional<Empresa> findByNit(String nit);
     List<Empresa> findByEstado(EstadoEmpresa estado);
     Page<Empresa> findByEstado(EstadoEmpresa estado, Pageable pageable);

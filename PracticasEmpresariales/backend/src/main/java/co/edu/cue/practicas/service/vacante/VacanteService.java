@@ -1,6 +1,8 @@
 package co.edu.cue.practicas.service.vacante;
 
 import co.edu.cue.practicas.dto.request.CrearVacanteRequest;
+import co.edu.cue.practicas.dto.request.EditarVacanteRequest;
+import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.dto.request.RechazarRequest;
 import co.edu.cue.practicas.dto.response.VacanteResponse;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
@@ -60,6 +62,25 @@ public class VacanteService {
 
         vacanteRepository.save(vacante);
         log.info("[GPE-152] Vacante creada → empresa: {}, área: {}", empresa.getRazonSocial(), req.area());
+        return mapper.toVacanteResponse(vacante);
+    }
+
+    // ── EDITAR ────────────────────────────────────────────────────────────
+
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
+    public VacanteResponse editarVacante(Long id, EditarVacanteRequest req) {
+        Vacante vacante = buscarOFallar(id);
+
+        if (req.cuposTotales() < vacante.getCuposOcupados()) {
+            throw new OperacionNoPermitidaException(
+                    "Los cupos totales no pueden ser menores a los cupos ya ocupados (" +
+                    vacante.getCuposOcupados() + ").");
+        }
+
+        vacante.setArea(req.area());
+        vacante.setCuposTotales(req.cuposTotales());
+        vacanteRepository.save(vacante);
+        log.info("[GPE-152] Vacante {} editada", id);
         return mapper.toVacanteResponse(vacante);
     }
 

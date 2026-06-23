@@ -44,6 +44,8 @@ export default function VacantesPage() {
   const [saving, setSaving]         = useState(false)
   const [modalCrear, setModalCrear] = useState(false)
   const [form, setForm]             = useState(FORM_INICIAL)
+  const [modalEditar, setModalEditar] = useState<VacanteResponse | null>(null)
+  const [formEditar, setFormEditar]   = useState({ area: '', cuposTotales: 1 })
   const [errorModal, setErrorModal] = useState('')
   const [confirm, setConfirm] = useState<{ open: boolean; id: number; accion: 'activar' | 'desactivar' }>({
     open: false, id: 0, accion: 'activar',
@@ -88,6 +90,29 @@ export default function VacantesPage() {
       showToast('Vacante creada y activada correctamente.')
     } catch (err: unknown) {
       setErrorModal((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al crear la vacante.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const abrirEditar = (v: VacanteResponse) => {
+    setFormEditar({ area: v.area, cuposTotales: v.cuposTotales })
+    setErrorModal('')
+    setModalEditar(v)
+  }
+
+  const handleEditar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!modalEditar) return
+    setErrorModal('')
+    setSaving(true)
+    try {
+      await vacanteService.editar(modalEditar.id, formEditar)
+      setModalEditar(null)
+      cargar()
+      showToast('Vacante actualizada correctamente.')
+    } catch (err: unknown) {
+      setErrorModal((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al editar la vacante.')
     } finally {
       setSaving(false)
     }
@@ -154,23 +179,31 @@ export default function VacantesPage() {
               </span>
             </td>
             <td className="px-4 py-3">
-              {esActiva(v) ? (
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setConfirm({ open: true, id: v.id, accion: 'desactivar' })}
-                  className="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  onClick={() => abrirEditar(v)}
+                  className="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-100 transition-colors font-medium"
                 >
-                  Desactivar
+                  Editar
                 </button>
-              ) : (
-                <button
-                  onClick={() => setConfirm({ open: true, id: v.id, accion: 'activar' })}
-                  className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition-colors font-medium"
-                  disabled={v.cuposOcupados >= v.cuposTotales}
-                  title={v.cuposOcupados >= v.cuposTotales ? 'Todos los cupos están ocupados' : 'Activar vacante'}
-                >
-                  Activar
-                </button>
-              )}
+                {esActiva(v) ? (
+                  <button
+                    onClick={() => setConfirm({ open: true, id: v.id, accion: 'desactivar' })}
+                    className="text-xs bg-gray-100 text-gray-700 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  >
+                    Desactivar
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setConfirm({ open: true, id: v.id, accion: 'activar' })}
+                    className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition-colors font-medium"
+                    disabled={v.cuposOcupados >= v.cuposTotales}
+                    title={v.cuposOcupados >= v.cuposTotales ? 'Todos los cupos están ocupados' : 'Activar vacante'}
+                  >
+                    Activar
+                  </button>
+                )}
+              </div>
             </td>
           </tr>
         ))}
@@ -183,6 +216,41 @@ export default function VacantesPage() {
         onPageChange={setPagina}
         disabled={loading}
       />
+
+      {modalEditar && (
+        <Modal title="Editar Vacante" subtitle={modalEditar.razonSocialEmpresa} onClose={() => { setModalEditar(null); setErrorModal('') }}>
+          {errorModal && <div className="bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{errorModal}</div>}
+          <form onSubmit={handleEditar} className="space-y-4">
+            <Input
+              label="Área"
+              required
+              placeholder="Ej. Sistemas, Contabilidad"
+              value={formEditar.area}
+              onChange={e => setFormEditar({ ...formEditar, area: e.target.value })}
+            />
+            <Input
+              label="Cupos Totales"
+              type="number"
+              min={modalEditar.cuposOcupados || 1}
+              required
+              value={formEditar.cuposTotales}
+              onChange={e => setFormEditar({ ...formEditar, cuposTotales: Number(e.target.value) })}
+            />
+            {modalEditar.cuposOcupados > 0 && (
+              <p className="text-xs text-gray-400">
+                No puede ser menor a los cupos ya ocupados ({modalEditar.cuposOcupados}).
+              </p>
+            )}
+            <div className="flex gap-3 pt-2">
+              <Button variant="secondary" className="flex-1" type="button"
+                onClick={() => { setModalEditar(null); setErrorModal('') }}>
+                Cancelar
+              </Button>
+              <Button className="flex-1" type="submit" loading={saving}>Guardar Cambios</Button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       {modalCrear && (
         <Modal title="Nueva Vacante" onClose={() => { setModalCrear(false); setErrorModal('') }}>

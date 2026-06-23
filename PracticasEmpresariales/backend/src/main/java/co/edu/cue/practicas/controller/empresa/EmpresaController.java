@@ -1,6 +1,7 @@
 package co.edu.cue.practicas.controller.empresa;
 
 import co.edu.cue.practicas.dto.request.CrearEmpresaRequest;
+import co.edu.cue.practicas.dto.request.EditarEmpresaRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.EmpresaResponse;
 import co.edu.cue.practicas.service.empresa.EmpresaService;
@@ -41,6 +42,13 @@ public class EmpresaController {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Empresa clonada.",
                         empresaService.crearDesdeEmpresaExistente(id, razonSocial, nit)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<EmpresaResponse>> editar(
+            @PathVariable Long id,
+            @Valid @RequestBody EditarEmpresaRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Empresa actualizada.", empresaService.editarEmpresa(id, req)));
     }
 
     @GetMapping("/{id}")

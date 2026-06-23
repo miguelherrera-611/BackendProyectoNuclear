@@ -39,6 +39,11 @@ export const empresaService = {
     return res.data.datos!
   },
 
+  async editar(id: number, data: CrearEmpresaRequest): Promise<EmpresaResponse> {
+    const res = await api.put<ApiResponse<EmpresaResponse>>(`/api/v1/empresas/${id}`, data)
+    return res.data.datos!
+  },
+
   async clonar(id: number, razonSocial: string, nit: string): Promise<EmpresaResponse> {
     const res = await api.post<ApiResponse<EmpresaResponse>>(
       `/api/v1/empresas/${id}/clonar?razonSocial=${encodeURIComponent(razonSocial)}&nit=${encodeURIComponent(nit)}`

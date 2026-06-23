@@ -25,6 +25,10 @@ export default function ProgramasPage() {
     nombre: '', descripcion: '', facultadId: '',
     numeroTotalPracticas: 1, promedioMinimoGeneral: 3.0,
   })
+  const [modalEditar, setModalEditar] = useState<ProgramaResponse | null>(null)
+  const [formEditar, setFormEditar] = useState({
+    nombre: '', descripcion: '', numeroTotalPracticas: 1, promedioMinimoGeneral: 3.0,
+  })
   const [errorModal, setErrorModal] = useState('')
   const [confirm, setConfirm] = useState<{ open: boolean; id: number; nombre: string; accion: 'activar' | 'desactivar' }>({
     open: false, id: 0, nombre: '', accion: 'desactivar',
@@ -77,6 +81,35 @@ export default function ProgramasPage() {
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
       setErrorModal(msg ?? 'Error al crear el programa.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const abrirEditar = (p: ProgramaResponse) => {
+    setFormEditar({
+      nombre: p.nombre,
+      descripcion: p.descripcion ?? '',
+      numeroTotalPracticas: p.numeroTotalPracticas,
+      promedioMinimoGeneral: p.promedioMinimoGeneral,
+    })
+    setErrorModal('')
+    setModalEditar(p)
+  }
+
+  const handleEditar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!modalEditar) return
+    setErrorModal('')
+    setSaving(true)
+    try {
+      await api.put(`/programas/${modalEditar.id}`, formEditar)
+      setModalEditar(null)
+      cargar()
+      showToast('Programa actualizado correctamente.')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
+      setErrorModal(msg ?? 'Error al editar el programa.')
     } finally {
       setSaving(false)
     }
@@ -146,21 +179,29 @@ export default function ProgramasPage() {
               </span>
             </td>
             <td className="px-4 py-3 text-center">
-              {p.activo ? (
+              <div className="flex items-center justify-center gap-3">
                 <button
-                  onClick={() => setConfirm({ open: true, id: p.id, nombre: p.nombre, accion: 'desactivar' })}
-                  className="text-xs text-red-500 hover:text-red-700 transition-colors"
+                  onClick={() => abrirEditar(p)}
+                  className="text-xs text-blue-600 hover:text-blue-800 transition-colors"
                 >
-                  Desactivar
+                  Editar
                 </button>
-              ) : (
-                <button
-                  onClick={() => setConfirm({ open: true, id: p.id, nombre: p.nombre, accion: 'activar' })}
-                  className="text-xs text-green-600 hover:text-green-800 transition-colors"
-                >
-                  Activar
-                </button>
-              )}
+                {p.activo ? (
+                  <button
+                    onClick={() => setConfirm({ open: true, id: p.id, nombre: p.nombre, accion: 'desactivar' })}
+                    className="text-xs text-red-500 hover:text-red-700 transition-colors"
+                  >
+                    Desactivar
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setConfirm({ open: true, id: p.id, nombre: p.nombre, accion: 'activar' })}
+                    className="text-xs text-green-600 hover:text-green-800 transition-colors"
+                  >
+                    Activar
+                  </button>
+                )}
+              </div>
             </td>
           </tr>
         ))}
@@ -186,6 +227,53 @@ export default function ProgramasPage() {
         onConfirm={handleConfirmar}
         onCancel={() => setConfirm({ open: false, id: 0, nombre: '', accion: 'desactivar' })}
       />
+
+      {/* Modal: Editar */}
+      {modalEditar && (
+        <Modal title="Editar Programa" size="lg" onClose={() => setModalEditar(null)}>
+          {errorModal && (
+            <div className="bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{errorModal}</div>
+          )}
+          <form onSubmit={handleEditar} className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="col-span-2">
+                <Input label="Nombre" required value={formEditar.nombre}
+                  onChange={e => setFormEditar({ ...formEditar, nombre: e.target.value })} />
+              </div>
+              <div className="col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                <textarea className="input-field" rows={2} value={formEditar.descripcion}
+                  onChange={e => setFormEditar({ ...formEditar, descripcion: e.target.value })} />
+              </div>
+              <Input
+                label="N° de Prácticas"
+                type="number"
+                min={1}
+                required
+                value={formEditar.numeroTotalPracticas}
+                onChange={e => setFormEditar({ ...formEditar, numeroTotalPracticas: Number(e.target.value) })}
+              />
+              <Input
+                label="Promedio Mínimo"
+                type="number"
+                step="0.1"
+                min={0}
+                max={5}
+                value={formEditar.promedioMinimoGeneral}
+                onChange={e => setFormEditar({ ...formEditar, promedioMinimoGeneral: Number(e.target.value) })}
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button variant="secondary" className="flex-1" type="button" onClick={() => setModalEditar(null)}>
+                Cancelar
+              </Button>
+              <Button className="flex-1" type="submit" loading={saving}>
+                Guardar Cambios
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       {/* Modal: Crear */}
       {modalCrear && (

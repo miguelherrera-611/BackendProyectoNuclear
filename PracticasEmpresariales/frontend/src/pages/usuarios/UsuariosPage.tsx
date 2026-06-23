@@ -38,6 +38,9 @@ export default function UsuariosPage() {
     identificacion: '', semestre: '', contactoEmergencia: '',
   })
   const [errorModal, setErrorModal] = useState('')
+  const [modalEditar, setModalEditar] = useState<UsuarioResponse | null>(null)
+  const [formEditar, setFormEditar] = useState({ nombre: '', telefono: '' })
+  const [errorEditar, setErrorEditar] = useState('')
 
   const cargar = () => {
     setLoading(true)
@@ -116,6 +119,30 @@ export default function UsuariosPage() {
     }
   }
 
+  const abrirEditar = (u: UsuarioResponse) => {
+    setFormEditar({ nombre: u.nombre, telefono: u.telefono ?? '' })
+    setErrorEditar('')
+    setModalEditar(u)
+  }
+
+  const handleEditar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!modalEditar) return
+    setErrorEditar('')
+    setSaving(true)
+    try {
+      await usuarioService.editar(modalEditar.id, formEditar)
+      setModalEditar(null)
+      cargar()
+      showToast('Usuario actualizado correctamente.')
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje
+      setErrorEditar(msg ?? 'Error al editar el usuario.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   const handleToggle = async (u: UsuarioResponse) => {
     try {
       if (u.activo) await usuarioService.desactivar(u.id)
@@ -181,12 +208,18 @@ export default function UsuariosPage() {
             <td className="px-4 py-3">{estadoBadge(u.activo)}</td>
             <td className="px-4 py-3">{accesoBadge(u.estadoCuenta)}</td>
             <td className="px-4 py-3">
-              <button onClick={() => handleToggle(u)}
-                className={`text-xs px-3 py-1 rounded-full border transition-colors ${
-                  u.activo ? 'border-red-300 text-red-600 hover:bg-red-50' : 'border-green-300 text-green-600 hover:bg-green-50'
-                }`}>
-                {u.activo ? 'Desactivar' : 'Activar'}
-              </button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => abrirEditar(u)}
+                  className="text-xs px-3 py-1 rounded-full border border-blue-300 text-blue-600 hover:bg-blue-50 transition-colors">
+                  Editar
+                </button>
+                <button onClick={() => handleToggle(u)}
+                  className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                    u.activo ? 'border-red-300 text-red-600 hover:bg-red-50' : 'border-green-300 text-green-600 hover:bg-green-50'
+                  }`}>
+                  {u.activo ? 'Desactivar' : 'Activar'}
+                </button>
+              </div>
             </td>
           </tr>
         ))}
@@ -199,6 +232,22 @@ export default function UsuariosPage() {
         onPageChange={setPagina}
         disabled={loading}
       />
+
+      {modalEditar && (
+        <Modal title="Editar usuario" subtitle={modalEditar.correo} onClose={() => setModalEditar(null)}>
+          {errorEditar && <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{errorEditar}</div>}
+          <form onSubmit={handleEditar} className="space-y-4">
+            <Input label="Nombre completo" required value={formEditar.nombre}
+              onChange={e => setFormEditar({ ...formEditar, nombre: e.target.value })} />
+            <Input label="Teléfono" value={formEditar.telefono}
+              onChange={e => setFormEditar({ ...formEditar, telefono: e.target.value })} />
+            <div className="flex gap-3 pt-2">
+              <Button variant="secondary" className="flex-1" type="button" onClick={() => setModalEditar(null)}>Cancelar</Button>
+              <Button className="flex-1" type="submit" loading={saving}>Guardar Cambios</Button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       {modalAbierto && (
         <Modal title="Crear nuevo usuario" subtitle="La contraseña temporal se enviará al correo." size="lg"

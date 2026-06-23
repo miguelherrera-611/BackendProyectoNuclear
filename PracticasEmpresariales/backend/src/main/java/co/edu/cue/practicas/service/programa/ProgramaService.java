@@ -4,6 +4,7 @@ import co.edu.cue.practicas.audit.ModuloAuditoria;
 import co.edu.cue.practicas.audit.singleton.AuditoriaLogger;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import co.edu.cue.practicas.dto.request.CrearProgramaRequest;
+import co.edu.cue.practicas.dto.request.EditarProgramaRequest;
 import co.edu.cue.practicas.dto.response.ProgramaResponse;
 import co.edu.cue.practicas.exception.OperacionNoPermitidaException;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
@@ -109,6 +110,41 @@ public class ProgramaService {
                 .valoresNuevos(toJson(java.util.Map.of(
                         "nombre", programa.getNombre(),
                         "facultad", facultad.getNombre())))
+                .exitoso(true));
+
+        return ProgramaResponse.desde(programa);
+    }
+
+    /**
+     * Edita los datos básicos de un programa académico ya existente.
+     * No permite reasignar la facultad ni modificar los requisitos por práctica:
+     * esos cambios tienen reglas propias y se manejan en flujos separados.
+     *
+     * @param id        ID del programa a editar
+     * @param request   nuevos datos básicos del programa
+     * @param editor    usuario DTI autenticado que realiza la acción
+     */
+    @RequiereRol(roles = {Rol.ADMIN_DTI})
+    @Transactional
+    public ProgramaResponse editarPrograma(Long id, EditarProgramaRequest request, CustomUserDetails editor) {
+        Programa programa = buscarPorId(id);
+
+        if (programaRepository.existsByNombreIgnoreCaseAndFacultad_IdAndIdNot(
+                request.getNombre(), programa.getFacultad().getId(), id)) {
+            throw new OperacionNoPermitidaException("Ya existe un programa con ese nombre en la facultad.");
+        }
+
+        programa.setNombre(request.getNombre());
+        programa.setDescripcion(request.getDescripcion());
+        programa.setNumeroTotalPracticas(request.getNumeroTotalPracticas());
+        programa.setPromedioMinimoGeneral(request.getPromedioMinimoGeneral());
+        programaRepository.save(programa);
+
+        auditoriaLogger.registrar(iniciarAuditoria(editor)
+                .modulo(ModuloAuditoria.PROGRAMAS)
+                .tipoAccion(TipoAccion.EDITAR)
+                .registroAfectadoId(id)
+                .registroAfectadoTipo("Programa")
                 .exitoso(true));
 
         return ProgramaResponse.desde(programa);

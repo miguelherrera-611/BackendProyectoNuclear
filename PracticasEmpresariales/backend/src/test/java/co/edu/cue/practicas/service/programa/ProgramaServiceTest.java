@@ -104,6 +104,70 @@ class ProgramaServiceTest {
         verify(programaRepository, never()).save(any());
     }
 
+    // ── editarPrograma ────────────────────────────────────────────────────
+
+    @Test
+    @DisplayName("editarPrograma exitoso debe persistir los nuevos datos")
+    void editarProgramaExitoso() {
+        Programa programaExistente = Programa.builder()
+                .id(1L).nombre("Nombre Antiguo").facultad(facultadActiva)
+                .numeroTotalPracticas(1).promedioMinimoGeneral(3.0).build();
+
+        co.edu.cue.practicas.dto.request.EditarProgramaRequest req =
+                new co.edu.cue.practicas.dto.request.EditarProgramaRequest();
+        req.setNombre("Nombre Actualizado");
+        req.setDescripcion("Nueva descripción");
+        req.setNumeroTotalPracticas(2);
+        req.setPromedioMinimoGeneral(3.5);
+
+        when(programaRepository.findById(1L)).thenReturn(Optional.of(programaExistente));
+        when(programaRepository.existsByNombreIgnoreCaseAndFacultad_IdAndIdNot("Nombre Actualizado", 10L, 1L))
+                .thenReturn(false);
+        when(programaRepository.save(any())).thenReturn(programaExistente);
+
+        ProgramaResponse resultado = service.editarPrograma(1L, req, dti);
+
+        assertThat(resultado.getNombre()).isEqualTo("Nombre Actualizado");
+        assertThat(programaExistente.getNumeroTotalPracticas()).isEqualTo(2);
+        verify(programaRepository).save(programaExistente);
+    }
+
+    @Test
+    @DisplayName("editarPrograma con nombre duplicado en la misma facultad debe lanzar excepcion")
+    void editarProgramaNombreDuplicadoLanzaExcepcion() {
+        Programa programaExistente = Programa.builder()
+                .id(1L).nombre("Nombre Antiguo").facultad(facultadActiva).build();
+
+        co.edu.cue.practicas.dto.request.EditarProgramaRequest req =
+                new co.edu.cue.practicas.dto.request.EditarProgramaRequest();
+        req.setNombre("Ya Existe");
+
+        when(programaRepository.findById(1L)).thenReturn(Optional.of(programaExistente));
+        when(programaRepository.existsByNombreIgnoreCaseAndFacultad_IdAndIdNot("Ya Existe", 10L, 1L))
+                .thenReturn(true);
+
+        assertThatThrownBy(() -> service.editarPrograma(1L, req, dti))
+                .isInstanceOf(OperacionNoPermitidaException.class)
+                .hasMessageContaining("Ya existe");
+
+        verify(programaRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("editarPrograma con id inexistente debe lanzar 404")
+    void editarProgramaNoExisteLanza404() {
+        co.edu.cue.practicas.dto.request.EditarProgramaRequest req =
+                new co.edu.cue.practicas.dto.request.EditarProgramaRequest();
+        req.setNombre("Cualquiera");
+
+        when(programaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.editarPrograma(99L, req, dti))
+                .isInstanceOf(RecursoNoEncontradoException.class);
+
+        verify(programaRepository, never()).save(any());
+    }
+
     // ── activarPrograma / desactivarPrograma ─────────────────────────────
 
     @Test

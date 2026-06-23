@@ -31,6 +31,8 @@ export default function EmpresasPage() {
   const [saving, setSaving]         = useState(false)
   const [modalCrear, setModalCrear] = useState(false)
   const [form, setForm]             = useState(FORM_INICIAL)
+  const [modalEditar, setModalEditar] = useState<EmpresaResponse | null>(null)
+  const [formEditar, setFormEditar]   = useState(FORM_INICIAL)
   const [errorModal, setErrorModal] = useState('')
   const [confirm, setConfirm] = useState<{
     open: boolean; id: number; razon: string; accion: 'activar' | 'inactivar'
@@ -77,6 +79,42 @@ export default function EmpresasPage() {
       showToast('Empresa creada correctamente. Estado inicial: Inactiva.')
     } catch (err: unknown) {
       setErrorModal((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al crear la empresa.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const abrirEditar = (e: EmpresaResponse) => {
+    setFormEditar({
+      razonSocial: e.razonSocial,
+      nit: e.nit,
+      sector: e.sector ?? '',
+      direccion: e.direccion ?? '',
+      municipio: e.municipio ?? '',
+      telefono: e.telefono ?? '',
+      nombreContacto: e.nombreContacto,
+      correo: e.correo ?? '',
+      areas: e.areasDisponibles?.join(', ') ?? '',
+    })
+    setErrorModal('')
+    setModalEditar(e)
+  }
+
+  const handleEditar = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!modalEditar) return
+    setErrorModal('')
+    setSaving(true)
+    try {
+      await empresaService.editar(modalEditar.id, {
+        ...formEditar,
+        areasDisponibles: formEditar.areas.split(',').map(a => a.trim()).filter(Boolean),
+      })
+      setModalEditar(null)
+      cargar()
+      showToast('Empresa actualizada correctamente.')
+    } catch (err: unknown) {
+      setErrorModal((err as { response?: { data?: { mensaje?: string } } })?.response?.data?.mensaje ?? 'Error al editar la empresa.')
     } finally {
       setSaving(false)
     }
@@ -144,21 +182,29 @@ export default function EmpresasPage() {
               </span>
             </td>
             <td className="px-4 py-3">
-              {e.estado === 'INACTIVA' ? (
+              <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setConfirm({ open: true, id: e.id, razon: e.razonSocial, accion: 'activar' })}
-                  className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition-colors font-medium"
+                  onClick={() => abrirEditar(e)}
+                  className="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-100 transition-colors font-medium"
                 >
-                  Activar
+                  Editar
                 </button>
-              ) : (
-                <button
-                  onClick={() => setConfirm({ open: true, id: e.id, razon: e.razonSocial, accion: 'inactivar' })}
-                  className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                >
-                  Inactivar
-                </button>
-              )}
+                {e.estado === 'INACTIVA' ? (
+                  <button
+                    onClick={() => setConfirm({ open: true, id: e.id, razon: e.razonSocial, accion: 'activar' })}
+                    className="text-xs bg-green-100 text-green-700 px-3 py-1 rounded-lg hover:bg-green-200 transition-colors font-medium"
+                  >
+                    Activar
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setConfirm({ open: true, id: e.id, razon: e.razonSocial, accion: 'inactivar' })}
+                    className="text-xs bg-gray-100 text-gray-600 px-3 py-1 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                  >
+                    Inactivar
+                  </button>
+                )}
+              </div>
             </td>
           </tr>
         ))}
@@ -171,6 +217,32 @@ export default function EmpresasPage() {
         onPageChange={setPagina}
         disabled={loading}
       />
+
+      {modalEditar && (
+        <Modal title="Editar Empresa" size="lg" onClose={() => { setModalEditar(null); setErrorModal('') }}>
+          {errorModal && <div className="bg-red-50 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">{errorModal}</div>}
+          <form onSubmit={handleEditar} className="space-y-3">
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Razón Social" required value={formEditar.razonSocial} onChange={e => setFormEditar({ ...formEditar, razonSocial: e.target.value })} />
+              <Input label="NIT" required value={formEditar.nit} onChange={e => setFormEditar({ ...formEditar, nit: e.target.value })} />
+              <Input label="Sector" value={formEditar.sector} onChange={e => setFormEditar({ ...formEditar, sector: e.target.value })} />
+              <Input label="Municipio" value={formEditar.municipio} onChange={e => setFormEditar({ ...formEditar, municipio: e.target.value })} />
+            </div>
+            <Input label="Dirección" value={formEditar.direccion} onChange={e => setFormEditar({ ...formEditar, direccion: e.target.value })} />
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="Nombre del Contacto" required value={formEditar.nombreContacto} onChange={e => setFormEditar({ ...formEditar, nombreContacto: e.target.value })} />
+              <Input label="Correo" type="email" value={formEditar.correo} onChange={e => setFormEditar({ ...formEditar, correo: e.target.value })} />
+            </div>
+            <Input label="Teléfono" value={formEditar.telefono} onChange={e => setFormEditar({ ...formEditar, telefono: e.target.value })} />
+            <Input label="Áreas Disponibles" placeholder="Sistemas, Contabilidad, Mercadeo" hint="Separadas por coma"
+              value={formEditar.areas} onChange={e => setFormEditar({ ...formEditar, areas: e.target.value })} />
+            <div className="flex gap-3 pt-2">
+              <Button variant="secondary" className="flex-1" type="button" onClick={() => { setModalEditar(null); setErrorModal('') }}>Cancelar</Button>
+              <Button className="flex-1" type="submit" loading={saving}>Guardar Cambios</Button>
+            </div>
+          </form>
+        </Modal>
+      )}
 
       {modalCrear && (
         <Modal title="Nueva Empresa" size="lg" onClose={() => { setModalCrear(false); setErrorModal('') }}>

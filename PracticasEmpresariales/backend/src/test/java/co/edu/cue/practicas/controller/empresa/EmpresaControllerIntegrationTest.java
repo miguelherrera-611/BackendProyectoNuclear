@@ -84,6 +84,105 @@ class EmpresaControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     // ═══════════════════════════════════════════════════
+    // PUT /empresas/{id} — Editar
+    // ═══════════════════════════════════════════════════
+
+    @Test
+    @DisplayName("PUT /empresas/{id} — Edición válida retorna 200 con los datos actualizados")
+    void editarEmpresa_valida_retorna200() throws Exception {
+        String resp = mockMvc.perform(post("/api/v1/empresas")
+                        .header("Authorization", bearer(tokenCoordinador))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "razonSocial": "Empresa Editar",
+                                "nit": "300.111.222-3",
+                                "nombreContacto": "Contacto",
+                                "correo": "editar@empresa.com"
+                            }
+                            """))
+                .andReturn().getResponse().getContentAsString();
+
+        Long id = objectMapper.readTree(resp).path("datos").path("id").asLong();
+
+        mockMvc.perform(put("/api/v1/empresas/" + id)
+                        .header("Authorization", bearer(tokenCoordinador))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "razonSocial": "Empresa Editada",
+                                "nit": "300.111.222-3",
+                                "nombreContacto": "Nuevo Contacto",
+                                "correo": "nuevo@empresa.com"
+                            }
+                            """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.datos.razonSocial").value("Empresa Editada"))
+                .andExpect(jsonPath("$.datos.nombreContacto").value("Nuevo Contacto"));
+    }
+
+    @Test
+    @DisplayName("PUT /empresas/{id} — NIT que ya pertenece a otra empresa retorna 409")
+    void editarEmpresa_nitDuplicado_retorna409() throws Exception {
+        mockMvc.perform(post("/api/v1/empresas")
+                .header("Authorization", bearer(tokenCoordinador))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("""
+                    {
+                        "razonSocial": "Empresa Uno",
+                        "nit": "400.111.222-3",
+                        "nombreContacto": "Contacto",
+                        "correo": "uno@empresa.com"
+                    }
+                    """));
+
+        String resp2 = mockMvc.perform(post("/api/v1/empresas")
+                        .header("Authorization", bearer(tokenCoordinador))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "razonSocial": "Empresa Dos",
+                                "nit": "400.111.222-4",
+                                "nombreContacto": "Contacto",
+                                "correo": "dos@empresa.com"
+                            }
+                            """))
+                .andReturn().getResponse().getContentAsString();
+
+        Long idEmpresaDos = objectMapper.readTree(resp2).path("datos").path("id").asLong();
+
+        mockMvc.perform(put("/api/v1/empresas/" + idEmpresaDos)
+                        .header("Authorization", bearer(tokenCoordinador))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "razonSocial": "Empresa Dos",
+                                "nit": "400.111.222-3",
+                                "nombreContacto": "Contacto",
+                                "correo": "dos@empresa.com"
+                            }
+                            """))
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    @DisplayName("PUT /empresas/{id} — Empresa inexistente retorna 404")
+    void editarEmpresa_noExiste_retorna404() throws Exception {
+        mockMvc.perform(put("/api/v1/empresas/999999")
+                        .header("Authorization", bearer(tokenCoordinador))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "razonSocial": "No Existe",
+                                "nit": "999.999.999-9",
+                                "nombreContacto": "Contacto",
+                                "correo": "no@existe.com"
+                            }
+                            """))
+                .andExpect(status().isNotFound());
+    }
+
+    // ═══════════════════════════════════════════════════
     // Flujo completo: crear → activar → inactivar
     // ═══════════════════════════════════════════════════
 

@@ -48,6 +48,11 @@ export const vacanteService = {
     return res.data.datos!
   },
 
+  async editar(id: number, data: { area: string; cuposTotales: number }): Promise<VacanteResponse> {
+    const res = await api.put<ApiResponse<VacanteResponse>>(`/api/v1/vacantes/${id}`, data)
+    return res.data.datos!
+  },
+
   async activar(id: number): Promise<VacanteResponse> {
     const res = await api.patch<ApiResponse<VacanteResponse>>(`/api/v1/vacantes/${id}/activar`)
     return res.data.datos!

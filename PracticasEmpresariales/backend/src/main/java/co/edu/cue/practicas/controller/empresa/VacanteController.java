@@ -1,6 +1,7 @@
 package co.edu.cue.practicas.controller.empresa;
 
 import co.edu.cue.practicas.dto.request.CrearVacanteRequest;
+import co.edu.cue.practicas.dto.request.EditarVacanteRequest;
 import co.edu.cue.practicas.dto.request.RechazarRequest;
 import co.edu.cue.practicas.dto.response.ApiResponse;
 import co.edu.cue.practicas.dto.response.VacanteResponse;
@@ -29,6 +30,13 @@ public class VacanteController {
             @Valid @RequestBody CrearVacanteRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.ok("Vacante creada.", vacanteService.crearVacante(req)));
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<ApiResponse<VacanteResponse>> editar(
+            @PathVariable Long id,
+            @Valid @RequestBody EditarVacanteRequest req) {
+        return ResponseEntity.ok(ApiResponse.ok("Vacante actualizada.", vacanteService.editarVacante(id, req)));
     }
 
     @GetMapping("/{id}")

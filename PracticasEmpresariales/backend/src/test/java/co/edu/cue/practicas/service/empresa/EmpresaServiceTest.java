@@ -128,6 +128,62 @@ class EmpresaServiceTest {
     }
 
     // =================================================================
+    // editarEmpresa
+    // =================================================================
+
+    @Test
+    @DisplayName("editarEmpresa exitoso debe persistir los nuevos datos sin validar NIT si no cambió")
+    void editarEmpresaExitoso() {
+        co.edu.cue.practicas.dto.request.EditarEmpresaRequest req = new co.edu.cue.practicas.dto.request.EditarEmpresaRequest(
+                "TechCo Actualizada", "900.123.456-7", "Software", "Calle 20", "Calarcá",
+                "3009999999", "Nuevo Contacto", "nuevo@tech.com", List.of("Backend"));
+
+        when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresaEjemplo));
+        when(empresaRepository.save(any())).thenReturn(empresaEjemplo);
+        when(mapper.toEmpresaResponse(any())).thenReturn(responseEjemplo);
+
+        EmpresaResponse resultado = service.editarEmpresa(1L, req);
+
+        assertThat(empresaEjemplo.getRazonSocial()).isEqualTo("TechCo Actualizada");
+        assertThat(empresaEjemplo.getDireccion()).isEqualTo("Calle 20");
+        assertThat(resultado).isEqualTo(responseEjemplo);
+        verify(validator, never()).validarNitUnicoParaEdicion(any(), any());
+        verify(empresaRepository).save(empresaEjemplo);
+    }
+
+    @Test
+    @DisplayName("editarEmpresa con NIT nuevo duplicado debe lanzar excepción antes de persistir")
+    void editarEmpresaConNitDuplicadoLanzaExcepcion() {
+        co.edu.cue.practicas.dto.request.EditarEmpresaRequest req = new co.edu.cue.practicas.dto.request.EditarEmpresaRequest(
+                "TechCo S.A.", "900.999.999-9", "Tecnología", "Calle 10", "Armenia",
+                "3001234567", "Juan Díaz", "c@tech.com", List.of());
+
+        when(empresaRepository.findById(1L)).thenReturn(Optional.of(empresaEjemplo));
+        doThrow(new OperacionNoPermitidaException("Ya existe otra empresa registrada con NIT: 900.999.999-9"))
+                .when(validator).validarNitUnicoParaEdicion("900.999.999-9", 1L);
+
+        assertThatThrownBy(() -> service.editarEmpresa(1L, req))
+                .isInstanceOf(OperacionNoPermitidaException.class)
+                .hasMessageContaining("900.999.999-9");
+
+        verify(empresaRepository, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("editarEmpresa con id inexistente debe lanzar 404")
+    void editarEmpresaNoExisteLanza404() {
+        co.edu.cue.practicas.dto.request.EditarEmpresaRequest req = new co.edu.cue.practicas.dto.request.EditarEmpresaRequest(
+                "Cualquiera", "900.000.000-0", null, null, null, null, "Contacto", null, null);
+
+        when(empresaRepository.findById(99L)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.editarEmpresa(99L, req))
+                .isInstanceOf(RecursoNoEncontradoException.class);
+
+        verify(empresaRepository, never()).save(any());
+    }
+
+    // =================================================================
     // Lecturas
     // =================================================================
 

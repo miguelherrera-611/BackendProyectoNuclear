@@ -80,6 +80,81 @@ class VacanteControllerIntegrationTest extends BaseIntegrationTest {
     }
 
     @Test
+    @DisplayName("PUT /vacantes/{id} — Edición válida retorna 200 con los datos actualizados")
+    void editarVacante_valida_retorna200() throws Exception {
+        String resp = mockMvc.perform(post("/api/v1/vacantes")
+                        .header("Authorization", bearer(tokenCoordinador))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "empresaId": %d,
+                                "area": "Soporte",
+                                "cuposTotales": 2
+                            }
+                            """.formatted(empresaAprobadaId)))
+                .andReturn().getResponse().getContentAsString();
+
+        Long vacanteId = objectMapper.readTree(resp).path("datos").path("id").asLong();
+
+        mockMvc.perform(put("/api/v1/vacantes/" + vacanteId)
+                        .header("Authorization", bearer(tokenCoordinador))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "area": "Soporte Avanzado",
+                                "cuposTotales": 4
+                            }
+                            """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.datos.area").value("Soporte Avanzado"))
+                .andExpect(jsonPath("$.datos.cuposTotales").value(4));
+    }
+
+    @Test
+    @DisplayName("PUT /vacantes/{id} — Cupos totales en 0 retorna 400 (validación @Min)")
+    void editarVacante_cuposCero_retorna400() throws Exception {
+        String resp = mockMvc.perform(post("/api/v1/vacantes")
+                        .header("Authorization", bearer(tokenCoordinador))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "empresaId": %d,
+                                "area": "Datos",
+                                "cuposTotales": 1
+                            }
+                            """.formatted(empresaAprobadaId)))
+                .andReturn().getResponse().getContentAsString();
+
+        Long vacanteId = objectMapper.readTree(resp).path("datos").path("id").asLong();
+
+        mockMvc.perform(put("/api/v1/vacantes/" + vacanteId)
+                        .header("Authorization", bearer(tokenCoordinador))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "area": "Datos",
+                                "cuposTotales": 0
+                            }
+                            """))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("PUT /vacantes/{id} — Vacante inexistente retorna 404")
+    void editarVacante_noExiste_retorna404() throws Exception {
+        mockMvc.perform(put("/api/v1/vacantes/999999")
+                        .header("Authorization", bearer(tokenCoordinador))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {
+                                "area": "No existe",
+                                "cuposTotales": 1
+                            }
+                            """))
+                .andExpect(status().isNotFound());
+    }
+
+    @Test
     @DisplayName("Flujo: crear vacante → aprobar → estado DISPONIBLE")
     void flujoAprobarVacante_retornaDisponible() throws Exception {
         // Crear vacante

@@ -31,6 +31,13 @@ public class EmpresaValidator {
                     "Ya existe una empresa registrada con NIT: " + nit);
     }
 
+    /** OCL: nitUnico — variante para edición, excluye la propia empresa de la verificación */
+    public void validarNitUnicoParaEdicion(String nit, Long empresaId) {
+        if (empresaRepository.existsByNitAndIdNot(nit, empresaId))
+            throw new OperacionNoPermitidaException(
+                    "Ya existe otra empresa registrada con NIT: " + nit);
+    }
+
     /** OCL: vinculacionRestringida — no inactivar con vacantes activas */
     public void validarSinVacantesActivas(Long empresaId) {
         boolean tieneActivas = vacanteRepository.existsByEmpresaIdAndEstadoIn(

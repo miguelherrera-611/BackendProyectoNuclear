@@ -1,6 +1,7 @@
 package co.edu.cue.practicas.service.empresa;
 
 import co.edu.cue.practicas.dto.request.CrearEmpresaRequest;
+import co.edu.cue.practicas.dto.request.EditarEmpresaRequest;
 import co.edu.cue.practicas.dto.response.EmpresaResponse;
 import co.edu.cue.practicas.event.EmpresaObserver;
 import co.edu.cue.practicas.exception.RecursoNoEncontradoException;
@@ -99,6 +100,31 @@ public class EmpresaService {
         empresaRepository.save(clon);
         log.info("[GPE-150/Prototype] Empresa clonada desde {} → {}", origen.getRazonSocial(), nuevaRazonSocial);
         return mapper.toEmpresaResponse(clon);
+    }
+
+    // ── EDITAR ────────────────────────────────────────────────────────────
+
+    @RequiereRol(roles = {Rol.COORDINADOR_PRACTICAS})
+    public EmpresaResponse editarEmpresa(Long id, EditarEmpresaRequest req) {
+        Empresa empresa = buscarOFallar(id);
+
+        if (!empresa.getNit().equals(req.nit())) {
+            validator.validarNitUnicoParaEdicion(req.nit(), id);
+        }
+
+        empresa.setRazonSocial(req.razonSocial());
+        empresa.setNit(req.nit());
+        empresa.setSector(req.sector());
+        empresa.setDireccion(req.direccion());
+        empresa.setMunicipio(req.municipio());
+        empresa.setTelefono(req.telefono());
+        empresa.setNombreContacto(req.nombreContacto());
+        empresa.setCorreo(req.correo());
+        empresa.setAreasDisponibles(req.areasDisponibles());
+
+        empresaRepository.save(empresa);
+        log.info("[GPE-150] Empresa editada: {} (NIT: {})", empresa.getRazonSocial(), empresa.getNit());
+        return mapper.toEmpresaResponse(empresa);
     }
 
     // ── LEER ──────────────────────────────────────────────────────────────
